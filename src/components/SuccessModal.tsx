@@ -13,10 +13,11 @@ interface SuccessModalProps {
   };
   completionPercentage: number;
   emailSent: boolean;
+  sentRecipient?: string;
   onResetForm?: () => void;
 }
 
-export default function SuccessModal({ isOpen, onClose, formData, completionPercentage, emailSent, onResetForm }: SuccessModalProps) {
+export default function SuccessModal({ isOpen, onClose, formData, completionPercentage, emailSent, sentRecipient, onResetForm }: SuccessModalProps) {
   if (!isOpen) return null;
 
   const handleStartNewForm = () => {
@@ -56,7 +57,7 @@ export default function SuccessModal({ isOpen, onClose, formData, completionPerc
             {emailSent && (
               <div className="bg-white rounded-lg p-3 mt-3 border border-[#0F6E56]">
                 <p className="text-sm text-[#2C2C2A]">
-                  📧 Un email a été envoyé à <strong>{formData.email_dest}</strong>
+                  📧 Un email a été envoyé à <strong>{sentRecipient || formData.email_dest || formData.c_email || 'la destination configurée'}</strong>
                 </p>
               </div>
             )}

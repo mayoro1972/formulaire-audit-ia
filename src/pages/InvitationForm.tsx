@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { FormProvider, useForm } from '../context/FormContext';
 import { supabase } from '../lib/supabase';
+import type { Database } from '../lib/database.types';
+import type { FormData } from '../types/form';
 import App from '../App';
 
 function InvitationFormContent() {
   const [token, setToken] = useState<string | null>(null);
-  const [invitation, setInvitation] = useState<any>(null);
+  const [invitation, setInvitation] = useState<Database['public']['Tables']['form_invitations']['Row'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { updateField } = useForm();
+  const { loadFormData } = useForm();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,33 +33,55 @@ function InvitationFormContent() {
         .maybeSingle();
 
       if (error) throw error;
+      const invitationData = data as Database['public']['Tables']['form_invitations']['Row'] | null;
 
-      if (!data) {
+      if (!invitationData) {
         setError('Invitation invalide ou expirée');
         setLoading(false);
         return;
       }
 
-      if (data.status === 'completed') {
+      if (invitationData.status === 'completed') {
         setError('Cette invitation a déjà été utilisée');
         setLoading(false);
         return;
       }
 
-      if (new Date(data.expires_at) < new Date()) {
+      if (new Date(invitationData.expires_at) < new Date()) {
         await supabase
           .from('form_invitations')
           .update({ status: 'expired' })
-          .eq('id', data.id);
+          .eq('id', invitationData.id);
 
         setError('Cette invitation a expiré');
         setLoading(false);
         return;
       }
 
-      setInvitation(data);
-      updateField('c_nom', data.invitee_name);
-      updateField('c_email', data.invitee_email);
+      setInvitation(invitationData);
+      const draftFormData =
+        invitationData.draft_form_data &&
+        typeof invitationData.draft_form_data === 'object' &&
+        !Array.isArray(invitationData.draft_form_data)
+          ? (invitationData.draft_form_data as Partial<FormData>)
+          : {};
+
+      loadFormData(
+        {
+          ...draftFormData,
+          c_nom: invitationData.invitee_name,
+          c_email: invitationData.invitee_email,
+          email_dest: '',
+          email_cc: '',
+          email_msg: '',
+        },
+        {
+          reset: true,
+          clearResponseId: true,
+          saveStatus: 'Formulaire prérempli depuis une invitation',
+          section: 0,
+        }
+      );
 
       setLoading(false);
     } catch (err) {

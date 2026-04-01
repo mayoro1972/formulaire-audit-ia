@@ -1,4 +1,5 @@
 import { useForm } from '../context/FormContext';
+import { getInputValue } from '../lib/formValue';
 
 export default function Section4_Profil() {
   const { formData, updateField, setCurrentSection } = useForm();
@@ -30,11 +31,13 @@ export default function Section4_Profil() {
                 type="range"
                 min="1"
                 max="10"
-                value={formData[score.id]}
+                value={getInputValue(formData[score.id], 5)}
                 onChange={(e) => updateField(score.id, e.target.value)}
                 className="w-40 flex-shrink-0"
               />
-              <span className="text-lg font-semibold text-[#185FA5] min-w-[28px] text-center">{formData[score.id]}</span>
+              <span className="text-lg font-semibold text-[#185FA5] min-w-[28px] text-center">
+                {getInputValue(formData[score.id], 5)}
+              </span>
             </div>
           ))}
         </div>

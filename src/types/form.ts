@@ -1,3 +1,5 @@
+export type FormFieldValue = string | boolean | number | undefined;
+
 export interface FormData {
   ts?: string;
   libreRowCount: number;
@@ -112,7 +114,7 @@ export interface FormData {
   email_cc: string;
   email_msg: string;
 
-  [key: string]: string | boolean | number | undefined;
+  [key: string]: FormFieldValue;
 }
 
 export interface LibreTask {

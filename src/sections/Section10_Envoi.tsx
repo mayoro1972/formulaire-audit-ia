@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useForm } from '../context/FormContext';
 import SuccessModal from '../components/SuccessModal';
-import { supabase } from '../lib/supabase';
 
 export default function Section10_Envoi() {
   const { formData, updateField, setCurrentSection, saveAll, submitToSupabase, resetForm } = useForm();
@@ -11,6 +10,7 @@ export default function Section10_Envoi() {
   const [savedToDatabase, setSavedToDatabase] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<'csv' | 'pdf' | 'word'>('csv');
+  const [sentRecipient, setSentRecipient] = useState('');
 
   const urlParams = new URLSearchParams(window.location.search);
   const hasInviteToken = urlParams.get('invite') !== null;
@@ -49,94 +49,29 @@ export default function Section10_Envoi() {
 
   const { overall, done } = calculateProgress();
 
-  const buildEmailBody = () => {
-    const nom = formData.c_nom || 'Utilisateur';
-    const date = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const notifyAdmin = async (responseId: string) => {
+    const notifyAdminUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-admin`;
+    const notifyHeaders = {
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    };
 
-    const libres = [];
-    for (let i = 1; i <= formData.libreRowCount; i++) {
-      const desc = formData[`lib_d${i}`];
-      if (desc && String(desc).trim()) {
-        libres.push(`  ${i}. ${desc} [${formData[`lib_f${i}`] || '—'}] [${formData[`lib_t${i}`] || '—'}] → Automatisable: ${formData[`lib_a${i}`] || '—'}`);
-      }
+    const response = await fetch(notifyAdminUrl, {
+      method: 'POST',
+      headers: notifyHeaders,
+      body: JSON.stringify({
+        user_name: formData.c_nom,
+        user_email: formData.c_email,
+        user_position: formData.c_poste,
+        completion_percentage: overall,
+        response_id: responseId,
+      }),
+    });
+
+    if (!response.ok) {
+      const responseData = await response.json().catch(() => null);
+      throw new Error(responseData?.error || "La notification admin n'a pas pu être envoyée.");
     }
-
-    const irrs = [1, 2, 3, 4, 5]
-      .map(i => formData[`irr${i}_desc`])
-      .filter(d => d && String(d).trim());
-
-    return `
-=== AUDIT IA — FICHE PERSONNELLE ===
-Répondant : ${nom}
-Entité : ${formData.c_entite}
-Date : ${date}
-
-── A. CHARGE HEBDOMADAIRE ──
-Emails/jour : ${formData.a_emails || '—'}
-Réunions/sem : ${formData.a_reunions || '—'}
-Rapports/mois : ${formData.a_rapports || '—'}
-Sources réglementaires/sem : ${formData.a_sources || '—'}
-Heures "perdues"/sem : ${formData.a_perdues || '—'}
-
-── C. PRIORITÉS IA ──
-Priorité 1 : ${formData.c_prio1 || '—'}
-Priorité 2 : ${formData.c_prio2 || '—'}
-Priorité 3 : ${formData.c_prio3 || '—'}
-Attentes IA : ${formData.c_attentes || '—'}
-À exclure : ${formData.c_exclure || '—'}
-Inexactitudes : ${formData.c_inexact || '—'}
-
-── D. PROFIL EARLY ADOPTER ──
-Score numérique : ${formData.sc1}/10
-Score BI/Excel : ${formData.sc2}/10
-Score IA actuelle : ${formData.sc3}/10
-Score adoption : ${formData.sc4}/10
-Score ouverture : ${formData.sc5}/10
-Outils IA utilisés : ${formData.d_outils || '—'}
-Points positifs : ${formData.d_plus || '—'}
-Points négatifs : ${formData.d_moins || '—'}
-
-── E. TÂCHES LIBRES (${libres.length} tâches ajoutées) ──
-${libres.length > 0 ? libres.join('\n') : '  (aucune tâche libre ajoutée)'}
-
-── F. JOURNAL DE BORD ──
-Matin : ${formData.f_matin || '—'}
-Matinée : ${formData.f_matinee || '—'}
-Après-midi : ${formData.f_apm || '—'}
-Fin de journée : ${formData.f_soir || '—'}
-Lundi : ${formData.f_lundi || '—'}
-Vendredi : ${formData.f_vendredi || '—'}
-Mensuel : ${formData.f_mois || '—'}
-Trimestriel : ${formData.f_trim || '—'}
-Annuel : ${formData.f_annuel || '—'}
-Déplacements : ${formData.f_deplac || '—'}
-
-── G. POINTS DE DOULEUR ──
-${irrs.length > 0 ? irrs.map((d, i) => `  ${i + 1}. ${d}`).join('\n') : '  (non renseigné)'}
-Doublons : ${formData.g_doublons || '—'}
-Hors heures : ${formData.g_nuit || '—'}
-
-── H. VISION IA ──
-Tâche prioritaire 6 mois : ${formData.h_une || '—'}
-Pourquoi : ${formData.h_pourquoi || '—'}
-Vision 18 mois : ${formData.h_vision || '—'}
-Déléguées à l'IA : ${formData.h_delegate || '—'}
-Expertise humaine : ${formData.h_humain || '—'}
-Déploiement AWA : ${formData.h_awa || '—'}
-KPIs succès : ${formData.h_kpi || '—'}
-
-── I. CONTRAINTES ──
-Confidentialité : ${formData.i_conf || '—'}
-Hébergement : ${formData.i_heberg || '—'}
-Approbations : ${formData.i_appro || '—'}
-Systèmes : ${formData.i_sys || '—'}
-Calendaire : ${formData.i_cal || '—'}
-Politique IA groupe : ${formData.i_pol || '—'}
-Autres : ${formData.i_autres || '—'}
-
-── MESSAGE ──
-${formData.email_msg || ''}
-`;
   };
 
   const handleSubmitToDatabase = async () => {
@@ -151,25 +86,7 @@ ${formData.email_msg || ''}
         setSavedToDatabase(true);
         saveAll();
         setShowSuccessModal(true);
-
-        const notifyAdminUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-admin`;
-
-        const notifyHeaders = {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        };
-
-        await fetch(notifyAdminUrl, {
-          method: 'POST',
-          headers: notifyHeaders,
-          body: JSON.stringify({
-            user_name: formData.c_nom,
-            user_email: formData.c_email,
-            user_position: formData.c_poste,
-            completion_percentage: overall,
-            response_id: 'pending',
-          }),
-        }).catch(err => console.log('Admin notification error:', err));
+        await notifyAdmin(result.responseId).catch(err => console.log('Admin notification error:', err));
       } else {
         setError(`Erreur lors de l'enregistrement: ${result.error || 'Erreur inconnue'}`);
       }
@@ -202,24 +119,7 @@ ${formData.email_msg || ''}
         return;
       }
 
-      const notifyAdminUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-admin`;
-
-      const notifyHeaders = {
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-      };
-
-      await fetch(notifyAdminUrl, {
-        method: 'POST',
-        headers: notifyHeaders,
-        body: JSON.stringify({
-          user_name: formData.c_nom,
-          user_email: formData.c_email,
-          user_position: formData.c_poste,
-          completion_percentage: overall,
-          response_id: 'pending',
-        }),
-      }).catch(err => console.log('Admin notification error:', err));
+      await notifyAdmin(result.responseId).catch(err => console.log('Admin notification error:', err));
 
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-form-email`;
 
@@ -233,6 +133,7 @@ ${formData.email_msg || ''}
         inviteToken: inviteToken || undefined,
         email_msg: formData.email_msg,
         format: selectedFormat,
+        responseId: result.responseId,
       };
 
       const response = await fetch(apiUrl, {
@@ -249,10 +150,11 @@ ${formData.email_msg || ''}
 
       setEmailSent(true);
       setSavedToDatabase(true);
+      setSentRecipient(responseData.sent_to || '');
       saveAll();
       setShowSuccessModal(true);
     } catch (err) {
-      setError("Erreur lors de l'envoi de l'email. Les données ont été sauvegardées dans la base de données.");
+      setError(err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.");
       console.error('Email error:', err);
     } finally {
       setSending(false);
@@ -282,6 +184,7 @@ ${formData.email_msg || ''}
         formData={formData}
         completionPercentage={overall}
         emailSent={emailSent}
+        sentRecipient={sentRecipient}
         onResetForm={resetForm}
       />
 
@@ -298,7 +201,9 @@ ${formData.email_msg || ''}
         <div className="flex-1 text-sm text-[#185FA5] leading-8">
           <div>Tâches libres ajoutées : <strong>{formData.libreRowCount}</strong></div>
           <div>Sections remplies : <strong>{done} / 9</strong></div>
-          <div>Email de destination : <strong>{formData.email_dest || '(à renseigner)'}</strong></div>
+          <div>
+            Email de destination : <strong>{hasInviteToken ? (sentRecipient || "personne qui vous a invité(e)") : (formData.email_dest || '(à renseigner)')}</strong>
+          </div>
         </div>
       </div>
 
@@ -309,7 +214,7 @@ ${formData.email_msg || ''}
         <div className="space-y-3">
           {hasInviteToken && (
             <div className="bg-[#E6F1FB] border border-[#185FA5] rounded-lg p-3 text-sm text-[#185FA5]">
-              ✓ Votre réponse sera automatiquement envoyée à <strong>{formData.c_email}</strong> avec copie à l'administrateur.
+              ✓ Votre réponse sera envoyée à la personne ou à l'équipe qui vous a invité(e). Votre email de réponse restera celui du répondant.
             </div>
           )}
           {!hasInviteToken && (
@@ -383,7 +288,7 @@ ${formData.email_msg || ''}
           )}
           {emailSent && (
             <div className="bg-[#EAF3DE] border border-[#3B6D11] rounded-lg p-4 text-center text-[#3B6D11] font-medium">
-              ✓ Email envoyé avec succès à <strong>{formData.email_dest}</strong> — vérifiez votre boîte de réception.
+              ✓ Email envoyé avec succès à <strong>{sentRecipient || formData.email_dest || formData.c_email}</strong> — vérifiez la boîte de réception correspondante.
             </div>
           )}
           {error && (

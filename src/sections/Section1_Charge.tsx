@@ -1,4 +1,5 @@
 import { useForm } from '../context/FormContext';
+import { getInputValue } from '../lib/formValue';
 
 export default function Section1_Charge() {
   const { formData, updateField, setCurrentSection } = useForm();
@@ -65,7 +66,7 @@ export default function Section1_Charge() {
                         type="number"
                         min="0"
                         max="60"
-                        value={formData[activity.hId]}
+                        value={getInputValue(formData[activity.hId])}
                         onChange={(e) => updateField(activity.hId, e.target.value)}
                         placeholder="ex: 8"
                         className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
@@ -79,7 +80,7 @@ export default function Section1_Charge() {
                         type="number"
                         min="0"
                         max="100"
-                        value={formData[activity.rId]}
+                        value={getInputValue(formData[activity.rId])}
                         onChange={(e) => updateField(activity.rId, e.target.value)}
                         placeholder="ex: 70"
                         className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"

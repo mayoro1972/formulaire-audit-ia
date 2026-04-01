@@ -1,4 +1,5 @@
 import { useForm } from '../context/FormContext';
+import { getInputValue } from '../lib/formValue';
 
 export default function Section7_Douleurs() {
   const { formData, updateField, setCurrentSection } = useForm();
@@ -33,7 +34,7 @@ export default function Section7_Douleurs() {
                   <td className="p-2 border-b border-[#F1EFE8]">
                     <input
                       type="text"
-                      value={formData[`irr${i}_desc`]}
+                      value={getInputValue(formData[`irr${i}_desc`])}
                       onChange={(e) => updateField(`irr${i}_desc`, e.target.value)}
                       placeholder="Décrivez..."
                       className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
@@ -42,7 +43,7 @@ export default function Section7_Douleurs() {
                   <td className="p-2 border-b border-[#F1EFE8]">
                     <input
                       type="text"
-                      value={formData[`irr${i}_t`]}
+                      value={getInputValue(formData[`irr${i}_t`])}
                       onChange={(e) => updateField(`irr${i}_t`, e.target.value)}
                       placeholder="ex: 3h"
                       className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
@@ -50,7 +51,7 @@ export default function Section7_Douleurs() {
                   </td>
                   <td className="p-2 border-b border-[#F1EFE8]">
                     <select
-                      value={formData[`irr${i}_s`]}
+                      value={getInputValue(formData[`irr${i}_s`])}
                       onChange={(e) => updateField(`irr${i}_s`, e.target.value)}
                       className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
                     >
