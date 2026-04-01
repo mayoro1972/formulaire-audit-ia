@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mail, Plus, Trash2, Send, ArrowLeft } from 'lucide-react';
+import { useForm } from '../context/FormContext';
+import { createInvitationDraft, hasDraftContent } from '../lib/formDefaults';
+import type { Database } from '../lib/database.types';
 
 interface Invitee {
   name: string;
@@ -12,10 +15,48 @@ interface SendInvitationsProps {
 }
 
 export default function SendInvitations({ onBack }: SendInvitationsProps) {
+  const { formData, saveAll } = useForm();
   const [invitees, setInvitees] = useState<Invitee[]>([{ name: '', email: '' }]);
+  const [responseEmail, setResponseEmail] = useState('');
+  const [responseCc, setResponseCc] = useState('');
+  const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const hasCurrentDraft = hasDraftContent(formData);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDefaults = async () => {
+      try {
+        const { data } = await supabase
+          .from('admin_settings')
+          .select('admin_email')
+          .limit(1)
+          .maybeSingle();
+
+        const adminSettings = data as Pick<Database['public']['Tables']['admin_settings']['Row'], 'admin_email'> | null;
+
+        if (!isMounted) return;
+
+        setResponseEmail(formData.email_dest || adminSettings?.admin_email || '');
+        setResponseCc(formData.email_cc || '');
+        setIncludeCurrentDraft(hasCurrentDraft);
+      } catch (loadError) {
+        if (!isMounted) return;
+        setResponseEmail(formData.email_dest || '');
+        setResponseCc(formData.email_cc || '');
+        setIncludeCurrentDraft(hasCurrentDraft);
+      }
+    };
+
+    loadDefaults();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const addInvitee = () => {
     setInvitees([...invitees, { name: '', email: '' }]);
@@ -43,16 +84,27 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
       return;
     }
 
+    if (!responseEmail.trim()) {
+      setError("Veuillez renseigner l'email qui recevra les formulaires complétés.");
+      return;
+    }
+
     setSending(true);
     setError('');
     setSuccess(false);
 
     try {
+      saveAll();
+
+      const invitationDraft = includeCurrentDraft ? createInvitationDraft(formData) : {};
       const invitationsToCreate = validInvitees.map(inv => ({
         invitee_name: inv.name,
         invitee_email: inv.email,
         invite_token: generateToken(),
-        created_by: 'admin',
+        created_by: formData.c_nom || 'admin',
+        response_email: responseEmail.trim(),
+        response_cc: responseCc.trim(),
+        draft_form_data: invitationDraft,
       }));
 
       const { data, error: insertError } = await supabase
@@ -78,14 +130,16 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
         return;
       }
 
+      const createdInvitations = data as Database['public']['Tables']['form_invitations']['Row'][];
+
       const baseUrl = window.location.origin;
-      const edgeFunctionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-emailjs-invitation`;
+      const edgeFunctionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invitation-email`;
 
       let successCount = 0;
       let failureCount = 0;
-      let errorMessages: string[] = [];
+      const errorMessages: string[] = [];
 
-      for (const invitation of data) {
+      for (const invitation of createdInvitations) {
         const inviteLink = `${baseUrl}/?invite=${invitation.invite_token}`;
 
         try {
@@ -99,6 +153,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
               invitee_name: invitation.invitee_name,
               invitee_email: invitation.invitee_email,
               invite_link: inviteLink,
+              has_prefilled_draft: includeCurrentDraft,
             }),
           });
 
@@ -204,6 +259,61 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
             ))}
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
+                Email qui recevra le formulaire complété <span className="text-[#712B13]">*</span>
+              </label>
+              <input
+                type="email"
+                value={responseEmail}
+                onChange={(e) => setResponseEmail(e.target.value)}
+                placeholder="ex: equipe.audit@entreprise.com"
+                className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+              />
+              <p className="text-xs text-[#888780] mt-1">
+                C'est cette adresse qui recevra le formulaire complété par le client.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
+                Email de copie (optionnel)
+              </label>
+              <input
+                type="email"
+                value={responseCc}
+                onChange={(e) => setResponseCc(e.target.value)}
+                placeholder="ex: supervision@entreprise.com"
+                className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+              />
+              <p className="text-xs text-[#888780] mt-1">
+                Une copie du formulaire complété peut aussi être envoyée ici.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-[#FAEEDA] border border-[#BA7517] rounded-lg p-4 mb-6">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeCurrentDraft}
+                onChange={(e) => setIncludeCurrentDraft(e.target.checked)}
+                disabled={!hasCurrentDraft}
+                className="w-4 h-4 mt-1 accent-[#185FA5]"
+              />
+              <div>
+                <div className="text-sm font-semibold text-[#854F0B]">
+                  Inclure le brouillon actuel comme premier snapshot
+                </div>
+                <p className="text-xs text-[#2C2C2A] mt-1">
+                  {hasCurrentDraft
+                    ? "Le client ouvrira le lien avec le brouillon actuel déjà prérempli et pourra le compléter."
+                    : "Aucun brouillon significatif n'a encore été saisi dans le formulaire principal."}
+                </p>
+              </div>
+            </label>
+          </div>
+
           <div className="flex gap-3 mb-6">
             <button
               onClick={addInvitee}
@@ -244,8 +354,8 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                 <ul className="text-sm text-[#185FA5] space-y-2">
                   <li>• Chaque invitation génère un lien unique valide 30 jours</li>
                   <li>• L'utilisateur reçoit un email avec le lien personnalisé</li>
-                  <li>• Le formulaire pré-remplit son nom et email automatiquement</li>
-                  <li>• Quand il soumet le formulaire, vous recevez ses réponses</li>
+                  <li>• Le formulaire pré-remplit son nom, son email et peut reprendre un brouillon déjà préparé</li>
+                  <li>• Quand il soumet le formulaire, il est envoyé à l'email de retour défini ci-dessus</li>
                   <li>• Toutes les soumissions sont visibles dans le dashboard admin</li>
                 </ul>
               </div>

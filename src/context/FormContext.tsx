@@ -1,51 +1,31 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { FormData } from '../types/form';
+import { FormData, FormFieldValue } from '../types/form';
 import { supabase } from '../lib/supabase';
+import { createInitialFormData, mergeWithInitialFormData } from '../lib/formDefaults';
 
 const SAVE_KEY = 'audit_ia_gerard_v2';
 const SESSION_KEY = 'audit_session_id';
 
-const initialFormData: FormData = {
-  libreRowCount: 0,
-  c_nom: '',
-  c_email: '',
-  c_poste: '',
-  c_entite: '',
-  eng1: false,
-  eng2: false,
-  eng3: false,
-  eng4: false,
-  ch1_h: '', ch1_r: '', ch2_h: '', ch2_r: '', ch3_h: '', ch3_r: '',
-  ch4_h: '', ch4_r: '', ch5_h: '', ch5_r: '', ch6_h: '', ch6_r: '',
-  ch7_h: '', ch7_r: '', ch8_h: '', ch8_r: '',
-  a_emails: '', a_reunions: '', a_rapports: '', a_sources: '', a_dossiers: '',
-  a_missions: '', a_perdues: '',
-  c_inexact: '', c_exclure: '', c_prio1: '', c_prio2: '', c_prio3: '', c_attentes: '',
-  sc1: '5', sc2: '5', sc3: '5', sc4: '5', sc5: '5',
-  d_outils: '', d_usage: '', d_plus: '', d_moins: '',
-  fmt1: false, fmt2: false, fmt3: false, fmt4: false, fmt5: false,
-  d_format_autre: '',
-  f_matin: '', f_matinee: '', f_apm: '', f_soir: '', f_lundi: '', f_vendredi: '',
-  f_mois: '', f_trim: '', f_annuel: '', f_deplac: '',
-  irr1_desc: '', irr1_t: '', irr1_s: '', irr2_desc: '', irr2_t: '', irr2_s: '',
-  irr3_desc: '', irr3_t: '', irr3_s: '', irr4_desc: '', irr4_t: '', irr4_s: '',
-  irr5_desc: '', irr5_t: '', irr5_s: '',
-  g_doublons: '', g_nuit: '',
-  h_une: '', h_pourquoi: '', h_vision: '', h_delegate: '', h_humain: '',
-  h_awa: '', h_kpi: '',
-  i_conf: '', i_rgpd: '', i_heberg: '', i_appro: '', i_sys: '', i_cal: '',
-  i_pol: '', i_autres: '',
-  email_dest: '', email_cc: '', email_msg: '',
-};
+interface LoadFormDataOptions {
+  reset?: boolean;
+  clearResponseId?: boolean;
+  saveStatus?: string;
+  section?: number;
+}
+
+type SubmitResult =
+  | { success: true; responseId: string }
+  | { success: false; error?: string };
 
 interface FormContextType {
   formData: FormData;
-  updateField: (field: string, value: string | boolean) => void;
+  updateField: (field: string, value: FormFieldValue) => void;
+  loadFormData: (data: Partial<FormData>, options?: LoadFormDataOptions) => void;
   saveStatus: string;
   currentSection: number;
   setCurrentSection: (section: number) => void;
   saveAll: () => void;
-  submitToSupabase: () => Promise<{ success: boolean; error?: string }>;
+  submitToSupabase: () => Promise<SubmitResult>;
   responseId: string | null;
   resetForm: () => void;
 }
@@ -67,12 +47,12 @@ export function FormProvider({ children }: { children: ReactNode }) {
       const saved = localStorage.getItem(SAVE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { ...initialFormData, ...parsed };
+        return mergeWithInitialFormData(parsed);
       }
-    } catch (e) {
-      console.error('Error loading saved data:', e);
+    } catch (error) {
+      console.error('Error loading saved data:', error);
     }
-    return initialFormData;
+    return createInitialFormData();
   });
 
   const [saveStatus, setSaveStatus] = useState('Non sauvegardé');
@@ -81,19 +61,26 @@ export function FormProvider({ children }: { children: ReactNode }) {
   const [responseId, setResponseId] = useState<string | null>(null);
   const [sessionId] = useState<string>(getOrCreateSessionId());
 
-  const saveAll = () => {
+  const persistFormData = (data: FormData, statusOverride?: string) => {
     try {
-      const dataToSave = { ...formData, ts: new Date().toISOString() };
+      const dataToSave = { ...data, ts: new Date().toISOString() };
       localStorage.setItem(SAVE_KEY, JSON.stringify(dataToSave));
       const now = new Date();
-      setSaveStatus(`Sauvegardé ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`);
-    } catch (e) {
+      setSaveStatus(
+        statusOverride ||
+          `Sauvegardé ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+      );
+    } catch (error) {
       setSaveStatus('Erreur de sauvegarde');
     }
   };
 
+  const saveAll = () => {
+    persistFormData(formData);
+  };
+
   const calculateCompletionPercentage = (data: FormData): number => {
-    const totalFields = Object.keys(initialFormData).length;
+    const totalFields = Object.keys(createInitialFormData()).length;
     let filledFields = 0;
 
     Object.entries(data).forEach(([key, value]) => {
@@ -106,12 +93,33 @@ export function FormProvider({ children }: { children: ReactNode }) {
     return Math.round((filledFields / totalFields) * 100);
   };
 
-  const submitToSupabase = async (): Promise<{ success: boolean; error?: string }> => {
+  const loadFormData = (data: Partial<FormData>, options: LoadFormDataOptions = {}) => {
+    const nextData = options.reset
+      ? mergeWithInitialFormData(data)
+      : mergeWithInitialFormData({ ...formData, ...data });
+
+    setFormData(nextData);
+
+    if (options.clearResponseId ?? options.reset) {
+      setResponseId(null);
+    }
+
+    if (typeof options.section === 'number') {
+      setCurrentSection(options.section);
+    }
+
+    persistFormData(
+      nextData,
+      options.saveStatus || (options.reset ? 'Formulaire prérempli' : undefined)
+    );
+  };
+
+  const submitToSupabase = async (): Promise<SubmitResult> => {
     try {
       const completionPercentage = calculateCompletionPercentage(formData);
-
       const urlParams = new URLSearchParams(window.location.search);
       const inviteToken = urlParams.get('invite') || '';
+      let targetResponseId = responseId;
 
       const payload = {
         user_name: formData.c_nom || '',
@@ -125,11 +133,29 @@ export function FormProvider({ children }: { children: ReactNode }) {
         invitation_token: inviteToken,
       };
 
-      if (responseId) {
+      if (!targetResponseId) {
+        const existingResponseQuery = supabase
+          .from('form_responses')
+          .select('id')
+          .order('submitted_at', { ascending: false })
+          .limit(1);
+
+        const { data: existingResponse, error: existingError } = inviteToken
+          ? await existingResponseQuery.eq('invitation_token', inviteToken).maybeSingle()
+          : await existingResponseQuery.eq('session_id', sessionId).maybeSingle();
+
+        if (existingError) throw existingError;
+        if (existingResponse?.id) {
+          targetResponseId = existingResponse.id;
+          setResponseId(existingResponse.id);
+        }
+      }
+
+      if (targetResponseId) {
         const { error } = await supabase
           .from('form_responses')
           .update(payload)
-          .eq('id', responseId);
+          .eq('id', targetResponseId);
 
         if (error) throw error;
       } else {
@@ -141,29 +167,30 @@ export function FormProvider({ children }: { children: ReactNode }) {
 
         if (error) throw error;
         if (data) {
+          targetResponseId = data.id;
           setResponseId(data.id);
-
-          if (inviteToken) {
-            await supabase
-              .from('form_invitations')
-              .update({
-                status: 'completed',
-                response_id: data.id
-              })
-              .eq('invite_token', inviteToken);
-          }
         }
       }
 
+      if (inviteToken && targetResponseId) {
+        await supabase
+          .from('form_invitations')
+          .update({
+            status: 'completed',
+            response_id: targetResponseId,
+          })
+          .eq('invite_token', inviteToken);
+      }
+
       setSaveStatus(`Envoyé à Supabase ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`);
-      return { success: true };
+      return { success: true, responseId: targetResponseId || '' };
     } catch (error) {
       console.error('Error submitting to Supabase:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
-  const updateField = (field: string, value: string | boolean) => {
+  const updateField = (field: string, value: FormFieldValue) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
@@ -174,7 +201,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
   };
 
   const resetForm = () => {
-    setFormData(initialFormData);
+    setFormData(createInitialFormData());
     setCurrentSection(0);
     setResponseId(null);
     localStorage.removeItem(SAVE_KEY);
@@ -199,6 +226,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
     <FormContext.Provider value={{
       formData,
       updateField,
+      loadFormData,
       saveStatus,
       currentSection,
       setCurrentSection,

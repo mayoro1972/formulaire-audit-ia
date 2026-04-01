@@ -1,10 +1,8 @@
 import { useForm } from '../context/FormContext';
-import { Mail, Link2 } from 'lucide-react';
-import { useState } from 'react';
+import { Link2 } from 'lucide-react';
 
 export default function Section0_Accueil() {
   const { formData, updateField, setCurrentSection } = useForm();
-  const [showShareOptions, setShowShareOptions] = useState(false);
 
   const calculateProgress = () => {
     const sections = [
@@ -61,7 +59,7 @@ export default function Section0_Accueil() {
             />
           </div>
           <div className="bg-white/10 rounded-lg p-3">
-            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">Email de réception des résultats</label>
+            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">Email du répondant</label>
             <input
               type="email"
               value={formData.c_email}

@@ -1,4 +1,5 @@
 import { useForm } from '../context/FormContext';
+import { getInputValue } from '../lib/formValue';
 
 export default function Section6_Journal() {
   const { formData, updateField, setCurrentSection } = useForm();
@@ -26,7 +27,7 @@ export default function Section6_Journal() {
             <div key={field.id}>
               <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{field.label}</label>
               <textarea
-                value={formData[field.id]}
+                value={getInputValue(formData[field.id])}
                 onChange={(e) => updateField(field.id, e.target.value)}
                 placeholder={field.placeholder}
                 rows={3}
@@ -75,7 +76,7 @@ export default function Section6_Journal() {
             <div key={field.id}>
               <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{field.label}</label>
               <textarea
-                value={formData[field.id]}
+                value={getInputValue(formData[field.id])}
                 onChange={(e) => updateField(field.id, e.target.value)}
                 placeholder={field.placeholder}
                 rows={3}

@@ -1,4 +1,5 @@
 import { useForm } from '../context/FormContext';
+import { getInputValue } from '../lib/formValue';
 
 const tachesVeille = [
   ['Scraping sites BCEAO, COBAC, FATF, GIABA', 'Quotidienne', '5–8h/sem'],
@@ -30,7 +31,7 @@ export default function Section2_Taches() {
                 <td className="p-2 border-b border-[#F1EFE8]">
                   <input
                     type="text"
-                    value={formData[`${prefix}_f${idx}`] || task[1]}
+                    value={getInputValue(formData[`${prefix}_f${idx}`], task[1])}
                     onChange={(e) => updateField(`${prefix}_f${idx}`, e.target.value)}
                     className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
                   />
@@ -38,14 +39,14 @@ export default function Section2_Taches() {
                 <td className="p-2 border-b border-[#F1EFE8]">
                   <input
                     type="text"
-                    value={formData[`${prefix}_t${idx}`] || task[2]}
+                    value={getInputValue(formData[`${prefix}_t${idx}`], task[2])}
                     onChange={(e) => updateField(`${prefix}_t${idx}`, e.target.value)}
                     className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
                   />
                 </td>
                 <td className="p-2 text-center border-b border-[#F1EFE8]">
                   <select
-                    value={formData[`${prefix}_c${idx}`] || ''}
+                    value={getInputValue(formData[`${prefix}_c${idx}`])}
                     onChange={(e) => updateField(`${prefix}_c${idx}`, e.target.value)}
                     className="border border-[#D3D1C7] rounded px-2 py-1 text-xs"
                   >

@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,10 +15,16 @@ interface NotificationPayload {
   response_id: string;
 }
 
+interface AdminSettingsRow {
+  admin_email: string;
+  notification_enabled: boolean;
+}
+
 async function sendEmailWithResend(
   to: string,
   subject: string,
-  content: string
+  content: string,
+  replyTo?: string
 ): Promise<{ success: boolean; error?: string }> {
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
@@ -25,9 +32,12 @@ async function sendEmailWithResend(
     return { success: false, error: 'RESEND_API_KEY not configured' };
   }
 
+  const fromEmail = Deno.env.get('FROM_EMAIL') || 'Audit IA <onboarding@resend.dev>';
+
   const emailPayload = {
-    from: 'Audit IA <onboarding@resend.dev>',
+    from: fromEmail,
     to: [to],
+    reply_to: replyTo || undefined,
     subject: subject,
     text: content,
   };
@@ -65,6 +75,20 @@ Deno.serve(async (req: Request) => {
   try {
     const payload: NotificationPayload = await req.json();
     const { user_name, user_email, user_position, completion_percentage, response_id } = payload;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    let adminSettings: AdminSettingsRow | null = null;
+
+    if (supabaseUrl && supabaseKey) {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data } = await supabase
+        .from('admin_settings')
+        .select('admin_email, notification_enabled')
+        .limit(1)
+        .maybeSingle();
+
+      adminSettings = (data as AdminSettingsRow | null) ?? null;
+    }
 
     const subject = `Nouveau formulaire reçu - ${user_name}`;
 
@@ -85,13 +109,29 @@ Vous pouvez consulter cette réponse dans le tableau de bord admin.
 Cordialement,
 Système d'audit IA`;
 
-    const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+    if (adminSettings && adminSettings.notification_enabled === false) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          message: 'Admin notifications are disabled in admin_settings',
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
+    const adminEmail = adminSettings?.admin_email || Deno.env.get('ADMIN_EMAIL') || '';
 
     if (!adminEmail) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Admin email not configured. Please set ADMIN_EMAIL environment variable.'
+          error: 'Admin email not configured. Set admin_settings.admin_email or ADMIN_EMAIL.'
         }),
         {
           status: 400,
@@ -103,7 +143,7 @@ Système d'audit IA`;
       );
     }
 
-    const result = await sendEmailWithResend(adminEmail, subject, content);
+    const result = await sendEmailWithResend(adminEmail, subject, content, user_email);
 
     if (!result.success) {
       return new Response(
@@ -121,7 +161,8 @@ Système d'audit IA`;
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Admin notification sent successfully'
+        message: 'Admin notification sent successfully',
+        recipient: adminEmail,
       }),
       {
         headers: {

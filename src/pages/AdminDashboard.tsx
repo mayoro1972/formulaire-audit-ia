@@ -5,12 +5,6 @@ import { Download, RefreshCw, Eye, Trash2, Search, ArrowLeft, Mail, Settings } f
 
 type FormResponse = Database['public']['Tables']['form_responses']['Row'];
 
-interface AdminSettings {
-  id: string;
-  admin_email: string;
-  notification_enabled: boolean;
-}
-
 interface AdminDashboardProps {
   onBack?: () => void;
 }
@@ -41,7 +35,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       const { data, error } = await query;
 
       if (error) throw error;
-      setResponses(data || []);
+      setResponses((data || []) as FormResponse[]);
     } catch (error) {
       console.error('Error loading responses:', error);
       alert('Erreur lors du chargement des réponses');
@@ -64,8 +58,9 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
         .maybeSingle();
 
       if (error) throw error;
-      if (data) {
-        setAdminEmail(data.admin_email);
+      const adminSettings = data as Database['public']['Tables']['admin_settings']['Row'] | null;
+      if (adminSettings) {
+        setAdminEmail(adminSettings.admin_email);
       }
     } catch (error) {
       console.error('Error loading admin settings:', error);
@@ -81,14 +76,16 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
         .limit(1)
         .maybeSingle();
 
-      if (existing) {
+      const existingSettings = existing as Pick<Database['public']['Tables']['admin_settings']['Row'], 'id'> | null;
+
+      if (existingSettings) {
         const { error } = await supabase
           .from('admin_settings')
           .update({
             admin_email: adminEmail,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', existing.id);
+          .eq('id', existingSettings.id);
 
         if (error) throw error;
       } else {

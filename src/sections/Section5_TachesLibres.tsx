@@ -1,11 +1,12 @@
 import { useForm } from '../context/FormContext';
+import { getInputValue } from '../lib/formValue';
 
 export default function Section5_TachesLibres() {
   const { formData, updateField, setCurrentSection } = useForm();
 
   const addLibreRow = () => {
     const count = formData.libreRowCount + 1;
-    updateField('libreRowCount', count.toString());
+    updateField('libreRowCount', count);
     updateField(`lib_rowcount`, count.toString());
   };
 
@@ -18,7 +19,7 @@ export default function Section5_TachesLibres() {
           <td className="p-2 border-b border-[#F1EFE8]">
             <input
               type="text"
-              value={formData[`lib_d${i}`] || ''}
+              value={getInputValue(formData[`lib_d${i}`])}
               onChange={(e) => updateField(`lib_d${i}`, e.target.value)}
               placeholder="Décrivez la tâche en détail..."
               className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
@@ -26,7 +27,7 @@ export default function Section5_TachesLibres() {
           </td>
           <td className="p-2 border-b border-[#F1EFE8]">
             <select
-              value={formData[`lib_f${i}`] || ''}
+              value={getInputValue(formData[`lib_f${i}`])}
               onChange={(e) => updateField(`lib_f${i}`, e.target.value)}
               className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
             >
@@ -42,7 +43,7 @@ export default function Section5_TachesLibres() {
           <td className="p-2 border-b border-[#F1EFE8]">
             <input
               type="text"
-              value={formData[`lib_t${i}`] || ''}
+              value={getInputValue(formData[`lib_t${i}`])}
               onChange={(e) => updateField(`lib_t${i}`, e.target.value)}
               placeholder="ex: 2h"
               className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
@@ -50,7 +51,7 @@ export default function Section5_TachesLibres() {
           </td>
           <td className="p-2 text-center border-b border-[#F1EFE8]">
             <select
-              value={formData[`lib_a${i}`] || ''}
+              value={getInputValue(formData[`lib_a${i}`])}
               onChange={(e) => updateField(`lib_a${i}`, e.target.value)}
               className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
             >

@@ -22,6 +22,11 @@ interface RequestBody {
   inviteToken?: string;
   email_msg?: string;
   format: 'pdf' | 'word' | 'csv';
+  responseId?: string;
+}
+
+function getTrimmedString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function generateCSV(formData: FormData): string {
@@ -351,7 +356,8 @@ async function sendEmailWithResend(
   content: string,
   attachmentContent: string | Uint8Array,
   attachmentFilename: string,
-  cc?: string
+  cc?: string,
+  replyTo?: string
 ): Promise<{ success: boolean; error?: string }> {
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
@@ -375,6 +381,7 @@ async function sendEmailWithResend(
     from: FROM_EMAIL,
     to: [to],
     cc: cc ? [cc] : undefined,
+    reply_to: replyTo || undefined,
     subject: subject,
     text: content,
     attachments: [
@@ -422,7 +429,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body: RequestBody = await req.json();
-    const { formData, inviteToken, email_msg, format } = body;
+    const { formData, inviteToken, email_msg, format, responseId } = body;
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -430,22 +437,25 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Determine recipient email
-    let email_dest = formData.c_email;
-    let email_cc: string | undefined;
+    let email_dest = getTrimmedString(formData.email_dest) || getTrimmedString(formData.c_email);
+    let email_cc = getTrimmedString(formData.email_cc) || undefined;
+    let replyTo = getTrimmedString(formData.c_email) || undefined;
 
     if (inviteToken) {
       // Get invitation details
       const { data: invitation, error: inviteError } = await supabase
         .from('form_invitations')
-        .select('invitee_email')
+        .select('invitee_email, response_email, response_cc')
         .eq('invite_token', inviteToken)
         .maybeSingle();
 
       if (!inviteError && invitation) {
-        email_dest = invitation.invitee_email;
+        email_dest = getTrimmedString(invitation.response_email) || email_dest;
+        email_cc = getTrimmedString(invitation.response_cc) || email_cc;
+        replyTo = getTrimmedString(invitation.invitee_email) || replyTo;
       }
 
-      // Get admin email for CC
+      // Get admin email as fallback routing
       const { data: adminSettings, error: adminError } = await supabase
         .from('admin_settings')
         .select('admin_email')
@@ -453,8 +463,16 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       if (!adminError && adminSettings?.admin_email) {
-        email_cc = adminSettings.admin_email;
+        if (!email_dest) {
+          email_dest = adminSettings.admin_email;
+        } else if (!email_cc && adminSettings.admin_email !== email_dest) {
+          email_cc = adminSettings.admin_email;
+        }
       }
+    }
+
+    if (!email_dest) {
+      email_dest = getTrimmedString(Deno.env.get('ADMIN_EMAIL'));
     }
 
     if (!email_dest) {
@@ -502,7 +520,8 @@ Deno.serve(async (req: Request) => {
       emailContent,
       attachmentContent,
       attachmentFilename,
-      email_cc
+      email_cc,
+      replyTo
     );
 
     if (!result.success) {
@@ -518,18 +537,37 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { data: responses } = await supabase
-      .from('form_responses')
-      .select('id')
-      .eq('user_email', formData.c_email)
-      .order('submitted_at', { ascending: false })
-      .limit(1);
+    let targetResponseId = getTrimmedString(responseId);
 
-    if (responses && responses.length > 0) {
+    if (!targetResponseId && inviteToken) {
+      const { data: invitationResponse } = await supabase
+        .from('form_responses')
+        .select('id')
+        .eq('invitation_token', inviteToken)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      targetResponseId = invitationResponse?.id || '';
+    }
+
+    if (!targetResponseId) {
+      const { data: latestResponse } = await supabase
+        .from('form_responses')
+        .select('id')
+        .eq('user_email', formData.c_email)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      targetResponseId = latestResponse?.id || '';
+    }
+
+    if (targetResponseId) {
       await supabase
         .from('form_responses')
         .update({ email_sent_at: new Date().toISOString() })
-        .eq('id', responses[0].id);
+        .eq('id', targetResponseId);
     }
 
     return new Response(
@@ -537,7 +575,9 @@ Deno.serve(async (req: Request) => {
         success: true,
         message: 'Email sent successfully with attachment',
         filename: attachmentFilename,
-        sent_at: new Date().toISOString()
+        sent_at: new Date().toISOString(),
+        sent_to: email_dest,
+        sent_cc: email_cc || null,
       }),
       {
         headers: {
