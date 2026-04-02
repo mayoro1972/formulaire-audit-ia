@@ -419,6 +419,58 @@ async function sendEmailWithResend(
   }
 }
 
+async function sendEmailWithEmailJS(
+  to: string,
+  subject: string,
+  content: string,
+  recipientName?: string,
+): Promise<{ success: boolean; error?: string }> {
+  const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
+  const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
+  const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
+  const EMAILJS_PRIVATE_KEY = Deno.env.get('EMAILJS_PRIVATE_KEY');
+
+  if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
+    return { success: false, error: 'EmailJS credentials not configured' };
+  }
+
+  const emailjsPayload: Record<string, unknown> = {
+    service_id: EMAILJS_SERVICE_ID,
+    template_id: EMAILJS_TEMPLATE_ID,
+    user_id: EMAILJS_PUBLIC_KEY,
+    template_params: {
+      to_email: to,
+      to_name: recipientName || to,
+      subject,
+      invite_link: '',
+      message: content,
+    },
+  };
+
+  if (EMAILJS_PRIVATE_KEY) {
+    emailjsPayload.accessToken = EMAILJS_PRIVATE_KEY;
+  }
+
+  try {
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(emailjsPayload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, error: `EmailJS error: ${errorText}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -514,7 +566,7 @@ Deno.serve(async (req: Request) => {
       emailContent = `Bonjour,\n\nVeuillez trouver ci-joint le formulaire d'audit IA complété.\n\nDate d'envoi : ${date} à ${time}\n\n${email_msg || ''}\n\nCordialement,\n${formData.c_nom}`;
     }
 
-    const result = await sendEmailWithResend(
+    const resendResult = await sendEmailWithResend(
       email_dest,
       subject,
       emailContent,
@@ -524,17 +576,49 @@ Deno.serve(async (req: Request) => {
       replyTo
     );
 
-    if (!result.success) {
-      return new Response(
-        JSON.stringify({ error: result.error }),
-        {
-          status: 500,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        }
+    let provider: 'resend' | 'emailjs' = 'resend';
+    let fallbackFrom: 'resend' | null = null;
+    let attachmentIncluded = true;
+
+    if (!resendResult.success) {
+      const fallbackContent = `${emailContent}
+
+---
+Note technique :
+La livraison via Resend a échoué. Ce message est envoyé via EmailJS en mode secours.
+Le contenu complet du formulaire est repris ci-dessous en texte brut.
+
+${generatePlainText(formData)}`;
+
+      const emailJsResult = await sendEmailWithEmailJS(
+        email_dest,
+        subject,
+        fallbackContent,
+        formData.c_nom || email_dest,
       );
+
+      if (!emailJsResult.success) {
+        return new Response(
+          JSON.stringify({
+            error: 'Failed to send form email',
+            details: {
+              resend: resendResult.error,
+              emailjs: emailJsResult.error,
+            }
+          }),
+          {
+            status: 500,
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      provider = 'emailjs';
+      fallbackFrom = 'resend';
+      attachmentIncluded = false;
     }
 
     let targetResponseId = getTrimmedString(responseId);
@@ -578,6 +662,9 @@ Deno.serve(async (req: Request) => {
         sent_at: new Date().toISOString(),
         sent_to: email_dest,
         sent_cc: email_cc || null,
+        provider,
+        fallback_from: fallbackFrom,
+        attachment_included: attachmentIncluded,
       }),
       {
         headers: {

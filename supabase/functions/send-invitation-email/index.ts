@@ -44,6 +44,7 @@ Deno.serve(async (req: Request) => {
     const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
     const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
     const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
+    const EMAILJS_PRIVATE_KEY = Deno.env.get('EMAILJS_PRIVATE_KEY');
 
     const customMessageBlock = custom_message ? `${custom_message}\n\n` : '';
     const prefilledDraftNotice = has_prefilled_draft
@@ -111,25 +112,31 @@ Cordialement`;
     }
 
     if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+      const emailjsPayload: Record<string, unknown> = {
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          to_email: invitee_email,
+          to_name: invitee_name,
+          invite_link,
+          message: emailBody,
+          custom_message: custom_message || '',
+          prefilled_draft_notice: prefilledDraftNotice.trim(),
+          has_prefilled_draft: has_prefilled_draft ? 'true' : 'false',
+        },
+      };
+
+      if (EMAILJS_PRIVATE_KEY) {
+        emailjsPayload.accessToken = EMAILJS_PRIVATE_KEY;
+      }
+
       const emailjsResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          service_id: EMAILJS_SERVICE_ID,
-          template_id: EMAILJS_TEMPLATE_ID,
-          user_id: EMAILJS_PUBLIC_KEY,
-          template_params: {
-            to_email: invitee_email,
-            to_name: invitee_name,
-            invite_link,
-            message: emailBody,
-            custom_message: custom_message || '',
-            prefilled_draft_notice: prefilledDraftNotice.trim(),
-            has_prefilled_draft: has_prefilled_draft ? 'true' : 'false',
-          },
-        }),
+        body: JSON.stringify(emailjsPayload),
       });
 
       if (emailjsResponse.ok) {

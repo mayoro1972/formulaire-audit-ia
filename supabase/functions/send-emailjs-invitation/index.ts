@@ -40,6 +40,7 @@ Deno.serve(async (req: Request) => {
     const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
     const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
     const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
+    const EMAILJS_PRIVATE_KEY = Deno.env.get('EMAILJS_PRIVATE_KEY');
 
     if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
       return new Response(
@@ -75,22 +76,28 @@ Instructions :
 
 Cordialement`;
 
+    const emailjsPayload: Record<string, unknown> = {
+      service_id: EMAILJS_SERVICE_ID,
+      template_id: EMAILJS_TEMPLATE_ID,
+      user_id: EMAILJS_PUBLIC_KEY,
+      template_params: {
+        to_email: invitee_email,
+        to_name: invitee_name,
+        invite_link: invite_link,
+        message: emailMessage,
+      },
+    };
+
+    if (EMAILJS_PRIVATE_KEY) {
+      emailjsPayload.accessToken = EMAILJS_PRIVATE_KEY;
+    }
+
     const emailjsResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        service_id: EMAILJS_SERVICE_ID,
-        template_id: EMAILJS_TEMPLATE_ID,
-        user_id: EMAILJS_PUBLIC_KEY,
-        template_params: {
-          to_email: invitee_email,
-          to_name: invitee_name,
-          invite_link: invite_link,
-          message: emailMessage,
-        },
-      }),
+      body: JSON.stringify(emailjsPayload),
     });
 
     if (!emailjsResponse.ok) {
