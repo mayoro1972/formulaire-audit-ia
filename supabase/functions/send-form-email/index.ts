@@ -658,7 +658,9 @@ ${generatePlainText(formData)}`;
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Email sent successfully with attachment',
+        message: attachmentIncluded
+          ? 'Email sent successfully with attachment'
+          : 'Email sent successfully without attachment via fallback',
         filename: attachmentFilename,
         sent_at: new Date().toISOString(),
         sent_to: email_dest,
