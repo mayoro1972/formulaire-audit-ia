@@ -1,94 +1,117 @@
 # Guide de déploiement GitHub Pages
 
-## Configuration effectuée
+## Ce que le dépôt fournit maintenant
 
-### 1. Configuration Vite
-Le fichier `vite.config.ts` contient maintenant :
-```typescript
-base: '/formulaire-audit-ia/'
+- `vite.config.ts` utilise `/formulaire-audit-ia/` en build GitHub Pages et `/` en local
+- `public/.nojekyll` empêche le traitement Jekyll par GitHub Pages
+- `.env.local.example` sert de modèle local pour le frontend
+- `.github/workflows/deploy-pages.yml` build et déploie automatiquement le site sur GitHub Pages
+
+## 1. Configuration locale
+
+Copiez le modèle puis remplacez les placeholders par vos vraies valeurs Supabase :
+
+```bash
+cp .env.local.example .env.local
 ```
-Cette configuration est essentielle pour que tous les chemins (CSS, JS, images) fonctionnent correctement sur GitHub Pages.
 
-### 2. Fichier .nojekyll
-Un fichier `.nojekyll` a été ajouté dans le dossier `public/` pour éviter que GitHub Pages traite le site avec Jekyll.
+Contenu attendu :
 
-### 3. Build du projet
-Le projet a été compilé avec succès. Les fichiers générés dans `dist/` utilisent les bons chemins :
-- `/formulaire-audit-ia/assets/index-[hash].js`
-- `/formulaire-audit-ia/assets/index-[hash].css`
-
-## Déploiement sur GitHub Pages
-
-### Étapes à suivre :
-
-1. **Pousser le code sur GitHub**
-   ```bash
-   git add .
-   git commit -m "Fix GitHub Pages configuration"
-   git push origin main
-   ```
-
-2. **Build le projet localement**
-   ```bash
-   npm run build
-   ```
-
-3. **Déployer le dossier dist/**
-
-   Option A - Utiliser gh-pages (recommandé) :
-   ```bash
-   npm install -g gh-pages
-   gh-pages -d dist
-   ```
-
-   Option B - Manuellement :
-   - Copier tout le contenu du dossier `dist/`
-   - Créer une nouvelle branche `gh-pages`
-   - Coller le contenu à la racine de cette branche
-   - Push la branche `gh-pages`
-
-4. **Configurer GitHub Pages**
-   - Aller sur GitHub → Settings → Pages
-   - Source : Deploy from a branch
-   - Branch : `gh-pages` / `root`
-   - Save
-
-## Vérification
-
-Après le déploiement, visitez :
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
+
+Important :
+
+- utilisez la clé publique `anon`, jamais la `service_role`
+- `.env.local` ne doit pas être versionné
+- le frontend plante au démarrage sans ces deux variables
+
+Pour lancer l'application en local :
+
+```bash
+npm install
+npm run dev
+```
+
+## 2. Configuration GitHub Pages automatique
+
+Le workflow `deploy-pages.yml` est déclenché :
+
+- à chaque push sur `main`
+- manuellement via `workflow_dispatch`
+
+### Secrets GitHub à créer
+
+Dans GitHub : `Settings > Secrets and variables > Actions > New repository secret`
+
+Ajoutez :
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Ces deux variables seront injectées au moment du build GitHub Actions.
+
+### Configuration Pages
+
+Dans GitHub : `Settings > Pages`
+
+- Source : `GitHub Actions`
+
+Ensuite, poussez votre code sur `main` :
+
+```bash
+git add .
+git commit -m "Add local env template and GitHub Pages workflow"
+git push origin main
+```
+
+Le workflow build automatiquement le site puis le publie sur GitHub Pages.
+
+## 3. URL attendue
+
+Après déploiement, le site sera disponible ici :
+
+```text
 https://mayoro1972.github.io/formulaire-audit-ia/
 ```
 
-Le formulaire devrait se charger correctement avec :
-- Tous les styles CSS appliqués
-- Toutes les fonctionnalités JavaScript actives
-- La connexion Supabase fonctionnelle
-- Les invitations par email opérationnelles
+## 4. Variables frontend réellement nécessaires
 
-## Problèmes courants
+Le frontend a besoin de :
 
-### Le site affiche une page blanche
-- Vérifier que `base: '/formulaire-audit-ia/'` est bien dans vite.config.ts
-- Vérifier que le build a été effectué après la modification
-- Vérifier dans la console du navigateur s'il y a des erreurs 404
-
-### Les styles ne s'appliquent pas
-- Vérifier les chemins dans `dist/index.html`
-- Ils doivent commencer par `/formulaire-audit-ia/assets/`
-
-### Erreurs de connexion Supabase
-- Les variables d'environnement ne sont pas disponibles côté client sur GitHub Pages
-- Vérifier que les clés sont bien dans le code compilé (dist/)
-- Vérifier la configuration CORS de Supabase
-
-## Variables d'environnement
-
-Les variables suivantes sont nécessaires et doivent être présentes au moment du build :
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_EMAILJS_SERVICE_ID`
-- `VITE_EMAILJS_TEMPLATE_ID`
-- `VITE_EMAILJS_PUBLIC_KEY`
 
-Elles sont incluses dans le build final car Vite les intègre lors de la compilation.
+Les anciennes variables frontend `VITE_EMAILJS_*` ne sont plus requises pour le flux actif d'invitation.
+
+## 5. Secrets à ne jamais exposer côté GitHub Pages
+
+Ne mettez jamais dans un fichier frontend ou dans des variables `VITE_*` :
+
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+- `FROM_EMAIL`
+
+Ces secrets backend doivent rester uniquement dans Supabase pour les Edge Functions.
+
+## 6. Problèmes courants
+
+### Le site affiche une page blanche
+
+- vérifiez que les secrets GitHub `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` existent
+- vérifiez l'onglet `Actions` pour voir si le build a échoué
+- vérifiez la console du navigateur pour confirmer l'absence d'erreurs de chargement
+
+### L'application marche en local mais pas sur GitHub Pages
+
+- confirmez que `Settings > Pages > Source` est bien sur `GitHub Actions`
+- vérifiez que le push a bien déclenché le workflow `Deploy GitHub Pages`
+- confirmez que les secrets GitHub ont été saisis sans espace ni guillemets
+
+### Les appels Supabase échouent
+
+- vérifiez l'URL du projet Supabase
+- vérifiez que la clé `anon` correspond bien au même projet
+- vérifiez les politiques CORS et RLS côté Supabase

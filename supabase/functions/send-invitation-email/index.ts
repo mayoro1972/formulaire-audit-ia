@@ -45,13 +45,18 @@ Deno.serve(async (req: Request) => {
     const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
     const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
 
+    const customMessageBlock = custom_message ? `${custom_message}\n\n` : '';
+    const prefilledDraftNotice = has_prefilled_draft
+      ? "Un premier brouillon a déjà été préparé pour vous. Vous pourrez l'ouvrir, le compléter et le corriger si nécessaire.\n\n"
+      : '';
+
     const emailBody = `Bonjour ${invitee_name},
 
 Vous êtes invité à compléter le formulaire d'audit IA. Veuillez cliquer sur le lien ci-dessous pour commencer :
 
 ${invite_link}
 
-${custom_message ? `${custom_message}\n\n` : ''}${has_prefilled_draft ? "Un premier brouillon a déjà été préparé pour vous. Vous pourrez l'ouvrir, le compléter et le corriger si nécessaire.\n\n" : ''}Le formulaire :
+${customMessageBlock}${prefilledDraftNotice}Le formulaire :
 - Se sauvegarde automatiquement toutes les 30 secondes
 - Peut être rempli en plusieurs fois
 - Prend environ 30-45 minutes à compléter
@@ -119,7 +124,10 @@ Cordialement`;
             to_email: invitee_email,
             to_name: invitee_name,
             invite_link,
-            message: custom_message || '',
+            message: emailBody,
+            custom_message: custom_message || '',
+            prefilled_draft_notice: prefilledDraftNotice.trim(),
+            has_prefilled_draft: has_prefilled_draft ? 'true' : 'false',
           },
         }),
       });

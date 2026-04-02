@@ -2,10 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  base: '/formulaire-audit-ia/',
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/formulaire-audit-ia/' : '/',
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-});
+}));
