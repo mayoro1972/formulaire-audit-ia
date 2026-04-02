@@ -11,6 +11,7 @@ interface RequestBody {
   invitee_email: string;
   invite_link: string;
   has_prefilled_draft?: boolean;
+  custom_message?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -23,7 +24,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body: RequestBody = await req.json();
-    const { invitee_name, invitee_email, invite_link, has_prefilled_draft } = body;
+    const { invitee_name, invitee_email, invite_link, has_prefilled_draft, custom_message } = body;
 
     if (!invitee_name || !invitee_email || !invite_link) {
       return new Response(
@@ -50,9 +51,7 @@ Vous êtes invité à compléter le formulaire d'audit IA. Veuillez cliquer sur 
 
 ${invite_link}
 
-${has_prefilled_draft ? "Un premier brouillon a déjà été préparé pour vous. Vous pourrez l'ouvrir, le compléter et le corriger si nécessaire.\n" : ''}
-
-Le formulaire :
+${custom_message ? `${custom_message}\n\n` : ''}${has_prefilled_draft ? "Un premier brouillon a déjà été préparé pour vous. Vous pourrez l'ouvrir, le compléter et le corriger si nécessaire.\n\n" : ''}Le formulaire :
 - Se sauvegarde automatiquement toutes les 30 secondes
 - Peut être rempli en plusieurs fois
 - Prend environ 30-45 minutes à compléter
@@ -120,7 +119,7 @@ Cordialement`;
             to_email: invitee_email,
             to_name: invitee_name,
             invite_link,
-            message: emailBody,
+            message: custom_message || '',
           },
         }),
       });

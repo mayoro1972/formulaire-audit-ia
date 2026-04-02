@@ -16,13 +16,18 @@ interface SendInvitationsProps {
 
 export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const { formData, saveAll } = useForm();
-  const [invitees, setInvitees] = useState<Invitee[]>([{ name: '', email: '' }]);
+  const [invitees, setInvitees] = useState<Invitee[]>([
+    { name: 'Marc Odia', email: 'Marc.odja@cba-ca.com' },
+    { name: 'Samy  Camara', email: 'Samy.Camara@cba-ca.com' },
+    { name: 'Vincent AGBADOU', email: 'Vincent.Agbadou@cba-ca.com' }
+  ]);
   const [responseEmail, setResponseEmail] = useState('');
   const [responseCc, setResponseCc] = useState('');
   const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
   const hasCurrentDraft = hasDraftContent(formData);
 
   useEffect(() => {
@@ -154,6 +159,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
               invitee_email: invitation.invitee_email,
               invite_link: inviteLink,
               has_prefilled_draft: includeCurrentDraft,
+              custom_message: customMessage.trim(),
             }),
           });
 
@@ -290,6 +296,22 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                 Une copie du formulaire complété peut aussi être envoyée ici.
               </p>
             </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
+              Message personnalisé (optionnel)
+            </label>
+            <textarea
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              placeholder="Ajoutez un message personnel qui sera inclus dans l'email d'invitation..."
+              rows={4}
+              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5] resize-none"
+            />
+            <p className="text-xs text-[#888780] mt-1">
+              Ce message sera affiché dans l'email d'invitation après le lien.
+            </p>
           </div>
 
           <div className="bg-[#FAEEDA] border border-[#BA7517] rounded-lg p-4 mb-6">
