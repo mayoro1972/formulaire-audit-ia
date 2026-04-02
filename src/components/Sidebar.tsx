@@ -1,4 +1,4 @@
-import { useForm } from '../context/FormContext';
+import { useForm } from '../context/formContextCore';
 
 const sections = [
   { id: 0, label: 'Accueil' },

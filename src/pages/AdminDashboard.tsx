@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
 import { Download, RefreshCw, Eye, Trash2, Search, ArrowLeft, Mail, Settings } from 'lucide-react';
 
 type FormResponse = Database['public']['Tables']['form_responses']['Row'];
+type FilterCompleted = 'all' | 'completed' | 'incomplete';
 
 interface AdminDashboardProps {
   onBack?: () => void;
@@ -13,12 +14,12 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [responses, setResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCompleted, setFilterCompleted] = useState<'all' | 'completed' | 'incomplete'>('all');
+  const [filterCompleted, setFilterCompleted] = useState<FilterCompleted>('all');
   const [showSettings, setShowSettings] = useState(false);
   const [adminEmail, setAdminEmail] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
 
-  const loadResponses = async () => {
+  const loadResponses = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -42,14 +43,9 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadResponses();
-    loadAdminSettings();
   }, [filterCompleted]);
 
-  const loadAdminSettings = async () => {
+  const loadAdminSettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('admin_settings')
@@ -65,7 +61,12 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     } catch (error) {
       console.error('Error loading admin settings:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadResponses();
+    loadAdminSettings();
+  }, [loadAdminSettings, loadResponses]);
 
   const saveAdminSettings = async () => {
     setSavingSettings(true);
@@ -146,17 +147,27 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
+    link.href = objectUrl;
     link.download = `audit_ia_responses_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    URL.revokeObjectURL(objectUrl);
   };
 
   const exportResponseJSON = (response: FormResponse) => {
     const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
+    link.href = objectUrl;
     link.download = `response_${response.user_name.replace(/\s+/g, '_')}_${response.id.substring(0, 8)}.json`;
     link.click();
+    URL.revokeObjectURL(objectUrl);
+  };
+
+  const handleFilterCompletedChange = (value: string) => {
+    if (value === 'all' || value === 'completed' || value === 'incomplete') {
+      setFilterCompleted(value);
+    }
   };
 
   const filteredResponses = responses.filter(r =>
@@ -288,7 +299,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
             </div>
             <select
               value={filterCompleted}
-              onChange={(e) => setFilterCompleted(e.target.value as any)}
+              onChange={(e) => handleFilterCompletedChange(e.target.value)}
               className="px-4 py-2 border border-[#D9D6CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
             >
               <option value="all">Tous les statuts</option>

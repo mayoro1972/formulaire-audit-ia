@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from '../context/FormContext';
+import { useForm } from '../context/formContextCore';
 import SuccessModal from '../components/SuccessModal';
 
 export default function Section10_Envoi() {

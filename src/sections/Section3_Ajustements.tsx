@@ -1,4 +1,4 @@
-import { useForm } from '../context/FormContext';
+import { useForm } from '../context/formContextCore';
 
 export default function Section3_Ajustements() {
   const { formData, updateField, setCurrentSection } = useForm();

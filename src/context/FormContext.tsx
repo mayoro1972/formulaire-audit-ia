@@ -1,36 +1,12 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { FormData, FormFieldValue } from '../types/form';
 import { supabase } from '../lib/supabase';
 import { createInitialFormData, mergeWithInitialFormData } from '../lib/formDefaults';
+import { getAppBaseUrl } from '../lib/appUrl';
+import { FormContext, LoadFormDataOptions, SubmitResult } from './formContextCore';
 
 const SAVE_KEY = 'audit_ia_gerard_v2';
 const SESSION_KEY = 'audit_session_id';
-
-interface LoadFormDataOptions {
-  reset?: boolean;
-  clearResponseId?: boolean;
-  saveStatus?: string;
-  section?: number;
-}
-
-type SubmitResult =
-  | { success: true; responseId: string }
-  | { success: false; error?: string };
-
-interface FormContextType {
-  formData: FormData;
-  updateField: (field: string, value: FormFieldValue) => void;
-  loadFormData: (data: Partial<FormData>, options?: LoadFormDataOptions) => void;
-  saveStatus: string;
-  currentSection: number;
-  setCurrentSection: (section: number) => void;
-  saveAll: () => void;
-  submitToSupabase: () => Promise<SubmitResult>;
-  responseId: string | null;
-  resetForm: () => void;
-}
-
-const FormContext = createContext<FormContextType | undefined>(undefined);
 
 function getOrCreateSessionId(): string {
   let sessionId = localStorage.getItem(SESSION_KEY);
@@ -57,11 +33,12 @@ export function FormProvider({ children }: { children: ReactNode }) {
 
   const [saveStatus, setSaveStatus] = useState('Non sauvegardé');
   const [currentSection, setCurrentSection] = useState(0);
-  const [autoSaveTimer, setAutoSaveTimer] = useState<number | null>(null);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [sessionId] = useState<string>(getOrCreateSessionId());
+  const autoSaveTimerRef = useRef<number | null>(null);
+  const hasHydratedRef = useRef(false);
 
-  const persistFormData = (data: FormData, statusOverride?: string) => {
+  const persistFormData = useCallback((data: FormData, statusOverride?: string) => {
     try {
       const dataToSave = { ...data, ts: new Date().toISOString() };
       localStorage.setItem(SAVE_KEY, JSON.stringify(dataToSave));
@@ -70,16 +47,16 @@ export function FormProvider({ children }: { children: ReactNode }) {
         statusOverride ||
           `Sauvegardé ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
       );
-    } catch (error) {
+    } catch {
       setSaveStatus('Erreur de sauvegarde');
     }
-  };
+  }, []);
 
-  const saveAll = () => {
+  const saveAll = useCallback(() => {
     persistFormData(formData);
-  };
+  }, [formData, persistFormData]);
 
-  const calculateCompletionPercentage = (data: FormData): number => {
+  const calculateCompletionPercentage = useCallback((data: FormData): number => {
     const totalFields = Object.keys(createInitialFormData()).length;
     let filledFields = 0;
 
@@ -91,14 +68,21 @@ export function FormProvider({ children }: { children: ReactNode }) {
     });
 
     return Math.round((filledFields / totalFields) * 100);
-  };
+  }, []);
 
-  const loadFormData = (data: Partial<FormData>, options: LoadFormDataOptions = {}) => {
-    const nextData = options.reset
-      ? mergeWithInitialFormData(data)
-      : mergeWithInitialFormData({ ...formData, ...data });
+  const loadFormData = useCallback((data: Partial<FormData>, options: LoadFormDataOptions = {}) => {
+    setFormData((previousFormData) => {
+      const nextData = options.reset
+        ? mergeWithInitialFormData(data)
+        : mergeWithInitialFormData({ ...previousFormData, ...data });
 
-    setFormData(nextData);
+      persistFormData(
+        nextData,
+        options.saveStatus || (options.reset ? 'Formulaire prérempli' : undefined)
+      );
+
+      return nextData;
+    });
 
     if (options.clearResponseId ?? options.reset) {
       setResponseId(null);
@@ -107,14 +91,9 @@ export function FormProvider({ children }: { children: ReactNode }) {
     if (typeof options.section === 'number') {
       setCurrentSection(options.section);
     }
+  }, [persistFormData]);
 
-    persistFormData(
-      nextData,
-      options.saveStatus || (options.reset ? 'Formulaire prérempli' : undefined)
-    );
-  };
-
-  const submitToSupabase = async (): Promise<SubmitResult> => {
+  const submitToSupabase = useCallback(async (): Promise<SubmitResult> => {
     try {
       const completionPercentage = calculateCompletionPercentage(formData);
       const urlParams = new URLSearchParams(window.location.search);
@@ -188,37 +167,61 @@ export function FormProvider({ children }: { children: ReactNode }) {
       console.error('Error submitting to Supabase:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
-  };
+  }, [calculateCompletionPercentage, formData, responseId, sessionId]);
 
-  const updateField = (field: string, value: FormFieldValue) => {
+  const updateField = useCallback((field: string, value: FormFieldValue) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    const timer = window.setTimeout(() => {
-      saveAll();
-    }, 2000);
-    setAutoSaveTimer(timer);
-  };
-
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData(createInitialFormData());
     setCurrentSection(0);
     setResponseId(null);
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem(SESSION_KEY);
     setSaveStatus('Formulaire réinitialisé');
-    window.location.href = window.location.origin;
-  };
+    window.location.href = getAppBaseUrl();
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(saveAll, 30000);
-    return () => clearInterval(interval);
-  }, [formData]);
+    if (!hasHydratedRef.current) {
+      hasHydratedRef.current = true;
+      return;
+    }
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      persistFormData(formData);
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [formData, persistFormData]);
 
   useEffect(() => {
     if (formData.ts) {
       const savedDate = new Date(formData.ts);
       setSaveStatus(`Restauré ${savedDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} ${savedDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`);
+    }
+  }, [formData.ts]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      persistFormData(formData);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [formData, persistFormData]);
+
+  useEffect(() => () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
     }
   }, []);
 
@@ -238,12 +241,4 @@ export function FormProvider({ children }: { children: ReactNode }) {
       {children}
     </FormContext.Provider>
   );
-}
-
-export function useForm() {
-  const context = useContext(FormContext);
-  if (!context) {
-    throw new Error('useForm must be used within FormProvider');
-  }
-  return context;
 }

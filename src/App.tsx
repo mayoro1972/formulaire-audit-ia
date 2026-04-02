@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FormProvider, useForm } from './context/FormContext';
+import { FormProvider } from './context/FormContext';
+import { useForm } from './context/formContextCore';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Section0_Accueil from './sections/Section0_Accueil';

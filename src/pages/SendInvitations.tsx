@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mail, Plus, Trash2, Send, ArrowLeft } from 'lucide-react';
-import { useForm } from '../context/FormContext';
+import { useForm } from '../context/formContextCore';
 import { createInvitationDraft, hasDraftContent } from '../lib/formDefaults';
 import type { Database } from '../lib/database.types';
+import { buildInviteUrl } from '../lib/appUrl';
 
 interface Invitee {
   name: string;
@@ -16,6 +17,14 @@ interface SendInvitationsProps {
 
 export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const { formData, saveAll } = useForm();
+  const initialRoutingRef = useRef({
+    responseEmail: formData.email_dest,
+    responseCc: formData.email_cc,
+    includeDraft: hasDraftContent(formData),
+  });
+  const responseEmailEditedRef = useRef(false);
+  const responseCcEditedRef = useRef(false);
+  const includeDraftEditedRef = useRef(false);
   const [invitees, setInvitees] = useState<Invitee[]>([
     { name: 'Axel Augusten Guessan', email: 'axelaugustenguessan@gmail.com' },
     { name: 'Marius Ayoro', email: 'marius.ayoro70@gmail.com' }
@@ -44,14 +53,28 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
         if (!isMounted) return;
 
-        setResponseEmail(formData.email_dest || adminSettings?.admin_email || '');
-        setResponseCc(formData.email_cc || '');
-        setIncludeCurrentDraft(hasCurrentDraft);
-      } catch (loadError) {
+        setResponseEmail((currentValue) =>
+          responseEmailEditedRef.current
+            ? currentValue
+            : initialRoutingRef.current.responseEmail || adminSettings?.admin_email || ''
+        );
+        setResponseCc((currentValue) =>
+          responseCcEditedRef.current ? currentValue : initialRoutingRef.current.responseCc || ''
+        );
+        setIncludeCurrentDraft((currentValue) =>
+          includeDraftEditedRef.current ? currentValue : initialRoutingRef.current.includeDraft
+        );
+      } catch {
         if (!isMounted) return;
-        setResponseEmail(formData.email_dest || '');
-        setResponseCc(formData.email_cc || '');
-        setIncludeCurrentDraft(hasCurrentDraft);
+        setResponseEmail((currentValue) =>
+          responseEmailEditedRef.current ? currentValue : initialRoutingRef.current.responseEmail || ''
+        );
+        setResponseCc((currentValue) =>
+          responseCcEditedRef.current ? currentValue : initialRoutingRef.current.responseCc || ''
+        );
+        setIncludeCurrentDraft((currentValue) =>
+          includeDraftEditedRef.current ? currentValue : initialRoutingRef.current.includeDraft
+        );
       }
     };
 
@@ -78,12 +101,6 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
   const generateToken = () => {
     return `invite_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  };
-
-  const buildInviteLink = (inviteToken: string) => {
-    const appUrl = new URL(import.meta.env.BASE_URL || '/', window.location.origin);
-    appUrl.searchParams.set('invite', inviteToken);
-    return appUrl.toString();
   };
 
   const sendInvitations = async () => {
@@ -149,7 +166,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
       const errorMessages: string[] = [];
 
       for (const invitation of createdInvitations) {
-        const inviteLink = buildInviteLink(invitation.invite_token);
+        const inviteLink = buildInviteUrl(invitation.invite_token);
 
         try {
           const response = await fetch(edgeFunctionUrl, {
@@ -181,9 +198,11 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
             .update({ email_sent_at: new Date().toISOString() })
             .eq('id', invitation.id);
 
-        } catch (emailError: any) {
+        } catch (emailError: unknown) {
           console.error('Error sending email to', invitation.invitee_email, emailError);
-          errorMessages.push(`${invitation.invitee_email}: ${emailError.message || 'Erreur d\'envoi'}`);
+          const emailMessage =
+            emailError instanceof Error ? emailError.message : 'Erreur d\'envoi';
+          errorMessages.push(`${invitation.invitee_email}: ${emailMessage}`);
           failureCount++;
         }
 
@@ -277,7 +296,10 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
               <input
                 type="email"
                 value={responseEmail}
-                onChange={(e) => setResponseEmail(e.target.value)}
+                onChange={(e) => {
+                  responseEmailEditedRef.current = true;
+                  setResponseEmail(e.target.value);
+                }}
                 placeholder="ex: equipe.audit@entreprise.com"
                 className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
               />
@@ -292,7 +314,10 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
               <input
                 type="email"
                 value={responseCc}
-                onChange={(e) => setResponseCc(e.target.value)}
+                onChange={(e) => {
+                  responseCcEditedRef.current = true;
+                  setResponseCc(e.target.value);
+                }}
                 placeholder="ex: supervision@entreprise.com"
                 className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
               />
@@ -323,7 +348,10 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
               <input
                 type="checkbox"
                 checked={includeCurrentDraft}
-                onChange={(e) => setIncludeCurrentDraft(e.target.checked)}
+                onChange={(e) => {
+                  includeDraftEditedRef.current = true;
+                  setIncludeCurrentDraft(e.target.checked);
+                }}
                 disabled={!hasCurrentDraft}
                 className="w-4 h-4 mt-1 accent-[#185FA5]"
               />

@@ -14,7 +14,7 @@ interface FormData {
   c_email: string;
   c_poste: string;
   c_entite: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface RequestBody {
@@ -76,8 +76,8 @@ function generateCSV(formData: FormData): string {
 
   for (let i = 1; i <= 5; i++) {
     const desc = formData[`irr${i}_desc`];
-    if (desc && desc.trim()) {
-      rows.push(['Points de douleur', `Irritant ${i}`, desc]);
+    if (getTrimmedString(desc)) {
+      rows.push(['Points de douleur', `Irritant ${i}`, getTrimmedString(desc)]);
       rows.push(['Points de douleur', `Temps ${i}`, formData[`irr${i}_t`] || '']);
       rows.push(['Points de douleur', `Solutions ${i}`, formData[`irr${i}_s`] || '']);
     }
@@ -143,8 +143,8 @@ function generatePlainText(formData: FormData): string {
   const libres = [];
   for (let i = 1; i <= (formData.libreRowCount || 0); i++) {
     const desc = formData[`lib_d${i}`];
-    if (desc && String(desc).trim()) {
-      libres.push(`  ${i}. ${desc} [${formData[`lib_f${i}`] || '—'}] [${formData[`lib_t${i}`] || '—'}] → Automatisable: ${formData[`lib_a${i}`] || '—'}`);
+    if (getTrimmedString(desc)) {
+      libres.push(`  ${i}. ${getTrimmedString(desc)} [${formData[`lib_f${i}`] || '—'}] [${formData[`lib_t${i}`] || '—'}] → Automatisable: ${formData[`lib_a${i}`] || '—'}`);
     }
   }
 
@@ -165,7 +165,8 @@ function generatePlainText(formData: FormData): string {
 
   const irrs = [1, 2, 3, 4, 5]
     .map(i => formData[`irr${i}_desc`])
-    .filter(d => d && String(d).trim());
+    .map(getTrimmedString)
+    .filter(Boolean);
 
   text += `── G. POINTS DE DOULEUR ──\n`;
   text += irrs.length > 0 ? irrs.map((d, i) => `  ${i + 1}. ${d}`).join('\n') + '\n' : '  (non renseigné)\n';

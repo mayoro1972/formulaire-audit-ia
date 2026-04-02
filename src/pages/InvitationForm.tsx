@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
-import { FormProvider, useForm } from '../context/FormContext';
+import { useState, useEffect, useCallback } from 'react';
+import { FormProvider } from '../context/FormContext';
+import { useForm } from '../context/formContextCore';
 import { supabase } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
 import type { FormData } from '../types/form';
+import { getAppBaseUrl } from '../lib/appUrl';
 import App from '../App';
 
 function InvitationFormContent() {
@@ -12,19 +14,7 @@ function InvitationFormContent() {
   const [error, setError] = useState('');
   const { loadFormData } = useForm();
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteToken = urlParams.get('invite');
-
-    if (inviteToken) {
-      setToken(inviteToken);
-      loadInvitation(inviteToken);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadInvitation = async (inviteToken: string) => {
+  const loadInvitation = useCallback(async (inviteToken: string) => {
     try {
       const { data, error } = await supabase
         .from('form_invitations')
@@ -89,7 +79,19 @@ function InvitationFormContent() {
       setError('Erreur lors du chargement de l\'invitation');
       setLoading(false);
     }
-  };
+  }, [loadFormData]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('invite');
+
+    if (inviteToken) {
+      setToken(inviteToken);
+      loadInvitation(inviteToken);
+    } else {
+      setLoading(false);
+    }
+  }, [loadInvitation]);
 
   if (loading) {
     return (
@@ -110,7 +112,7 @@ function InvitationFormContent() {
           <h1 className="text-2xl font-bold text-[#712B13] mb-4">Invitation invalide</h1>
           <p className="text-[#888780] mb-6">{error}</p>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = getAppBaseUrl()}
             className="px-6 py-3 bg-[#185FA5] text-white rounded-lg hover:bg-[#042C53] transition-all"
           >
             Retour à l'accueil
