@@ -17,11 +17,10 @@ interface SendInvitationsProps {
 export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const { formData, saveAll } = useForm();
   const [invitees, setInvitees] = useState<Invitee[]>([
-    { name: 'Marc Odia', email: 'Marc.odia@cba-ca.com' },
-    { name: 'Samy Camara', email: 'Samy.Camara@cba-ca.com' },
-    { name: 'Vincent AGBADOU', email: 'Vincent.Agbadou@cba-ca.com' }
+    { name: 'Axel Augusten Guessan', email: 'axelaugustenguessan@gmail.com' },
+    { name: 'Marius Ayoro', email: 'marius.ayoro70@gmail.com' }
   ]);
-  const [responseEmail, setResponseEmail] = useState('');
+  const [responseEmail, setResponseEmail] = useState('marius845@btinternet.com');
   const [responseCc, setResponseCc] = useState('');
   const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
   const [sending, setSending] = useState(false);
