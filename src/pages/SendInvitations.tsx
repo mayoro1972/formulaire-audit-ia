@@ -80,6 +80,12 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
     return `invite_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
   };
 
+  const buildInviteLink = (inviteToken: string) => {
+    const appUrl = new URL(import.meta.env.BASE_URL || '/', window.location.origin);
+    appUrl.searchParams.set('invite', inviteToken);
+    return appUrl.toString();
+  };
+
   const sendInvitations = async () => {
     const validInvitees = invitees.filter(inv => inv.name.trim() && inv.email.trim());
 
@@ -136,7 +142,6 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
       const createdInvitations = data as Database['public']['Tables']['form_invitations']['Row'][];
 
-      const baseUrl = window.location.origin;
       const edgeFunctionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invitation-email`;
 
       let successCount = 0;
@@ -144,7 +149,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
       const errorMessages: string[] = [];
 
       for (const invitation of createdInvitations) {
-        const inviteLink = `${baseUrl}/?invite=${invitation.invite_token}`;
+        const inviteLink = buildInviteLink(invitation.invite_token);
 
         try {
           const response = await fetch(edgeFunctionUrl, {

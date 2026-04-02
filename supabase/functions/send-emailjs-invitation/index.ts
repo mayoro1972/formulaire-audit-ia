@@ -55,11 +55,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const directLinkLine = `Lien direct du formulaire : ${invite_link}`;
     const emailMessage = `Bonjour ${invitee_name},
 
-Vous êtes invité à compléter le formulaire d'audit IA. Veuillez cliquer sur le lien ci-dessous pour commencer :
+Vous êtes invité à compléter le formulaire d'audit IA.
 
-${invite_link}
+${directLinkLine}
 
 Le formulaire :
 - Se sauvegarde automatiquement toutes les 30 secondes
@@ -84,6 +85,8 @@ Cordialement`;
         to_email: invitee_email,
         to_name: invitee_name,
         invite_link: invite_link,
+        invite_url: invite_link,
+        invite_link_line: directLinkLine,
         message: emailMessage,
       },
     };
