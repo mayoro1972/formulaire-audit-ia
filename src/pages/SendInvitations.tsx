@@ -29,7 +29,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
     { name: 'Axel Augusten Guessan', email: 'axelaugustenguessan@gmail.com' },
     { name: 'Marius Ayoro', email: 'marius.ayoro70@gmail.com' }
   ]);
-  const [responseEmail, setResponseEmail] = useState('marius845@btinternet.com');
+  const [responseEmail, setResponseEmail] = useState('contact@transferai.ci');
   const [responseCc, setResponseCc] = useState('');
   const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
   const [sending, setSending] = useState(false);

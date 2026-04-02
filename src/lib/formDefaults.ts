@@ -31,7 +31,7 @@ export function createInitialFormData(): FormData {
     h_awa: '', h_kpi: '',
     i_conf: '', i_rgpd: '', i_heberg: '', i_appro: '', i_sys: '', i_cal: '',
     i_pol: '', i_autres: '',
-    email_dest: '', email_cc: '', email_msg: '',
+    email_dest: 'contact@transferai.ci', email_cc: '', email_msg: '',
   };
 }
 
