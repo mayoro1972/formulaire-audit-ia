@@ -2,7 +2,7 @@ export default function InvitationEmail() {
   const appUrl = window.location.href;
 
   const emailSubject = encodeURIComponent("Formulaire d'Audit IA - À compléter");
-  const emailBody = encodeURIComponent(`Bonjour Gérard,
+  const emailBody = encodeURIComponent(`Bonjour,
 
 Veuillez compléter le formulaire d'audit IA en cliquant sur le lien ci-dessous :
 
@@ -25,13 +25,13 @@ Si vous avez des questions, n'hésitez pas à me contacter.
 
 Cordialement`);
 
-  const mailtoLink = `mailto:g.yapi@attijariwafabank.com?subject=${emailSubject}&body=${emailBody}`;
+  const mailtoLink = `mailto:?subject=${emailSubject}&body=${emailBody}`;
 
   return (
     <div className="fixed bottom-4 right-4 bg-white border-2 border-[#185FA5] rounded-lg shadow-lg p-4 max-w-sm">
       <div className="text-sm font-semibold text-[#042C53] mb-2">Partager ce formulaire</div>
       <div className="text-xs text-[#888780] mb-3">
-        Envoyez ce formulaire à Gérard pour qu'il puisse le remplir
+        Envoyez ce formulaire à votre contact pour qu&apos;il puisse le remplir
       </div>
       <div className="space-y-2">
         <a

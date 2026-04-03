@@ -29,6 +29,145 @@ function getTrimmedString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+interface EmailTemplateOptions {
+  formData: FormData;
+  date: string;
+  time: string;
+  formatLabel: string;
+  attachmentFilename: string;
+  emailMessage?: string;
+  recipientEmail: string;
+  ccEmail?: string;
+  responseId?: string;
+  attachmentIncluded: boolean;
+  viaFallback?: boolean;
+}
+
+function buildReturnEmailTemplate(options: EmailTemplateOptions) {
+  const {
+    formData,
+    date,
+    time,
+    formatLabel,
+    attachmentFilename,
+    emailMessage,
+    recipientEmail,
+    ccEmail,
+    responseId,
+    attachmentIncluded,
+    viaFallback = false,
+  } = options;
+
+  const respondentName = getTrimmedString(formData.c_nom) || 'Répondant non renseigné';
+  const respondentEmail = getTrimmedString(formData.c_email) || '—';
+  const respondentRole = getTrimmedString(formData.c_poste) || '—';
+  const respondentEntity = getTrimmedString(formData.c_entite) || '—';
+  const respondentDomain = getTrimmedString(formData.c_domaine) || 'Non renseigné';
+  const customMessage = getTrimmedString(emailMessage);
+  const statusLine = attachmentIncluded
+    ? `Le formulaire complété est joint à ce message au format ${formatLabel}.`
+    : `Le formulaire complété est repris dans le corps du message car la pièce jointe n'a pas pu être transmise dans le mode de secours.`;
+  const fallbackLine = viaFallback
+    ? `Mode d'envoi utilisé : EmailJS (secours après échec Resend).`
+    : `Mode d'envoi utilisé : Resend.`;
+
+  const subject = `[Audit IA] Formulaire complété - ${respondentName} - ${date}`;
+
+  const textParts = [
+    'Bonjour,',
+    '',
+    'Un formulaire d’audit IA complété vient d’être transmis.',
+    '',
+    statusLine,
+    fallbackLine,
+    '',
+    'Résumé du répondant :',
+    `- Nom : ${respondentName}`,
+    `- Email : ${respondentEmail}`,
+    `- Poste : ${respondentRole}`,
+    `- Entité : ${respondentEntity}`,
+    `- Domaine principal : ${respondentDomain}`,
+    `- Date d'envoi : ${date} à ${time}`,
+    `- Destinataire principal : ${recipientEmail}`,
+    `- Copie : ${ccEmail || 'Aucune'}`,
+    `- Référence de réponse : ${responseId || 'Non disponible'}`,
+    `- Fichier attendu : ${attachmentFilename}`,
+    '',
+  ];
+
+  if (customMessage) {
+    textParts.push('Message du répondant :', customMessage, '');
+  }
+
+  textParts.push(
+    'Actions conseillées :',
+    '- Ouvrir le message et vérifier la pièce jointe ou le contenu brut',
+    '- Archiver le formulaire dans la boîte partagée / GED',
+    '- Recontacter le répondant si un complément est nécessaire',
+  );
+
+  const text = textParts.join('\n');
+
+  const html = `
+    <div style="font-family:Arial,Helvetica,sans-serif; line-height:1.6; color:#1f2937; max-width:720px;">
+      <div style="background:#042C53; color:#ffffff; padding:20px 24px; border-radius:12px 12px 0 0;">
+        <div style="font-size:12px; opacity:0.8; margin-bottom:4px;">Audit IA · Réception de formulaire</div>
+        <div style="font-size:24px; font-weight:700;">Formulaire complété reçu</div>
+      </div>
+      <div style="border:1px solid #d3d1c7; border-top:none; border-radius:0 0 12px 12px; padding:24px; background:#ffffff;">
+        <p style="margin-top:0;">Bonjour,</p>
+        <p>Un formulaire d’audit IA complété vient d’être transmis.</p>
+        <div style="background:#E6F1FB; border:1px solid #185FA5; border-radius:10px; padding:16px; margin:16px 0;">
+          <p style="margin:0 0 8px 0;"><strong>${escapeHtml(statusLine)}</strong></p>
+          <p style="margin:0; color:#185FA5;">${escapeHtml(fallbackLine)}</p>
+        </div>
+        <h3 style="margin:24px 0 12px 0; color:#042C53;">Résumé du répondant</h3>
+        <table style="border-collapse:collapse; width:100%; font-size:14px;">
+          <tbody>
+            <tr><td style="padding:6px 0; width:210px; color:#6b7280;">Nom</td><td style="padding:6px 0;"><strong>${escapeHtml(respondentName)}</strong></td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Email</td><td style="padding:6px 0;">${escapeHtml(respondentEmail)}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Poste</td><td style="padding:6px 0;">${escapeHtml(respondentRole)}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Entité</td><td style="padding:6px 0;">${escapeHtml(respondentEntity)}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Domaine principal</td><td style="padding:6px 0;">${escapeHtml(respondentDomain)}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Date d'envoi</td><td style="padding:6px 0;">${escapeHtml(`${date} à ${time}`)}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Destinataire principal</td><td style="padding:6px 0;">${escapeHtml(recipientEmail)}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Copie</td><td style="padding:6px 0;">${escapeHtml(ccEmail || 'Aucune')}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Référence de réponse</td><td style="padding:6px 0;">${escapeHtml(responseId || 'Non disponible')}</td></tr>
+            <tr><td style="padding:6px 0; color:#6b7280;">Fichier attendu</td><td style="padding:6px 0;">${escapeHtml(attachmentFilename)}</td></tr>
+          </tbody>
+        </table>
+        ${
+          customMessage
+            ? `<div style="margin-top:20px; background:#FAEEDA; border:1px solid #BA7517; border-radius:10px; padding:16px;">
+                <div style="font-weight:700; color:#854F0B; margin-bottom:8px;">Message du répondant</div>
+                <div style="white-space:pre-line;">${escapeHtml(customMessage)}</div>
+              </div>`
+            : ''
+        }
+        <div style="margin-top:24px;">
+          <div style="font-weight:700; color:#042C53; margin-bottom:8px;">Vérifications conseillées</div>
+          <ul style="margin:0; padding-left:18px;">
+            <li>Ouvrir le message et vérifier la pièce jointe ou le contenu brut</li>
+            <li>Archiver le formulaire dans la boîte partagée ou la GED</li>
+            <li>Recontacter le répondant si un complément est nécessaire</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return { subject, text, html };
+}
+
 function generateCSV(formData: FormData): string {
   const rows: string[][] = [
     ['Section', 'Champ', 'Valeur'],
@@ -354,7 +493,8 @@ async function generateWord(formData: FormData): Promise<Uint8Array> {
 async function sendEmailWithResend(
   to: string,
   subject: string,
-  content: string,
+  textContent: string,
+  htmlContent: string,
   attachmentContent: string | Uint8Array,
   attachmentFilename: string,
   cc?: string,
@@ -384,7 +524,8 @@ async function sendEmailWithResend(
     cc: cc ? [cc] : undefined,
     reply_to: replyTo || undefined,
     subject: subject,
-    text: content,
+    text: textContent,
+    html: htmlContent,
     attachments: [
       {
         filename: attachmentFilename,
@@ -425,6 +566,7 @@ async function sendEmailWithEmailJS(
   subject: string,
   content: string,
   recipientName?: string,
+  templateParams?: Record<string, string>,
 ): Promise<{ success: boolean; error?: string }> {
   const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
   const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
@@ -445,6 +587,7 @@ async function sendEmailWithEmailJS(
       subject,
       invite_link: '',
       message: content,
+      ...templateParams,
     },
   };
 
@@ -543,34 +686,42 @@ Deno.serve(async (req: Request) => {
 
     let attachmentContent: string | Uint8Array;
     let attachmentFilename: string;
-    let emailContent: string;
-
     const date = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
     const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const subject = `Audit IA - ${formData.c_nom || 'Formulaire'} - ${date}`;
+    const formatLabel = format === 'csv' ? 'CSV' : format === 'pdf' ? 'PDF' : format === 'word' ? 'Word' : 'texte';
 
     if (format === 'csv') {
       attachmentContent = generateCSV(formData);
       attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.csv`;
-      emailContent = `Bonjour,\n\nVeuillez trouver ci-joint le formulaire d'audit IA complété en format CSV.\n\nDate d'envoi : ${date} à ${time}\n\n${email_msg || ''}\n\nCordialement,\n${formData.c_nom}`;
     } else if (format === 'pdf') {
       attachmentContent = await generatePDF(formData);
       attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.pdf`;
-      emailContent = `Bonjour,\n\nVeuillez trouver ci-joint le formulaire d'audit IA complété en format PDF.\n\nDate d'envoi : ${date} à ${time}\n\n${email_msg || ''}\n\nCordialement,\n${formData.c_nom}`;
     } else if (format === 'word') {
       attachmentContent = await generateWord(formData);
       attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.docx`;
-      emailContent = `Bonjour,\n\nVeuillez trouver ci-joint le formulaire d'audit IA complété en format Word.\n\nDate d'envoi : ${date} à ${time}\n\n${email_msg || ''}\n\nCordialement,\n${formData.c_nom}`;
     } else {
       attachmentContent = generatePlainText(formData);
       attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.txt`;
-      emailContent = `Bonjour,\n\nVeuillez trouver ci-joint le formulaire d'audit IA complété.\n\nDate d'envoi : ${date} à ${time}\n\n${email_msg || ''}\n\nCordialement,\n${formData.c_nom}`;
     }
+
+    const primaryEmail = buildReturnEmailTemplate({
+      formData,
+      date,
+      time,
+      formatLabel,
+      attachmentFilename,
+      emailMessage: email_msg,
+      recipientEmail: email_dest,
+      ccEmail: email_cc,
+      responseId,
+      attachmentIncluded: true,
+    });
 
     const resendResult = await sendEmailWithResend(
       email_dest,
-      subject,
-      emailContent,
+      primaryEmail.subject,
+      primaryEmail.text,
+      primaryEmail.html,
       attachmentContent,
       attachmentFilename,
       email_cc,
@@ -582,20 +733,54 @@ Deno.serve(async (req: Request) => {
     let attachmentIncluded = true;
 
     if (!resendResult.success) {
-      const fallbackContent = `${emailContent}
+      const fallbackEmail = buildReturnEmailTemplate({
+        formData,
+        date,
+        time,
+        formatLabel,
+        attachmentFilename,
+        emailMessage: email_msg,
+        recipientEmail: email_dest,
+        ccEmail: email_cc,
+        responseId,
+        attachmentIncluded: false,
+        viaFallback: true,
+      });
+      const fallbackContent = `${fallbackEmail.text}
 
 ---
-Note technique :
-La livraison via Resend a échoué. Ce message est envoyé via EmailJS en mode secours.
-Le contenu complet du formulaire est repris ci-dessous en texte brut.
+Contenu brut du formulaire :
 
 ${generatePlainText(formData)}`;
+      const fallbackTemplateParams = {
+        preheader: `Formulaire complété reçu de ${getTrimmedString(formData.c_nom) || 'un répondant'}`,
+        intro_title: 'Formulaire complété reçu',
+        status_line: 'Envoi via EmailJS (mode secours)',
+        format_label: formatLabel,
+        attachment_filename: attachmentFilename,
+        attachment_included: 'false',
+        response_reference: getTrimmedString(responseId) || 'non-disponible',
+        respondent_name: getTrimmedString(formData.c_nom) || 'Non renseigné',
+        respondent_email: getTrimmedString(formData.c_email) || '—',
+        respondent_role: getTrimmedString(formData.c_poste) || '—',
+        respondent_entity: getTrimmedString(formData.c_entite) || '—',
+        respondent_domain: getTrimmedString(formData.c_domaine) || 'Non renseigné',
+        sent_datetime: `${date} à ${time}`,
+        recipient_email: email_dest,
+        cc_email: email_cc || 'Aucune',
+        custom_message: getTrimmedString(email_msg) || 'Aucun message complémentaire',
+        verification_steps:
+          '1. Vérifier la présence du résumé du répondant; 2. Contrôler le contenu brut du formulaire; 3. Archiver le message dans la boîte partagée.',
+        message_html: fallbackEmail.html,
+        message_text: fallbackEmail.text,
+      };
 
       const emailJsResult = await sendEmailWithEmailJS(
         email_dest,
-        subject,
+        fallbackEmail.subject,
         fallbackContent,
         formData.c_nom || email_dest,
+        fallbackTemplateParams,
       );
 
       if (!emailJsResult.success) {

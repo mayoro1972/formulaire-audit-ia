@@ -1,8 +1,10 @@
 import { useForm } from '../context/formContextCore';
+import { getCompetencyDomainProfile } from '../lib/competencyDomains';
 import { getInputValue } from '../lib/formValue';
 
 export default function Section1_Charge() {
   const { formData, updateField, setCurrentSection } = useForm();
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   const calculateTotals = () => {
     const hours = [
@@ -21,22 +23,17 @@ export default function Section1_Charge() {
 
   const { hours, total } = calculateTotals();
 
-  const activities = [
-    { label: 'Veille réglementaire & conformité', hId: 'ch1_h', rId: 'ch1_r' },
-    { label: "Gestion des missions d'audit", hId: 'ch2_h', rId: 'ch2_r' },
-    { label: 'Pilotage régional AWA', hId: 'ch3_h', rId: 'ch3_r' },
-    { label: 'Lutte anti-blanchiment (LCB-FT)', hId: 'ch4_h', rId: 'ch4_r' },
-    { label: 'Management & coaching équipe', hId: 'ch5_h', rId: 'ch5_r' },
-    { label: 'Communication & reporting direction', hId: 'ch6_h', rId: 'ch6_r' },
-    { label: 'Projets stratégiques / organisation', hId: 'ch7_h', rId: 'ch7_r' },
-    { label: 'Autres activités', hId: 'ch8_h', rId: 'ch8_r' },
-  ];
+  const activities = profile.workloadCategories.map((label, index) => ({
+    label,
+    hId: `ch${index + 1}_h`,
+    rId: `ch${index + 1}_r`,
+  }));
 
   return (
     <div>
       <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
         <h2 className="text-lg font-semibold text-[#042C53]">A — Votre charge de travail actuelle</h2>
-        <p className="text-sm text-[#185FA5] mt-1">Vue d'ensemble de votre temps et de vos activités hebdomadaires</p>
+        <p className="text-sm text-[#185FA5] mt-1">Vue d&apos;ensemble de votre temps et de vos activités hebdomadaires pour le domaine {profile.label.toLowerCase()}</p>
       </div>
 
       <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
@@ -106,7 +103,7 @@ export default function Section1_Charge() {
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Emails traités par jour (en moyenne)</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{profile.metricLabels.emails}</label>
             <input
               type="number"
               value={formData.a_emails}
@@ -116,7 +113,7 @@ export default function Section1_Charge() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Réunions par semaine</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{profile.metricLabels.meetings}</label>
             <input
               type="number"
               value={formData.a_reunions}
@@ -126,7 +123,7 @@ export default function Section1_Charge() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Rapports produits par mois (tous types)</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{profile.metricLabels.reports}</label>
             <input
               type="number"
               value={formData.a_rapports}
@@ -136,7 +133,7 @@ export default function Section1_Charge() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Sources réglementaires consultées/semaine</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{profile.metricLabels.sources}</label>
             <input
               type="number"
               value={formData.a_sources}
@@ -146,7 +143,7 @@ export default function Section1_Charge() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Dossiers LCB-FT / KYC traités par mois</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{profile.metricLabels.dossiers}</label>
             <input
               type="number"
               value={formData.a_dossiers}
@@ -156,7 +153,7 @@ export default function Section1_Charge() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Missions d'audit supervisées simultanément</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{profile.metricLabels.missions}</label>
             <input
               type="number"
               value={formData.a_missions}
@@ -167,7 +164,7 @@ export default function Section1_Charge() {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Heures "perdues" par semaine (tâches à faible valeur)</label>
+          <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{profile.metricLabels.lowValueHours}</label>
           <input
             type="number"
             value={formData.a_perdues}

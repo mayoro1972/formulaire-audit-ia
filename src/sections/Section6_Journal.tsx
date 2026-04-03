@@ -1,8 +1,10 @@
 import { useForm } from '../context/formContextCore';
+import { getCompetencyDomainProfile } from '../lib/competencyDomains';
 import { getInputValue } from '../lib/formValue';
 
 export default function Section6_Journal() {
   const { formData, updateField, setCurrentSection } = useForm();
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   return (
     <div>
@@ -19,10 +21,10 @@ export default function Section6_Journal() {
         <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">F.1 — Votre routine quotidienne</div>
         <div className="space-y-3">
           {[
-            { id: 'f_matin', label: 'En arrivant le matin (premières 30 minutes) :', placeholder: 'ex: Je lis mes emails, je consulte le site de la BCEAO, je fais le point avec mon assistante...' },
-            { id: 'f_matinee', label: 'Pendant la matinée :', placeholder: 'ex: Revue des alertes LCB-FT, réunions d\'équipe, lecture des circulaires...' },
-            { id: 'f_apm', label: 'Après-midi :', placeholder: 'ex: Validation de rapports, appels avec les filiales, suivi des recommandations...' },
-            { id: 'f_soir', label: 'En fin de journée :', placeholder: 'ex: Synthèse de la journée, préparation du lendemain, envoi d\'emails...' },
+            { id: 'f_matin', label: 'En arrivant le matin (premières 30 minutes) :', placeholder: profile.routinePrompts.morning },
+            { id: 'f_matinee', label: 'Pendant la matinée :', placeholder: profile.routinePrompts.midday },
+            { id: 'f_apm', label: 'Après-midi :', placeholder: profile.routinePrompts.afternoon },
+            { id: 'f_soir', label: 'En fin de journée :', placeholder: profile.routinePrompts.endOfDay },
           ].map((field) => (
             <div key={field.id}>
               <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{field.label}</label>
@@ -46,7 +48,7 @@ export default function Section6_Journal() {
             <textarea
               value={formData.f_lundi}
               onChange={(e) => updateField('f_lundi', e.target.value)}
-              placeholder="ex: Revue du programme de la semaine, point équipe..."
+              placeholder={profile.routinePrompts.monday}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
@@ -56,7 +58,7 @@ export default function Section6_Journal() {
             <textarea
               value={formData.f_vendredi}
               onChange={(e) => updateField('f_vendredi', e.target.value)}
-              placeholder="ex: Bilan de semaine, rapport au DG, transmission aux filiales..."
+              placeholder={profile.routinePrompts.friday}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
@@ -68,10 +70,10 @@ export default function Section6_Journal() {
         <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">F.3 — Routine mensuelle et trimestrielle</div>
         <div className="space-y-3">
           {[
-            { id: 'f_mois', label: 'Début du mois (clôtures, reporting, consolidations) :', placeholder: 'ex: Consolidation des rapports AWA, rapport mensuel au groupe...' },
-            { id: 'f_trim', label: 'Tâches trimestrielles (rapports CENTIF, comités, revues AWA) :', placeholder: 'ex: Rapport CENTIF, comité d\'audit, revue du programme d\'audit...' },
-            { id: 'f_annuel', label: 'Tâches annuelles (programme audit, budget, évaluations) :', placeholder: 'ex: Élaboration du plan annuel d\'audit, évaluations équipe, budget...' },
-            { id: 'f_deplac', label: 'Tâches liées aux déplacements inter-filiales AWA :', placeholder: 'ex: Préparation des missions, rapports de déplacement, suivi post-visite...' },
+            { id: 'f_mois', label: 'Début du mois (clôtures, reporting, consolidations) :', placeholder: profile.routinePrompts.month },
+            { id: 'f_trim', label: 'Tâches trimestrielles / périodiques :', placeholder: profile.routinePrompts.quarter },
+            { id: 'f_annuel', label: 'Tâches annuelles (planification, budget, revues) :', placeholder: profile.routinePrompts.year },
+            { id: 'f_deplac', label: 'Tâches liées aux déplacements / coordination multi-sites :', placeholder: profile.routinePrompts.travel },
           ].map((field) => (
             <div key={field.id}>
               <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{field.label}</label>

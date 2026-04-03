@@ -1,7 +1,9 @@
 import { useForm } from '../context/formContextCore';
+import { getCompetencyDomainProfile } from '../lib/competencyDomains';
 
 export default function Section8_Vision() {
   const { formData, updateField, setCurrentSection } = useForm();
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   return (
     <div>
@@ -56,7 +58,7 @@ export default function Section8_Vision() {
             <textarea
               value={formData.h_delegate}
               onChange={(e) => updateField('h_delegate', e.target.value)}
-              placeholder="ex: La veille réglementaire complète, les premières passes des rapports d'audit..."
+              placeholder={profile.vision.delegate}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
@@ -66,7 +68,7 @@ export default function Section8_Vision() {
             <textarea
               value={formData.h_humain}
               onChange={(e) => updateField('h_humain', e.target.value)}
-              placeholder="ex: Les décisions stratégiques, le management, les arbitrages complexes..."
+              placeholder={profile.vision.human}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
@@ -75,14 +77,14 @@ export default function Section8_Vision() {
       </div>
 
       <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">H.3 — Ambition pour l'équipe AWA</div>
+        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">H.3 — Ambition de déploiement métier</div>
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Comment voyez-vous le déploiement IA sur les filiales AWA ?</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Comment voyez-vous le déploiement IA dans votre équipe, service ou réseau ?</label>
             <textarea
               value={formData.h_awa}
               onChange={(e) => updateField('h_awa', e.target.value)}
-              placeholder="ex: Commencer par la SIB CI puis étendre progressivement au Cameroun, Sénégal..."
+              placeholder={profile.vision.deployment}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
@@ -92,7 +94,7 @@ export default function Section8_Vision() {
             <textarea
               value={formData.h_kpi}
               onChange={(e) => updateField('h_kpi', e.target.value)}
-              placeholder="ex: Réduction de 40% du temps de veille, 0 réglementation manquée..."
+              placeholder={profile.vision.kpis}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />

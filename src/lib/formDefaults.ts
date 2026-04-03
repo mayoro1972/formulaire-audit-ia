@@ -7,6 +7,8 @@ export function createInitialFormData(): FormData {
     c_email: '',
     c_poste: '',
     c_entite: '',
+    c_domaine: '',
+    c_domaines_associes: '',
     eng1: false,
     eng2: false,
     eng3: false,

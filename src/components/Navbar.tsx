@@ -1,7 +1,9 @@
 import { useForm } from '../context/formContextCore';
+import { getCompetencyDomainProfile } from '../lib/competencyDomains';
 
 export default function Navbar() {
   const { saveStatus, saveAll, formData } = useForm();
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   const calculateProgress = () => {
     const sections = [
@@ -41,8 +43,12 @@ export default function Navbar() {
     <div className="sticky top-0 z-50">
       <div className="bg-[#042C53] text-white flex items-center gap-3 px-6 h-14 shadow-lg">
         <div className="flex-1">
-          <div className="text-sm font-semibold">Audit IA · Claude Yapi Gérard</div>
-          <div className="text-xs opacity-70">Directeur Audit Interne · Attijari West Africa</div>
+          <div className="text-sm font-semibold">
+            Audit IA · {formData.c_entite?.trim() || profile.label || 'Formulaire métier'}
+          </div>
+          <div className="text-xs opacity-70">
+            {formData.c_poste?.trim() || 'Formulaire adaptatif par domaine de compétence'}
+          </div>
         </div>
         <div className="text-xs text-[#9FE1CB] min-w-[140px] text-right">{saveStatus}</div>
         <button

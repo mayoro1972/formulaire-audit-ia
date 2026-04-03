@@ -1,7 +1,9 @@
 import { useForm } from '../context/formContextCore';
+import { getCompetencyDomainProfile } from '../lib/competencyDomains';
 
 export default function Section3_Ajustements() {
   const { formData, updateField, setCurrentSection } = useForm();
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   return (
     <div>
@@ -18,13 +20,13 @@ export default function Section3_Ajustements() {
           <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
             Quelles estimations sont inexactes ? Précisez la valeur réelle :
           </label>
-          <textarea
-            value={formData.c_inexact}
-            onChange={(e) => updateField('c_inexact', e.target.value)}
-            placeholder="Ex: La veille réglementaire prend en réalité 10h/semaine et non 5h..."
-            rows={4}
-            className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
-          />
+            <textarea
+              value={formData.c_inexact}
+              onChange={(e) => updateField('c_inexact', e.target.value)}
+              placeholder={profile.inaccuracyExample}
+              rows={4}
+              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
+            />
         </div>
       </div>
 
@@ -36,13 +38,13 @@ export default function Section3_Ajustements() {
           <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
             Tâches que vous souhaitez garder manuelles (et pourquoi) :
           </label>
-          <textarea
-            value={formData.c_exclure}
-            onChange={(e) => updateField('c_exclure', e.target.value)}
-            placeholder="Ex: Les décisions finales sur les dossiers suspects — elles requièrent mon jugement professionnel..."
-            rows={4}
-            className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
-          />
+            <textarea
+              value={formData.c_exclure}
+              onChange={(e) => updateField('c_exclure', e.target.value)}
+              placeholder={profile.exclusionExample}
+              rows={4}
+              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
+            />
         </div>
       </div>
 
@@ -90,7 +92,7 @@ export default function Section3_Ajustements() {
             <textarea
               value={formData.c_attentes}
               onChange={(e) => updateField('c_attentes', e.target.value)}
-              placeholder="Ex: Recevoir chaque matin un résumé des nouveaux textes réglementaires sans avoir à aller chercher l'information moi-même..."
+              placeholder={profile.expectationsExample}
               rows={4}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />

@@ -1,15 +1,10 @@
 import { useForm } from '../context/formContextCore';
+import { getCompetencyDomainProfile } from '../lib/competencyDomains';
 import { getInputValue } from '../lib/formValue';
-
-const tachesVeille = [
-  ['Scraping sites BCEAO, COBAC, FATF, GIABA', 'Quotidienne', '5–8h/sem'],
-  ['Lecture et tri des nouvelles circulaires', 'Quotidienne', '3–4h/sem'],
-  ['Synthèse et résumé des textes réglementaires', 'Hebdomadaire', '3–5h/sem'],
-  ['Diffusion alertes réglementaires aux filiales AWA', 'Hebdomadaire', '1–2h/sem'],
-];
 
 export default function Section2_Taches() {
   const { formData, updateField, setCurrentSection } = useForm();
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   const renderTable = (title: string, tasks: string[][], prefix: string) => (
     <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
@@ -72,22 +67,10 @@ export default function Section2_Taches() {
       </div>
 
       <div className="border-l-4 border-[#BA7517] bg-[#FAEEDA] rounded-r-lg p-4 mb-5 text-sm text-[#2C2C2A]">
-        Ces tâches ont été identifiées lors de nos échanges. <strong className="text-[#854F0B]">Corrigez les temps et fréquences</strong> si les estimations ne correspondent pas à votre réalité.
+        Cette trame est générée à partir du domaine <strong className="text-[#854F0B]">{profile.label}</strong>. Corrigez les temps, fréquences et intitulés si les estimations ne correspondent pas à votre réalité.
       </div>
 
-      {renderTable('B.1 — Veille réglementaire', tachesVeille, 'tb-veille')}
-      {renderTable('B.2 — LCB-FT & KYC', [
-        ['Mise à jour listes OFAC / ONU / UE', 'Hebdomadaire', '2–3h/sem'],
-        ['Vérification alertes transactions suspectes', 'Quotidienne', '2–4h/sem'],
-      ], 'tb-lcb')}
-      {renderTable('B.3 — Missions d\'audit', [
-        ['Élaboration programme annuel d\'audit AWA', 'Annuelle', '3–5j/an'],
-        ['Rédaction lettres de mission', 'À chaque mission', '2–4h/miss.'],
-      ], 'tb-audit')}
-      {renderTable('B.4 — Pilotage régional AWA', [
-        ['Consolidation rapports filiales (CI, CMR, SN...)', 'Mensuelle', '4–6h/mois'],
-        ['Tableau de bord risques par filiale', 'Mensuelle', '3–4h/mois'],
-      ], 'tb-awa')}
+      {profile.taskGroups.map((group, index) => renderTable(group.title, group.tasks, `tb-${profile.key}-${index}`))}
 
       <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
         <button

@@ -1,7 +1,9 @@
 import { useForm } from '../context/formContextCore';
+import { getCompetencyDomainProfile } from '../lib/competencyDomains';
 
 export default function Section9_Contraintes() {
   const { formData, updateField, setCurrentSection } = useForm();
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   return (
     <div>
@@ -18,17 +20,17 @@ export default function Section9_Contraintes() {
             <textarea
               value={formData.i_conf}
               onChange={(e) => updateField('i_conf', e.target.value)}
-              placeholder="ex: Données clients, dossiers KYC, décisions de soupçon..."
+              placeholder={profile.constraints.confidentiality}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Réglementations à respecter (RGPD, directives groupe BCEAO...) :</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Réglementations, normes ou politiques à respecter :</label>
             <textarea
               value={formData.i_rgpd}
               onChange={(e) => updateField('i_rgpd', e.target.value)}
-              placeholder="ex: Politique groupe Attijariwafa sur les données, directives BCEAO..."
+              placeholder={profile.constraints.regulations}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
@@ -45,7 +47,7 @@ export default function Section9_Contraintes() {
               type="text"
               value={formData.i_heberg}
               onChange={(e) => updateField('i_heberg', e.target.value)}
-              placeholder="ex: Serveur interne uniquement, ou cloud certifié ISO 27001..."
+              placeholder="ex: cloud privé, tenant dédié, serveur interne, région d'hébergement imposée..."
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm"
             />
           </div>
@@ -60,11 +62,11 @@ export default function Section9_Contraintes() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Systèmes existants à connecter (T24, Oracle, ERP...) :</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Systèmes existants à connecter :</label>
             <textarea
               value={formData.i_sys}
               onChange={(e) => updateField('i_sys', e.target.value)}
-              placeholder="ex: T24 (core banking), Outlook, SharePoint, portail groupe Attijariwafa..."
+              placeholder={profile.constraints.systems}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
@@ -80,17 +82,17 @@ export default function Section9_Contraintes() {
             <textarea
               value={formData.i_cal}
               onChange={(e) => updateField('i_cal', e.target.value)}
-              placeholder="ex: Pas de déploiement en période de clôture (décembre/janvier), validation DSI requise sous 3 mois..."
+              placeholder={profile.constraints.calendar}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Politique du groupe Attijariwafa sur l'usage des outils IA :</label>
+            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Politique interne sur l'usage des outils IA :</label>
             <textarea
               value={formData.i_pol}
               onChange={(e) => updateField('i_pol', e.target.value)}
-              placeholder="ex: Charte IA groupe en cours de rédaction, usage de ChatGPT non autorisé sur données sensibles..."
+              placeholder={profile.constraints.policy}
               rows={3}
               className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />

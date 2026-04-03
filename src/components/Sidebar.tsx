@@ -19,7 +19,7 @@ export default function Sidebar() {
 
   const calculateSectionProgress = (sectionId: number) => {
     const sectionFields: Record<number, { ids: string[]; libre?: boolean }> = {
-      0: { ids: ['c_nom', 'c_email'] },
+      0: { ids: ['c_nom', 'c_email', 'c_domaine'] },
       1: { ids: ['ch1_h', 'ch2_h', 'a_emails'] },
       2: { ids: [] },
       3: { ids: ['c_prio1', 'c_attentes'] },

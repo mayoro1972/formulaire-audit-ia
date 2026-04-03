@@ -8,6 +8,8 @@ export interface FormData {
   c_email: string;
   c_poste: string;
   c_entite: string;
+  c_domaine: string;
+  c_domaines_associes: string;
 
   eng1: boolean;
   eng2: boolean;
