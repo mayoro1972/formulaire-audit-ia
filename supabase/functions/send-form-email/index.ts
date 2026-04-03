@@ -607,8 +607,8 @@ async function sendEmailWithEmailJS(
   templateParams?: Record<string, string>,
   attachmentDataUrl?: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
-  const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
+  const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_RETURN_SERVICE_ID') || Deno.env.get('EMAILJS_SERVICE_ID');
+  const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_RETURN_TEMPLATE_ID') || Deno.env.get('EMAILJS_TEMPLATE_ID');
   const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
   const EMAILJS_PRIVATE_KEY = Deno.env.get('EMAILJS_PRIVATE_KEY');
 

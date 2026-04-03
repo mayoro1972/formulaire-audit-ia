@@ -27,7 +27,9 @@ Secrets requis :
 
 - `RESEND_API_KEY` recommandé
 - `FROM_EMAIL` recommandé
-- `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY` optionnels si fallback
+- `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY` optionnels pour les invitations
+- `EMAILJS_RETURN_TEMPLATE_ID` recommande pour le retour formulaire
+- `EMAILJS_RETURN_SERVICE_ID` optionnel si vous voulez isoler le service de retour
 
 ### 2. Notification admin
 
@@ -137,7 +139,8 @@ Le flux actif d'invitation ne lit pas de variables frontend `VITE_EMAILJS_*`.
 Le code réel utilise :
 
 - `RESEND_API_KEY` et `FROM_EMAIL` en priorité
-- `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY` en fallback
+- `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY` en fallback invitation
+- `EMAILJS_RETURN_TEMPLATE_ID` pour le template `Audit Return Email`
 
 Ces valeurs doivent être configurées comme secrets Supabase pour l'Edge Function `send-invitation-email`.
 

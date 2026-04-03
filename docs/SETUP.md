@@ -80,7 +80,9 @@ Le fichier `supabase/.env.example` sert de modèle. Les secrets attendus sont le
 | `FROM_EMAIL` | fonctions Resend | Recommandé | expéditeur affiché |
 | `ADMIN_EMAIL` | `notify-admin` | Optionnel | fallback si `admin_settings.admin_email` est vide |
 | `EMAILJS_SERVICE_ID` | `send-invitation-email` fallback | Optionnel | service EmailJS |
-| `EMAILJS_TEMPLATE_ID` | `send-invitation-email` fallback | Optionnel | template EmailJS |
+| `EMAILJS_TEMPLATE_ID` | `send-invitation-email` fallback | Optionnel | template EmailJS invitation |
+| `EMAILJS_RETURN_TEMPLATE_ID` | `send-form-email` fallback | Recommande | template EmailJS retour formulaire |
+| `EMAILJS_RETURN_SERVICE_ID` | `send-form-email` fallback | Optionnel | service EmailJS dedie au retour formulaire |
 | `EMAILJS_PUBLIC_KEY` | `send-invitation-email` fallback | Optionnel | clé publique EmailJS |
 | `GMAIL_FORWARD_ADDRESS` | `receive-email` | Optionnel | adresse Gmail de relais |
 

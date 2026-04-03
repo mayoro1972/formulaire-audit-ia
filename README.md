@@ -105,7 +105,8 @@ Les secrets principaux sont :
 - `FROM_EMAIL`
 - `ADMIN_EMAIL` (fallback si `admin_settings.admin_email` n'est pas défini)
 - `EMAILJS_SERVICE_ID`
-- `EMAILJS_TEMPLATE_ID`
+- `EMAILJS_TEMPLATE_ID` pour les invitations
+- `EMAILJS_RETURN_TEMPLATE_ID` pour le retour formulaire
 - `EMAILJS_PUBLIC_KEY`
 - `GMAIL_FORWARD_ADDRESS` (optionnel)
 - `SUPABASE_SERVICE_ROLE_KEY`
