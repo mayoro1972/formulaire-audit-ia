@@ -11,6 +11,8 @@ export default function Section10_Envoi() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<'csv' | 'pdf' | 'word'>('csv');
   const [sentRecipient, setSentRecipient] = useState('');
+  const [protectWord, setProtectWord] = useState(true);
+  const [documentPassword, setDocumentPassword] = useState('');
 
   const urlParams = new URLSearchParams(window.location.search);
   const hasInviteToken = urlParams.get('invite') !== null;
@@ -107,6 +109,11 @@ export default function Section10_Envoi() {
       return;
     }
 
+    if (selectedFormat === 'word' && protectWord && !documentPassword.trim()) {
+      alert("Veuillez renseigner un mot de passe pour protéger le document Word.");
+      return;
+    }
+
     setSending(true);
     setError('');
 
@@ -134,6 +141,7 @@ export default function Section10_Envoi() {
         email_msg: formData.email_msg,
         format: selectedFormat,
         responseId: result.responseId,
+        documentPassword: selectedFormat === 'word' && protectWord ? documentPassword.trim() : undefined,
       };
 
       const response = await fetch(apiUrl, {
@@ -265,6 +273,37 @@ export default function Section10_Envoi() {
               <option value="word">Word (.docx)</option>
             </select>
           </div>
+          {selectedFormat === 'word' && (
+            <div className="space-y-3 rounded-lg border border-[#D3D1C7] bg-[#F9F7F2] p-4">
+              <label className="flex items-center gap-2 text-sm text-[#2C2C2A]">
+                <input
+                  type="checkbox"
+                  checked={protectWord}
+                  onChange={(e) => setProtectWord(e.target.checked)}
+                />
+                Protéger le document Word par mot de passe
+              </label>
+              {protectWord && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
+                      Mot de passe du document <span className="text-[#712B13]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={documentPassword}
+                      onChange={(e) => setDocumentPassword(e.target.value)}
+                      placeholder="ex: TransferAI-2026"
+                      className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="text-xs text-[#6B7280]">
+                    Ce mot de passe n&apos;est pas enregistré dans la base. Il doit être communiqué séparément au destinataire.
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <div className="flex gap-3">
             <button
               onClick={handleSubmitToDatabase}

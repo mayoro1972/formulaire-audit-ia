@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "npm:docx@8";
 import { jsPDF } from "npm:jspdf@2";
+import JSZip from "npm:jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,7 @@ interface RequestBody {
   email_msg?: string;
   format: 'pdf' | 'word' | 'csv';
   responseId?: string;
+  documentPassword?: string;
 }
 
 function getTrimmedString(value: unknown): string {
@@ -50,6 +52,7 @@ interface EmailTemplateOptions {
   responseId?: string;
   attachmentIncluded: boolean;
   viaFallback?: boolean;
+  protectionNotice?: string;
 }
 
 function buildReturnEmailTemplate(options: EmailTemplateOptions) {
@@ -65,6 +68,7 @@ function buildReturnEmailTemplate(options: EmailTemplateOptions) {
     responseId,
     attachmentIncluded,
     viaFallback = false,
+    protectionNotice,
   } = options;
 
   const respondentName = getTrimmedString(formData.c_nom) || 'Répondant non renseigné';
@@ -104,6 +108,10 @@ function buildReturnEmailTemplate(options: EmailTemplateOptions) {
     '',
   ];
 
+  if (protectionNotice) {
+    textParts.push(`Protection du document : ${protectionNotice}`, '');
+  }
+
   if (customMessage) {
     textParts.push('Message du répondant :', customMessage, '');
   }
@@ -130,6 +138,13 @@ function buildReturnEmailTemplate(options: EmailTemplateOptions) {
           <p style="margin:0 0 8px 0;"><strong>${escapeHtml(statusLine)}</strong></p>
           <p style="margin:0; color:#185FA5;">${escapeHtml(fallbackLine)}</p>
         </div>
+        ${
+          protectionNotice
+            ? `<div style="background:#FAEEDA; border:1px solid #BA7517; border-radius:10px; padding:16px; margin:16px 0;">
+                <p style="margin:0; color:#854F0B;"><strong>Protection du document :</strong> ${escapeHtml(protectionNotice)}</p>
+              </div>`
+            : ''
+        }
         <h3 style="margin:24px 0 12px 0; color:#042C53;">Résumé du répondant</h3>
         <table style="border-collapse:collapse; width:100%; font-size:14px;">
           <tbody>
@@ -168,167 +183,223 @@ function buildReturnEmailTemplate(options: EmailTemplateOptions) {
   return { subject, text, html };
 }
 
-function generateCSV(formData: FormData): string {
-  const rows: string[][] = [
-    ['Section', 'Champ', 'Valeur'],
-    ['Informations personnelles', 'Nom', formData.c_nom || ''],
-    ['Informations personnelles', 'Email', formData.c_email || ''],
-    ['Informations personnelles', 'Poste', formData.c_poste || ''],
-    ['Informations personnelles', 'Entité', formData.c_entite || ''],
-    ['', '', ''],
-    ['Charge hebdomadaire', 'Emails/jour', formData.a_emails || ''],
-    ['Charge hebdomadaire', 'Réunions/semaine', formData.a_reunions || ''],
-    ['Charge hebdomadaire', 'Rapports/mois', formData.a_rapports || ''],
-    ['Charge hebdomadaire', 'Sources réglementaires/sem', formData.a_sources || ''],
-    ['Charge hebdomadaire', 'Heures perdues/sem', formData.a_perdues || ''],
-    ['', '', ''],
-    ['Priorités IA', 'Priorité 1', formData.c_prio1 || ''],
-    ['Priorités IA', 'Priorité 2', formData.c_prio2 || ''],
-    ['Priorités IA', 'Priorité 3', formData.c_prio3 || ''],
-    ['Priorités IA', 'Attentes IA', formData.c_attentes || ''],
-    ['Priorités IA', 'À exclure', formData.c_exclure || ''],
-    ['Priorités IA', 'Inexactitudes', formData.c_inexact || ''],
-    ['', '', ''],
-    ['Profil Early Adopter', 'Score numérique', formData.sc1 || ''],
-    ['Profil Early Adopter', 'Score BI/Excel', formData.sc2 || ''],
-    ['Profil Early Adopter', 'Score IA actuelle', formData.sc3 || ''],
-    ['Profil Early Adopter', 'Score adoption', formData.sc4 || ''],
-    ['Profil Early Adopter', 'Score ouverture', formData.sc5 || ''],
-    ['Profil Early Adopter', 'Outils IA utilisés', formData.d_outils || ''],
-    ['Profil Early Adopter', 'Points positifs', formData.d_plus || ''],
-    ['Profil Early Adopter', 'Points négatifs', formData.d_moins || ''],
-    ['', '', ''],
-    ['Journal de bord', 'Matin', formData.f_matin || ''],
-    ['Journal de bord', 'Matinée', formData.f_matinee || ''],
-    ['Journal de bord', 'Après-midi', formData.f_apm || ''],
-    ['Journal de bord', 'Fin de journée', formData.f_soir || ''],
-    ['Journal de bord', 'Lundi', formData.f_lundi || ''],
-    ['Journal de bord', 'Vendredi', formData.f_vendredi || ''],
-    ['Journal de bord', 'Mensuel', formData.f_mois || ''],
-    ['Journal de bord', 'Trimestriel', formData.f_trim || ''],
-    ['Journal de bord', 'Annuel', formData.f_annuel || ''],
-    ['Journal de bord', 'Déplacements', formData.f_deplac || ''],
-    ['', '', ''],
-    ['Points de douleur', 'Doublons', formData.g_doublons || ''],
-    ['Points de douleur', 'Hors heures', formData.g_nuit || ''],
-  ];
+interface ExportRow {
+  section: string;
+  field: string;
+  value: string;
+}
 
-  for (let i = 1; i <= 5; i++) {
-    const desc = formData[`irr${i}_desc`];
-    if (getTrimmedString(desc)) {
-      rows.push(['Points de douleur', `Irritant ${i}`, getTrimmedString(desc)]);
-      rows.push(['Points de douleur', `Temps ${i}`, formData[`irr${i}_t`] || '']);
-      rows.push(['Points de douleur', `Solutions ${i}`, formData[`irr${i}_s`] || '']);
-    }
+function formatBoolean(value: unknown): string {
+  return value ? 'Oui' : 'Non';
+}
+
+function normalizeValue(value: unknown): string {
+  if (typeof value === 'boolean') return formatBoolean(value);
+  if (typeof value === 'number') return String(value);
+  return getTrimmedString(value);
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  return btoa(Array.from(bytes).map((byte) => String.fromCharCode(byte)).join(''));
+}
+
+function slugifyFilenamePart(value: string | undefined): string {
+  return (value || 'reponse')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80) || 'reponse';
+}
+
+function utf16leEncode(value: string): Uint8Array {
+  const buffer = new Uint8Array(value.length * 2);
+  for (let index = 0; index < value.length; index += 1) {
+    const codeUnit = value.charCodeAt(index);
+    buffer[index * 2] = codeUnit & 0xff;
+    buffer[index * 2 + 1] = codeUnit >> 8;
+  }
+  return buffer;
+}
+
+function concatUint8Arrays(...arrays: Uint8Array[]): Uint8Array {
+  const totalLength = arrays.reduce((sum, array) => sum + array.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+
+  arrays.forEach((array) => {
+    result.set(array, offset);
+    offset += array.length;
+  });
+
+  return result;
+}
+
+async function sha512(input: Uint8Array): Promise<Uint8Array> {
+  return new Uint8Array(await crypto.subtle.digest('SHA-512', input));
+}
+
+async function applyWordProtection(docxContent: Uint8Array, password: string): Promise<Uint8Array> {
+  const zip = await JSZip.loadAsync(docxContent);
+  const settingsPath = 'word/settings.xml';
+  const existingSettings = zip.file(settingsPath)
+    ? await zip.file(settingsPath)!.async('string')
+    : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"></w:settings>';
+
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const spinCount = 5000;
+  let hash = await sha512(concatUint8Arrays(salt, utf16leEncode(password)));
+
+  for (let index = 0; index < spinCount; index += 1) {
+    const iterator = new Uint8Array(4);
+    new DataView(iterator.buffer).setUint32(0, index, true);
+    hash = await sha512(concatUint8Arrays(iterator, hash));
   }
 
-  rows.push(['', '', '']);
-  rows.push(['Vision IA', 'Tâche prioritaire 6 mois', formData.h_une || '']);
-  rows.push(['Vision IA', 'Pourquoi', formData.h_pourquoi || '']);
-  rows.push(['Vision IA', 'Vision 18 mois', formData.h_vision || '']);
-  rows.push(['Vision IA', 'Déléguées à l\'IA', formData.h_delegate || '']);
-  rows.push(['Vision IA', 'Expertise humaine', formData.h_humain || '']);
-  rows.push(['Vision IA', 'Déploiement AWA', formData.h_awa || '']);
-  rows.push(['Vision IA', 'KPIs succès', formData.h_kpi || '']);
-  rows.push(['', '', '']);
-  rows.push(['Contraintes', 'Confidentialité', formData.i_conf || '']);
-  rows.push(['Contraintes', 'Hébergement', formData.i_heberg || '']);
-  rows.push(['Contraintes', 'Approbations', formData.i_appro || '']);
-  rows.push(['Contraintes', 'Systèmes', formData.i_sys || '']);
-  rows.push(['Contraintes', 'Calendaire', formData.i_cal || '']);
-  rows.push(['Contraintes', 'Politique IA groupe', formData.i_pol || '']);
-  rows.push(['Contraintes', 'Autres', formData.i_autres || '']);
+  const protectionTag =
+    `<w:documentProtection w:edit="readOnly" w:enforcement="1" w:formatting="0" ` +
+    `w:algorithmName="SHA-512" w:cryptProviderType="rsaAES" w:cryptAlgorithmClass="hash" ` +
+    `w:cryptAlgorithmType="typeAny" w:cryptAlgorithmSid="14" w:spinCount="${spinCount}" ` +
+    `w:hashValue="${bytesToBase64(hash)}" w:saltValue="${bytesToBase64(salt)}"/>`;
 
-  return rows.map(row =>
-    row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')
-  ).join('\n');
+  const sanitizedSettings = existingSettings
+    .replace(/<w:documentProtection\b[^>]*\/>/g, '')
+    .replace(/<w:documentProtection\b[\s\S]*?<\/w:documentProtection>/g, '');
+
+  const patchedSettings = sanitizedSettings.includes('</w:settings>')
+    ? sanitizedSettings.replace('</w:settings>', `  ${protectionTag}\n</w:settings>`)
+    : `${sanitizedSettings}${protectionTag}`;
+
+  zip.file(settingsPath, patchedSettings);
+  return await zip.generateAsync({ type: 'uint8array' });
+}
+
+function buildExportRows(formData: FormData): ExportRow[] {
+  const rows: ExportRow[] = [];
+  const push = (section: string, field: string, value: unknown) => {
+    rows.push({ section, field, value: normalizeValue(value) || '—' });
+  };
+
+  push('Informations personnelles', 'Nom', formData.c_nom);
+  push('Informations personnelles', 'Email', formData.c_email);
+  push('Informations personnelles', 'Poste', formData.c_poste);
+  push('Informations personnelles', 'Entité', formData.c_entite);
+  push('Informations personnelles', 'Domaine principal', formData.c_domaine);
+  push('Informations personnelles', 'Domaines associés', formData.c_domaines_associes);
+  push('Engagements', 'Validation des informations', formData.eng1);
+  push('Engagements', 'Droit d’usage des informations', formData.eng2);
+  push('Engagements', 'Autorisation de recontact', formData.eng3);
+  push('Engagements', 'Confirmation de sincérité', formData.eng4);
+
+  for (let index = 1; index <= 8; index += 1) {
+    push('Charge détaillée', `Bloc ${index} — Heures`, formData[`ch${index}_h`]);
+    push('Charge détaillée', `Bloc ${index} — Répétitivité`, formData[`ch${index}_r`]);
+  }
+
+  push('Charge hebdomadaire', 'Emails / jour', formData.a_emails);
+  push('Charge hebdomadaire', 'Réunions / semaine', formData.a_reunions);
+  push('Charge hebdomadaire', 'Rapports / mois', formData.a_rapports);
+  push('Charge hebdomadaire', 'Sources / semaine', formData.a_sources);
+  push('Charge hebdomadaire', 'Dossiers / semaine', formData.a_dossiers);
+  push('Charge hebdomadaire', 'Missions / mois', formData.a_missions);
+  push('Charge hebdomadaire', 'Heures perdues / semaine', formData.a_perdues);
+
+  push('Priorités IA', 'Inexactitudes à éviter', formData.c_inexact);
+  push('Priorités IA', 'Périmètre à exclure', formData.c_exclure);
+  push('Priorités IA', 'Priorité 1', formData.c_prio1);
+  push('Priorités IA', 'Priorité 2', formData.c_prio2);
+  push('Priorités IA', 'Priorité 3', formData.c_prio3);
+  push('Priorités IA', 'Attentes', formData.c_attentes);
+
+  push('Profil numérique', 'Score numérique', formData.sc1);
+  push('Profil numérique', 'Score BI / Excel', formData.sc2);
+  push('Profil numérique', 'Score IA actuelle', formData.sc3);
+  push('Profil numérique', 'Score adoption', formData.sc4);
+  push('Profil numérique', 'Score ouverture', formData.sc5);
+  push('Profil numérique', 'Outils IA utilisés', formData.d_outils);
+  push('Profil numérique', 'Usage actuel', formData.d_usage);
+  push('Profil numérique', 'Points positifs', formData.d_plus);
+  push('Profil numérique', 'Points négatifs', formData.d_moins);
+  push('Profil numérique', 'Préférence format 1', formData.fmt1);
+  push('Profil numérique', 'Préférence format 2', formData.fmt2);
+  push('Profil numérique', 'Préférence format 3', formData.fmt3);
+  push('Profil numérique', 'Préférence format 4', formData.fmt4);
+  push('Profil numérique', 'Préférence format 5', formData.fmt5);
+  push('Profil numérique', 'Autre format préféré', formData.d_format_autre);
+
+  for (let index = 1; index <= Number(formData.libreRowCount || 0); index += 1) {
+    push('Tâches libres', `Tâche ${index} — Description`, formData[`lib_d${index}`]);
+    push('Tâches libres', `Tâche ${index} — Fréquence`, formData[`lib_f${index}`]);
+    push('Tâches libres', `Tâche ${index} — Durée`, formData[`lib_t${index}`]);
+    push('Tâches libres', `Tâche ${index} — Automatisable`, formData[`lib_a${index}`]);
+  }
+
+  push('Journal de bord', 'Matin', formData.f_matin);
+  push('Journal de bord', 'Matinée', formData.f_matinee);
+  push('Journal de bord', 'Après-midi', formData.f_apm);
+  push('Journal de bord', 'Fin de journée', formData.f_soir);
+  push('Journal de bord', 'Lundi', formData.f_lundi);
+  push('Journal de bord', 'Vendredi', formData.f_vendredi);
+  push('Journal de bord', 'Mensuel', formData.f_mois);
+  push('Journal de bord', 'Trimestriel', formData.f_trim);
+  push('Journal de bord', 'Annuel', formData.f_annuel);
+  push('Journal de bord', 'Déplacements', formData.f_deplac);
+
+  for (let index = 1; index <= 5; index += 1) {
+    push('Points de douleur', `Irritant ${index} — Description`, formData[`irr${index}_desc`]);
+    push('Points de douleur', `Irritant ${index} — Temps perdu`, formData[`irr${index}_t`]);
+    push('Points de douleur', `Irritant ${index} — Solution actuelle`, formData[`irr${index}_s`]);
+  }
+  push('Points de douleur', 'Doublons / ressaisies', formData.g_doublons);
+  push('Points de douleur', 'Travail hors heures', formData.g_nuit);
+
+  push('Vision IA', 'Tâche prioritaire à automatiser', formData.h_une);
+  push('Vision IA', 'Pourquoi cette priorité', formData.h_pourquoi);
+  push('Vision IA', 'Vision à 18 mois', formData.h_vision);
+  push('Vision IA', 'Tâches déléguées à l’IA', formData.h_delegate);
+  push('Vision IA', 'Expertise à conserver côté humain', formData.h_humain);
+  push('Vision IA', 'Déploiement AWA', formData.h_awa);
+  push('Vision IA', 'KPIs de succès', formData.h_kpi);
+
+  push('Contraintes', 'Confidentialité', formData.i_conf);
+  push('Contraintes', 'RGPD / données personnelles', formData.i_rgpd);
+  push('Contraintes', 'Hébergement', formData.i_heberg);
+  push('Contraintes', 'Approbations', formData.i_appro);
+  push('Contraintes', 'Systèmes', formData.i_sys);
+  push('Contraintes', 'Calendaire', formData.i_cal);
+  push('Contraintes', 'Politique IA groupe', formData.i_pol);
+  push('Contraintes', 'Autres contraintes', formData.i_autres);
+
+  push('Email de retour', 'Destinataire principal', formData.email_dest);
+  push('Email de retour', 'Destinataire copie', formData.email_cc);
+  push('Email de retour', 'Message d’accompagnement', formData.email_msg);
+
+  return rows;
+}
+
+function generateCSV(formData: FormData): string {
+  const rows = [['Section', 'Champ', 'Valeur'], ...buildExportRows(formData).map((row) => [row.section, row.field, row.value])];
+  return rows
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
 }
 
 function generatePlainText(formData: FormData): string {
   const date = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-
-  let text = `=== AUDIT IA — FICHE PERSONNELLE ===\n`;
+  const rows = buildExportRows(formData);
+  let currentSection = '';
+  let text = `=== AUDIT IA — FICHE COMPLETE ===\n`;
   text += `Répondant : ${formData.c_nom || '—'}\n`;
   text += `Email : ${formData.c_email || '—'}\n`;
-  text += `Poste : ${formData.c_poste || '—'}\n`;
-  text += `Entité : ${formData.c_entite || '—'}\n`;
   text += `Date : ${date}\n\n`;
 
-  text += `── A. CHARGE HEBDOMADAIRE ──\n`;
-  text += `Emails/jour : ${formData.a_emails || '—'}\n`;
-  text += `Réunions/sem : ${formData.a_reunions || '—'}\n`;
-  text += `Rapports/mois : ${formData.a_rapports || '—'}\n`;
-  text += `Sources réglementaires/sem : ${formData.a_sources || '—'}\n`;
-  text += `Heures perdues/sem : ${formData.a_perdues || '—'}\n\n`;
-
-  text += `── C. PRIORITÉS IA ──\n`;
-  text += `Priorité 1 : ${formData.c_prio1 || '—'}\n`;
-  text += `Priorité 2 : ${formData.c_prio2 || '—'}\n`;
-  text += `Priorité 3 : ${formData.c_prio3 || '—'}\n`;
-  text += `Attentes IA : ${formData.c_attentes || '—'}\n`;
-  text += `À exclure : ${formData.c_exclure || '—'}\n`;
-  text += `Inexactitudes : ${formData.c_inexact || '—'}\n\n`;
-
-  text += `── D. PROFIL EARLY ADOPTER ──\n`;
-  text += `Score numérique : ${formData.sc1}/10\n`;
-  text += `Score BI/Excel : ${formData.sc2}/10\n`;
-  text += `Score IA actuelle : ${formData.sc3}/10\n`;
-  text += `Score adoption : ${formData.sc4}/10\n`;
-  text += `Score ouverture : ${formData.sc5}/10\n`;
-  text += `Outils IA utilisés : ${formData.d_outils || '—'}\n`;
-  text += `Points positifs : ${formData.d_plus || '—'}\n`;
-  text += `Points négatifs : ${formData.d_moins || '—'}\n\n`;
-
-  const libres = [];
-  for (let i = 1; i <= (formData.libreRowCount || 0); i++) {
-    const desc = formData[`lib_d${i}`];
-    if (getTrimmedString(desc)) {
-      libres.push(`  ${i}. ${getTrimmedString(desc)} [${formData[`lib_f${i}`] || '—'}] [${formData[`lib_t${i}`] || '—'}] → Automatisable: ${formData[`lib_a${i}`] || '—'}`);
+  rows.forEach((row) => {
+    if (row.section !== currentSection) {
+      currentSection = row.section;
+      text += `── ${currentSection.toUpperCase()} ──\n`;
     }
-  }
-
-  text += `── E. TÂCHES LIBRES (${libres.length} tâches) ──\n`;
-  text += libres.length > 0 ? libres.join('\n') + '\n\n' : '  (aucune tâche libre ajoutée)\n\n';
-
-  text += `── F. JOURNAL DE BORD ──\n`;
-  text += `Matin : ${formData.f_matin || '—'}\n`;
-  text += `Matinée : ${formData.f_matinee || '—'}\n`;
-  text += `Après-midi : ${formData.f_apm || '—'}\n`;
-  text += `Fin de journée : ${formData.f_soir || '—'}\n`;
-  text += `Lundi : ${formData.f_lundi || '—'}\n`;
-  text += `Vendredi : ${formData.f_vendredi || '—'}\n`;
-  text += `Mensuel : ${formData.f_mois || '—'}\n`;
-  text += `Trimestriel : ${formData.f_trim || '—'}\n`;
-  text += `Annuel : ${formData.f_annuel || '—'}\n`;
-  text += `Déplacements : ${formData.f_deplac || '—'}\n\n`;
-
-  const irrs = [1, 2, 3, 4, 5]
-    .map(i => formData[`irr${i}_desc`])
-    .map(getTrimmedString)
-    .filter(Boolean);
-
-  text += `── G. POINTS DE DOULEUR ──\n`;
-  text += irrs.length > 0 ? irrs.map((d, i) => `  ${i + 1}. ${d}`).join('\n') + '\n' : '  (non renseigné)\n';
-  text += `Doublons : ${formData.g_doublons || '—'}\n`;
-  text += `Hors heures : ${formData.g_nuit || '—'}\n\n`;
-
-  text += `── H. VISION IA ──\n`;
-  text += `Tâche prioritaire 6 mois : ${formData.h_une || '—'}\n`;
-  text += `Pourquoi : ${formData.h_pourquoi || '—'}\n`;
-  text += `Vision 18 mois : ${formData.h_vision || '—'}\n`;
-  text += `Déléguées à l'IA : ${formData.h_delegate || '—'}\n`;
-  text += `Expertise humaine : ${formData.h_humain || '—'}\n`;
-  text += `Déploiement AWA : ${formData.h_awa || '—'}\n`;
-  text += `KPIs succès : ${formData.h_kpi || '—'}\n\n`;
-
-  text += `── I. CONTRAINTES ──\n`;
-  text += `Confidentialité : ${formData.i_conf || '—'}\n`;
-  text += `Hébergement : ${formData.i_heberg || '—'}\n`;
-  text += `Approbations : ${formData.i_appro || '—'}\n`;
-  text += `Systèmes : ${formData.i_sys || '—'}\n`;
-  text += `Calendaire : ${formData.i_cal || '—'}\n`;
-  text += `Politique IA groupe : ${formData.i_pol || '—'}\n`;
-  text += `Autres : ${formData.i_autres || '—'}\n`;
+    text += `${row.field} : ${row.value}\n`;
+  });
 
   return text;
 }
@@ -337,10 +408,12 @@ async function generatePDF(formData: FormData): Promise<Uint8Array> {
   const doc = new jsPDF();
   const date = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
   const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const rows = buildExportRows(formData);
 
   let y = 20;
   const lineHeight = 7;
   const pageHeight = doc.internal.pageSize.height;
+  const pageWidth = doc.internal.pageSize.width;
 
   const addText = (text: string, size = 10, isBold = false) => {
     if (y > pageHeight - 20) {
@@ -349,8 +422,9 @@ async function generatePDF(formData: FormData): Promise<Uint8Array> {
     }
     doc.setFontSize(size);
     doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-    doc.text(text, 15, y);
-    y += lineHeight;
+    const lines = doc.splitTextToSize(text, pageWidth - 30);
+    doc.text(lines, 15, y);
+    y += Math.max(lineHeight, lines.length * (lineHeight - 1));
   };
 
   const addSection = (title: string) => {
@@ -367,33 +441,14 @@ async function generatePDF(formData: FormData): Promise<Uint8Array> {
   addText(`Entité : ${formData.c_entite || '—'}`);
   addText(`Date de soumission : ${date} à ${time}`);
 
-  addSection('A. CHARGE HEBDOMADAIRE');
-  addText(`Emails/jour : ${formData.a_emails || '—'}`);
-  addText(`Réunions/semaine : ${formData.a_reunions || '—'}`);
-  addText(`Rapports/mois : ${formData.a_rapports || '—'}`);
-  addText(`Sources réglementaires/sem : ${formData.a_sources || '—'}`);
-  addText(`Heures perdues/sem : ${formData.a_perdues || '—'}`);
-
-  addSection('C. PRIORITÉS IA');
-  addText(`Priorité 1 : ${formData.c_prio1 || '—'}`);
-  addText(`Priorité 2 : ${formData.c_prio2 || '—'}`);
-  addText(`Priorité 3 : ${formData.c_prio3 || '—'}`);
-  addText(`Attentes IA : ${formData.c_attentes || '—'}`);
-  addText(`À exclure : ${formData.c_exclure || '—'}`);
-
-  addSection('D. PROFIL EARLY ADOPTER');
-  addText(`Score numérique : ${formData.sc1 || '—'}/10`);
-  addText(`Score BI/Excel : ${formData.sc2 || '—'}/10`);
-  addText(`Score IA actuelle : ${formData.sc3 || '—'}/10`);
-  addText(`Outils IA utilisés : ${formData.d_outils || '—'}`);
-
-  addSection('H. VISION IA');
-  addText(`Tâche prioritaire 6 mois : ${formData.h_une || '—'}`);
-  addText(`Vision 18 mois : ${formData.h_vision || '—'}`);
-
-  addSection('I. CONTRAINTES');
-  addText(`Confidentialité : ${formData.i_conf || '—'}`);
-  addText(`Systèmes : ${formData.i_sys || '—'}`);
+  let currentSection = '';
+  rows.forEach((row) => {
+    if (row.section !== currentSection) {
+      currentSection = row.section;
+      addSection(currentSection);
+    }
+    addText(`${row.field} : ${row.value}`);
+  });
 
   return doc.output('arraybuffer') as Uint8Array;
 }
@@ -401,6 +456,7 @@ async function generatePDF(formData: FormData): Promise<Uint8Array> {
 async function generateWord(formData: FormData): Promise<Uint8Array> {
   const date = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
   const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const rows = buildExportRows(formData);
 
   const sections = [];
 
@@ -441,44 +497,29 @@ async function generateWord(formData: FormData): Promise<Uint8Array> {
       ],
     }),
     new Paragraph({ text: '' }),
-    new Paragraph({
-      text: 'A. CHARGE HEBDOMADAIRE',
-      heading: HeadingLevel.HEADING_2,
-    }),
-    new Paragraph(`Emails/jour : ${formData.a_emails || '—'}`),
-    new Paragraph(`Réunions/semaine : ${formData.a_reunions || '—'}`),
-    new Paragraph(`Rapports/mois : ${formData.a_rapports || '—'}`),
-    new Paragraph({ text: '' }),
-    new Paragraph({
-      text: 'C. PRIORITÉS IA',
-      heading: HeadingLevel.HEADING_2,
-    }),
-    new Paragraph(`Priorité 1 : ${formData.c_prio1 || '—'}`),
-    new Paragraph(`Priorité 2 : ${formData.c_prio2 || '—'}`),
-    new Paragraph(`Priorité 3 : ${formData.c_prio3 || '—'}`),
-    new Paragraph({ text: '' }),
-    new Paragraph({
-      text: 'D. PROFIL EARLY ADOPTER',
-      heading: HeadingLevel.HEADING_2,
-    }),
-    new Paragraph(`Score numérique : ${formData.sc1 || '—'}/10`),
-    new Paragraph(`Score BI/Excel : ${formData.sc2 || '—'}/10`),
-    new Paragraph(`Outils IA utilisés : ${formData.d_outils || '—'}`),
-    new Paragraph({ text: '' }),
-    new Paragraph({
-      text: 'H. VISION IA',
-      heading: HeadingLevel.HEADING_2,
-    }),
-    new Paragraph(`Tâche prioritaire 6 mois : ${formData.h_une || '—'}`),
-    new Paragraph(`Vision 18 mois : ${formData.h_vision || '—'}`),
-    new Paragraph({ text: '' }),
-    new Paragraph({
-      text: 'I. CONTRAINTES',
-      heading: HeadingLevel.HEADING_2,
-    }),
-    new Paragraph(`Confidentialité : ${formData.i_conf || '—'}`),
-    new Paragraph(`Systèmes : ${formData.i_sys || '—'}`)
   );
+
+  let currentSection = '';
+  rows.forEach((row) => {
+    if (row.section !== currentSection) {
+      currentSection = row.section;
+      sections.push(
+        new Paragraph({
+          text: currentSection,
+          heading: HeadingLevel.HEADING_2,
+        }),
+      );
+    }
+
+    sections.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: `${row.field} : `, bold: true }),
+          new TextRun(row.value),
+        ],
+      }),
+    );
+  });
 
   const doc = new Document({
     sections: [{
@@ -508,12 +549,9 @@ async function sendEmailWithResend(
 
   let base64Content: string;
   if (typeof attachmentContent === 'string') {
-    base64Content = btoa(attachmentContent);
+    base64Content = bytesToBase64(new TextEncoder().encode(attachmentContent));
   } else {
-    const binaryString = Array.from(attachmentContent)
-      .map(byte => String.fromCharCode(byte))
-      .join('');
-    base64Content = btoa(binaryString);
+    base64Content = bytesToBase64(attachmentContent);
   }
 
   const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'Audit IA <onboarding@resend.dev>';
@@ -567,6 +605,7 @@ async function sendEmailWithEmailJS(
   content: string,
   recipientName?: string,
   templateParams?: Record<string, string>,
+  attachmentDataUrl?: string,
 ): Promise<{ success: boolean; error?: string }> {
   const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
   const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
@@ -587,6 +626,7 @@ async function sendEmailWithEmailJS(
       subject,
       invite_link: '',
       message: content,
+      attachment_file: attachmentDataUrl || '',
       ...templateParams,
     },
   };
@@ -625,7 +665,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body: RequestBody = await req.json();
-    const { formData, inviteToken, email_msg, format, responseId } = body;
+    const { formData, inviteToken, email_msg, format, responseId, documentPassword } = body;
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -686,22 +726,46 @@ Deno.serve(async (req: Request) => {
 
     let attachmentContent: string | Uint8Array;
     let attachmentFilename: string;
+    const trimmedPassword = getTrimmedString(documentPassword);
+    const isProtectedWord = format === 'word' && trimmedPassword.length > 0;
     const date = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
     const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const formatLabel = format === 'csv' ? 'CSV' : format === 'pdf' ? 'PDF' : format === 'word' ? 'Word' : 'texte';
+    const baseFilename = `audit_ia_${slugifyFilenamePart(formData.c_nom)}_${slugifyFilenamePart(date)}`;
+    const formatLabel = format === 'csv'
+      ? 'CSV'
+      : format === 'pdf'
+        ? 'PDF'
+        : isProtectedWord
+          ? 'Word protégé'
+          : format === 'word'
+            ? 'Word'
+            : 'texte';
+    const protectionNotice = isProtectedWord
+      ? 'Le document Word est protégé par mot de passe. Communiquez ce mot de passe séparément au destinataire.'
+      : undefined;
+    const attachmentMimeType = format === 'csv'
+      ? 'text/csv'
+      : format === 'pdf'
+        ? 'application/pdf'
+        : format === 'word'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'text/plain';
 
     if (format === 'csv') {
       attachmentContent = generateCSV(formData);
-      attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.csv`;
+      attachmentFilename = `${baseFilename}.csv`;
     } else if (format === 'pdf') {
       attachmentContent = await generatePDF(formData);
-      attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.pdf`;
+      attachmentFilename = `${baseFilename}.pdf`;
     } else if (format === 'word') {
       attachmentContent = await generateWord(formData);
-      attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.docx`;
+      if (isProtectedWord) {
+        attachmentContent = await applyWordProtection(attachmentContent, trimmedPassword);
+      }
+      attachmentFilename = `${baseFilename}${isProtectedWord ? '_protege' : ''}.docx`;
     } else {
       attachmentContent = generatePlainText(formData);
-      attachmentFilename = `audit_ia_${formData.c_nom?.replace(/\s+/g, '_')}_${date.replace(/\s+/g, '_')}.txt`;
+      attachmentFilename = `${baseFilename}.txt`;
     }
 
     const primaryEmail = buildReturnEmailTemplate({
@@ -715,6 +779,7 @@ Deno.serve(async (req: Request) => {
       ccEmail: email_cc,
       responseId,
       attachmentIncluded: true,
+      protectionNotice,
     });
 
     const resendResult = await sendEmailWithResend(
@@ -733,31 +798,41 @@ Deno.serve(async (req: Request) => {
     let attachmentIncluded = true;
 
     if (!resendResult.success) {
-      const fallbackEmail = buildReturnEmailTemplate({
+      let fallbackFormatLabel = formatLabel;
+      let fallbackAttachmentFilename = attachmentFilename;
+      let fallbackAttachmentContent = attachmentContent;
+      let fallbackProtectionNotice = protectionNotice;
+      let fallbackAttachmentMimeType = attachmentMimeType;
+
+      let fallbackEmail = buildReturnEmailTemplate({
         formData,
         date,
         time,
-        formatLabel,
-        attachmentFilename,
+        formatLabel: fallbackFormatLabel,
+        attachmentFilename: fallbackAttachmentFilename,
         emailMessage: email_msg,
         recipientEmail: email_dest,
         ccEmail: email_cc,
         responseId,
         attachmentIncluded: false,
         viaFallback: true,
+        protectionNotice: fallbackProtectionNotice,
       });
-      const fallbackContent = `${fallbackEmail.text}
+      const fallbackContent = fallbackEmail.text;
 
----
-Contenu brut du formulaire :
+      const buildAttachmentDataUrl = (content: string | Uint8Array, mimeType: string) => {
+        const base64 = typeof content === 'string'
+          ? bytesToBase64(new TextEncoder().encode(content))
+          : bytesToBase64(content);
+        return `data:${mimeType};base64,${base64}`;
+      };
 
-${generatePlainText(formData)}`;
-      const fallbackTemplateParams = {
+      const buildFallbackTemplateParams = () => ({
         preheader: `Formulaire complété reçu de ${getTrimmedString(formData.c_nom) || 'un répondant'}`,
         intro_title: 'Formulaire complété reçu',
         status_line: 'Envoi via EmailJS (mode secours)',
-        format_label: formatLabel,
-        attachment_filename: attachmentFilename,
+        format_label: fallbackFormatLabel,
+        attachment_filename: fallbackAttachmentFilename,
         attachment_included: 'false',
         response_reference: getTrimmedString(responseId) || 'non-disponible',
         respondent_name: getTrimmedString(formData.c_nom) || 'Non renseigné',
@@ -771,17 +846,53 @@ ${generatePlainText(formData)}`;
         custom_message: getTrimmedString(email_msg) || 'Aucun message complémentaire',
         verification_steps:
           '1. Vérifier la présence du résumé du répondant; 2. Contrôler le contenu brut du formulaire; 3. Archiver le message dans la boîte partagée.',
-        message_html: fallbackEmail.html,
         message_text: fallbackEmail.text,
-      };
+        attachment_content_type: fallbackAttachmentMimeType,
+      });
 
-      const emailJsResult = await sendEmailWithEmailJS(
+      let emailJsResult = await sendEmailWithEmailJS(
         email_dest,
         fallbackEmail.subject,
         fallbackContent,
         formData.c_nom || email_dest,
-        fallbackTemplateParams,
+        buildFallbackTemplateParams(),
+        buildAttachmentDataUrl(fallbackAttachmentContent, fallbackAttachmentMimeType),
       );
+
+      const canDowngradeToCsv =
+        format === 'word' &&
+        emailJsResult.error?.includes('Variables size limit');
+
+      if (canDowngradeToCsv) {
+        fallbackAttachmentContent = generateCSV(formData);
+        fallbackAttachmentFilename = `${baseFilename}_secours.csv`;
+        fallbackAttachmentMimeType = 'text/csv';
+        fallbackFormatLabel = 'CSV de secours';
+        fallbackProtectionNotice = 'Le document Word protégé dépassait la limite du mode secours. Un CSV complet a été joint à la place.';
+        fallbackEmail = buildReturnEmailTemplate({
+          formData,
+          date,
+          time,
+          formatLabel: fallbackFormatLabel,
+          attachmentFilename: fallbackAttachmentFilename,
+          emailMessage: email_msg,
+          recipientEmail: email_dest,
+          ccEmail: email_cc,
+          responseId,
+          attachmentIncluded: false,
+          viaFallback: true,
+          protectionNotice: fallbackProtectionNotice,
+        });
+
+        emailJsResult = await sendEmailWithEmailJS(
+          email_dest,
+          fallbackEmail.subject,
+          fallbackEmail.text,
+          formData.c_nom || email_dest,
+          buildFallbackTemplateParams(),
+          buildAttachmentDataUrl(fallbackAttachmentContent, fallbackAttachmentMimeType),
+        );
+      }
 
       if (!emailJsResult.success) {
         return new Response(
@@ -804,7 +915,8 @@ ${generatePlainText(formData)}`;
 
       provider = 'emailjs';
       fallbackFrom = 'resend';
-      attachmentIncluded = false;
+      attachmentIncluded = true;
+      attachmentFilename = fallbackAttachmentFilename;
     }
 
     let targetResponseId = getTrimmedString(responseId);

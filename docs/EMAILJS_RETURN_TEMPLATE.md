@@ -23,6 +23,20 @@ Variables attendues :
 - `custom_message`
 - `verification_steps`
 - `message_text`
+- `attachment_file`
+- `attachment_content_type`
+
+Configuration EmailJS recommandee dans l'onglet `Attachments` :
+
+1. Ajouter une piece jointe de type `Variable Attachment`
+2. `Filename` : `{{attachment_filename}}`
+3. `Content type` :
+   - recommande pour un template unique : `application/octet-stream`
+   - soit fixe sur `application/vnd.openxmlformats-officedocument.wordprocessingml.document` pour un template dedie Word
+   - soit fixe sur `text/csv` pour un template dedie CSV
+4. `Parameter name` : `attachment_file`
+
+Le backend envoie deja `attachment_file` sous forme de data URL base64.
 
 Template HTML :
 
