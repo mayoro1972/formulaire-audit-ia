@@ -10,6 +10,24 @@ interface AdminDashboardProps {
   onBack?: () => void;
 }
 
+function getSafeText(value: string | null | undefined, fallback = '—') {
+  const trimmedValue = typeof value === 'string' ? value.trim() : '';
+  return trimmedValue || fallback;
+}
+
+function escapeCsvCell(value: string | null | undefined) {
+  return `"${getSafeText(value).replace(/"/g, '""')}"`;
+}
+
+function slugifyFilePart(value: string | null | undefined, fallback: string) {
+  return getSafeText(value, fallback)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60) || fallback;
+}
+
 export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [responses, setResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,17 +150,17 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     const rows = filteredResponses.map(r => [
       new Date(r.submitted_at).toLocaleString('fr-FR'),
       r.email_sent_at ? new Date(r.email_sent_at).toLocaleString('fr-FR') : 'Non envoyé',
-      r.user_name,
-      r.user_email,
-      r.user_position,
-      r.user_entity,
+      getSafeText(r.user_name),
+      getSafeText(r.user_email),
+      getSafeText(r.user_position),
+      getSafeText(r.user_entity),
       `${r.completion_percentage}%`,
       r.is_completed ? 'Complété' : 'En cours',
     ]);
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map(row => row.map(cell => escapeCsvCell(String(cell))).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -159,7 +177,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     const link = document.createElement('a');
     const objectUrl = URL.createObjectURL(blob);
     link.href = objectUrl;
-    link.download = `response_${response.user_name.replace(/\s+/g, '_')}_${response.id.substring(0, 8)}.json`;
+    link.download = `response_${slugifyFilePart(response.user_name, 'reponse')}_${response.id.substring(0, 8)}.json`;
     link.click();
     URL.revokeObjectURL(objectUrl);
   };
@@ -170,11 +188,14 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     }
   };
 
-  const filteredResponses = responses.filter(r =>
-    r.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.user_position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredResponses = responses.filter((response) => {
+    if (!normalizedSearchTerm) return true;
+
+    return [response.user_name, response.user_email, response.user_position, response.user_entity]
+      .map((value) => getSafeText(value, '').toLowerCase())
+      .some((value) => value.includes(normalizedSearchTerm));
+  });
 
   if (showSettings) {
     return (

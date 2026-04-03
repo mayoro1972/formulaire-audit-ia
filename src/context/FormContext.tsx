@@ -8,10 +8,19 @@ import { FormContext, LoadFormDataOptions, SubmitResult } from './formContextCor
 const SAVE_KEY = 'audit_ia_gerard_v2';
 const SESSION_KEY = 'audit_session_id';
 
+function createStableRandomId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}_${crypto.randomUUID()}`;
+  }
+
+  const randomPart = Math.random().toString(36).slice(2, 11);
+  return `${prefix}_${Date.now()}_${randomPart}`;
+}
+
 function getOrCreateSessionId(): string {
   let sessionId = localStorage.getItem(SESSION_KEY);
   if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionId = createStableRandomId('session');
     localStorage.setItem(SESSION_KEY, sessionId);
   }
   return sessionId;

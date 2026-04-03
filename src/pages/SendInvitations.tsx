@@ -15,6 +15,15 @@ interface SendInvitationsProps {
   onBack?: () => void;
 }
 
+function generateSecureInviteToken() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `invite_${crypto.randomUUID().replace(/-/g, '')}`;
+  }
+
+  const randomPart = Math.random().toString(36).slice(2, 15);
+  return `invite_${Date.now()}_${randomPart}`;
+}
+
 export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const { formData, saveAll } = useForm();
   const initialRoutingRef = useRef({
@@ -26,10 +35,9 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const responseCcEditedRef = useRef(false);
   const includeDraftEditedRef = useRef(false);
   const [invitees, setInvitees] = useState<Invitee[]>([
-    { name: 'Axel Augusten Guessan', email: 'axelaugustenguessan@gmail.com' },
-    { name: 'Marius Ayoro', email: 'marius.ayoro70@gmail.com' }
+    { name: '', email: '' }
   ]);
-  const [responseEmail, setResponseEmail] = useState('contact@transferai.ci');
+  const [responseEmail, setResponseEmail] = useState(formData.email_dest || 'contact@transferai.ci');
   const [responseCc, setResponseCc] = useState('');
   const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
   const [sending, setSending] = useState(false);
@@ -99,10 +107,6 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
     setInvitees(updated);
   };
 
-  const generateToken = () => {
-    return `invite_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  };
-
   const sendInvitations = async () => {
     const validInvitees = invitees.filter(inv => inv.name.trim() && inv.email.trim());
 
@@ -127,7 +131,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
       const invitationsToCreate = validInvitees.map(inv => ({
         invitee_name: inv.name,
         invitee_email: inv.email,
-        invite_token: generateToken(),
+        invite_token: generateSecureInviteToken(),
         created_by: formData.c_nom || 'admin',
         response_email: responseEmail.trim(),
         response_cc: responseCc.trim(),
