@@ -814,7 +814,7 @@ Deno.serve(async (req: Request) => {
         recipientEmail: email_dest,
         ccEmail: email_cc,
         responseId,
-        attachmentIncluded: false,
+        attachmentIncluded: true,
         viaFallback: true,
         protectionNotice: fallbackProtectionNotice,
       });
@@ -833,7 +833,7 @@ Deno.serve(async (req: Request) => {
         status_line: 'Envoi via EmailJS (mode secours)',
         format_label: fallbackFormatLabel,
         attachment_filename: fallbackAttachmentFilename,
-        attachment_included: 'false',
+        attachment_included: 'true',
         response_reference: getTrimmedString(responseId) || 'non-disponible',
         respondent_name: getTrimmedString(formData.c_nom) || 'Non renseigné',
         respondent_email: getTrimmedString(formData.c_email) || '—',
@@ -845,7 +845,7 @@ Deno.serve(async (req: Request) => {
         cc_email: email_cc || 'Aucune',
         custom_message: getTrimmedString(email_msg) || 'Aucun message complémentaire',
         verification_steps:
-          '1. Vérifier la présence du résumé du répondant; 2. Contrôler le contenu brut du formulaire; 3. Archiver le message dans la boîte partagée.',
+          '1. Ouvrir la pièce jointe envoyée; 2. Vérifier le résumé du répondant; 3. Archiver le message dans la boîte partagée.',
         message_text: fallbackEmail.text,
         attachment_content_type: fallbackAttachmentMimeType,
       });
@@ -879,7 +879,7 @@ Deno.serve(async (req: Request) => {
           recipientEmail: email_dest,
           ccEmail: email_cc,
           responseId,
-          attachmentIncluded: false,
+          attachmentIncluded: true,
           viaFallback: true,
           protectionNotice: fallbackProtectionNotice,
         });
