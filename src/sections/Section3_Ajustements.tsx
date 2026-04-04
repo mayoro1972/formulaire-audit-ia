@@ -7,111 +7,87 @@ export default function Section3_Ajustements() {
 
   return (
     <div>
-      <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-[#042C53]">C — Ajustements et corrections</h2>
-        <p className="text-sm text-[#185FA5] mt-1">Corrigez ce qui ne correspond pas à votre réalité</p>
+      <div className="audit-section-header mb-6">
+        <span className="audit-pill bg-blue-100 text-blue-800">Section C</span>
+        <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
+          Ajustements et corrections
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          Cette partie permet de corriger la vision initiale et de faire emerger les priorites
+          personnelles du repondant.
+        </p>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">
-          C.1 — Ce qui est inexact dans les estimations
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-            Quelles estimations sont inexactes ? Précisez la valeur réelle :
-          </label>
-            <textarea
-              value={formData.c_inexact}
-              onChange={(e) => updateField('c_inexact', e.target.value)}
-              placeholder={profile.inaccuracyExample}
-              rows={4}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
-            />
-        </div>
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">C.1 - Estimations inexactes</div>
+        <label className="mb-2 block">Quelles estimations doivent etre corrigees ?</label>
+        <textarea
+          value={formData.c_inexact}
+          onChange={(event) => updateField('c_inexact', event.target.value)}
+          placeholder={profile.inaccuracyExample}
+          rows={4}
+        />
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">
-          C.2 — Tâches à exclure de l'automatisation
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-            Tâches que vous souhaitez garder manuelles (et pourquoi) :
-          </label>
-            <textarea
-              value={formData.c_exclure}
-              onChange={(e) => updateField('c_exclure', e.target.value)}
-              placeholder={profile.exclusionExample}
-              rows={4}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
-            />
-        </div>
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">C.2 - Taches a garder manuelles</div>
+        <label className="mb-2 block">Quelles activites ne doivent pas etre automatisees, et pourquoi ?</label>
+        <textarea
+          value={formData.c_exclure}
+          onChange={(event) => updateField('c_exclure', event.target.value)}
+          placeholder={profile.exclusionExample}
+          rows={4}
+        />
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">
-          C.3 — Vos 3 priorités IA personnelles
-        </div>
-        <div className="space-y-3">
+      <div className="audit-card">
+        <div className="mb-4 text-sm font-semibold text-slate-900">C.3 - Priorites IA personnelles</div>
+        <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-              Module IA numéro 1 — Gain maximum immédiat <span className="text-[#712B13]">*</span>
-            </label>
+            <label className="mb-2 block">Priorite 1 - gain maximum immediat</label>
             <textarea
               value={formData.c_prio1}
-              onChange={(e) => updateField('c_prio1', e.target.value)}
-              placeholder="Décrivez le module IA qui vous ferait gagner le plus de temps immédiatement..."
+              onChange={(event) => updateField('c_prio1', event.target.value)}
+              placeholder="Decrivez le module ou le cas d usage qui aurait le plus d impact tout de suite."
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Module IA numéro 2</label>
+            <label className="mb-2 block">Priorite 2</label>
             <textarea
               value={formData.c_prio2}
-              onChange={(e) => updateField('c_prio2', e.target.value)}
-              placeholder="Deuxième priorité..."
+              onChange={(event) => updateField('c_prio2', event.target.value)}
+              placeholder="Deuxieme priorite."
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Module IA numéro 3</label>
+            <label className="mb-2 block">Priorite 3</label>
             <textarea
               value={formData.c_prio3}
-              onChange={(e) => updateField('c_prio3', e.target.value)}
-              placeholder="Troisième priorité..."
+              onChange={(event) => updateField('c_prio3', event.target.value)}
+              placeholder="Troisieme priorite."
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-              Ce que vous attendez concrètement de l'IA dans votre travail :
-            </label>
+            <label className="mb-2 block">Ce que vous attendez concretement de l IA</label>
             <textarea
               value={formData.c_attentes}
-              onChange={(e) => updateField('c_attentes', e.target.value)}
+              onChange={(event) => updateField('c_attentes', event.target.value)}
               placeholder={profile.expectationsExample}
               rows={4}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
         </div>
       </div>
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button
-          onClick={() => setCurrentSection(2)}
-          className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-[#2C2C2A] border border-[#D3D1C7] transition-all hover:bg-[#F1EFE8]"
-        >
-          ← Retour
+      <div className="section-actions">
+        <button onClick={() => setCurrentSection(2)} className="audit-button audit-button-secondary">
+          Retour
         </button>
-        <button
-          onClick={() => setCurrentSection(4)}
-          className="ml-auto px-6 py-2.5 rounded-lg text-sm font-medium bg-[#185FA5] text-white transition-all hover:bg-[#042C53]"
-        >
-          Section suivante →
+        <button onClick={() => setCurrentSection(4)} className="audit-button audit-button-primary sm:ml-auto">
+          Section suivante
         </button>
       </div>
     </div>

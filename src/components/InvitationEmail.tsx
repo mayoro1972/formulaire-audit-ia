@@ -1,52 +1,62 @@
+import { Copy, Mail, Sparkles } from 'lucide-react';
+
 export default function InvitationEmail() {
   const appUrl = window.location.href;
 
-  const emailSubject = encodeURIComponent("Formulaire d'Audit IA - À compléter");
+  const emailSubject = encodeURIComponent("Formulaire d'Audit IA - A completer");
   const emailBody = encodeURIComponent(`Bonjour,
 
-Veuillez compléter le formulaire d'audit IA en cliquant sur le lien ci-dessous :
+Veuillez completer le formulaire d'audit IA via le lien ci-dessous :
 
 ${appUrl}
 
 Le formulaire :
-- Se sauvegarde automatiquement toutes les 30 secondes
-- Peut être rempli en plusieurs fois (vous pouvez fermer et reprendre)
-- Prend environ 30-45 minutes à compléter
-- Comporte 9 sections principales + récapitulatif
+- se sauvegarde automatiquement
+- peut etre rempli en plusieurs fois
+- prend environ 30 a 45 minutes
+- couvre 9 sections metier plus un recapitulatif
 
 Instructions :
-1. Cliquez sur le lien ci-dessus
-2. Remplissez les sections dans l'ordre ou selon vos préférences
-3. Vos réponses sont automatiquement sauvegardées
-4. Une fois terminé, allez à la section "Envoi & récapitulatif"
-5. Cliquez sur "Envoyer" pour transmettre vos réponses
-
-Si vous avez des questions, n'hésitez pas à me contacter.
+1. Ouvrez le lien
+2. Renseignez les sections dans l'ordre souhaite
+3. Sauvegardez ou reprenez si besoin
+4. Terminez par l'etape d'envoi et recapitulatif
 
 Cordialement`);
 
   const mailtoLink = `mailto:?subject=${emailSubject}&body=${emailBody}`;
 
   return (
-    <div className="fixed bottom-4 right-4 bg-white border-2 border-[#185FA5] rounded-lg shadow-lg p-4 max-w-sm">
-      <div className="text-sm font-semibold text-[#042C53] mb-2">Partager ce formulaire</div>
-      <div className="text-xs text-[#888780] mb-3">
-        Envoyez ce formulaire à votre contact pour qu&apos;il puisse le remplir
+    <div className="panel-glass fixed bottom-4 right-4 z-40 max-w-sm rounded-[26px] border border-white/70 p-4 shadow-[0_24px_44px_rgba(11,31,56,0.14)]">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="rounded-2xl bg-blue-100 p-3 text-blue-800">
+          <Sparkles className="h-5 w-5" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-slate-900">Partager ce formulaire</div>
+          <div className="mt-1 text-xs leading-5 text-slate-500">
+            Envoyez un lien propre et contextualise a votre contact.
+          </div>
+        </div>
       </div>
-      <div className="space-y-2">
-        <a
-          href={mailtoLink}
-          className="block w-full bg-[#185FA5] text-white text-center py-2 rounded-lg text-sm font-medium hover:bg-[#042C53] transition-all"
-        >
+
+      <div className="mb-4 rounded-[18px] border border-slate-900/8 bg-white/70 px-4 py-3 text-xs leading-5 text-slate-600 break-all">
+        {appUrl}
+      </div>
+
+      <div className="grid gap-2">
+        <a href={mailtoLink} className="audit-button audit-button-primary w-full border-0">
+          <Mail className="h-4 w-4" />
           Envoyer par email
         </a>
         <button
           onClick={() => {
             navigator.clipboard.writeText(appUrl);
-            alert('Lien copié dans le presse-papiers !');
+            alert('Lien copie dans le presse-papiers.');
           }}
-          className="block w-full bg-white text-[#185FA5] border border-[#185FA5] text-center py-2 rounded-lg text-sm font-medium hover:bg-[#E6F1FB] transition-all"
+          className="audit-button audit-button-secondary w-full"
         >
+          <Copy className="h-4 w-4" />
           Copier le lien
         </button>
       </div>

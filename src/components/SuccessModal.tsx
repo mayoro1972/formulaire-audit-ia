@@ -1,4 +1,4 @@
-import { X, CheckCircle } from 'lucide-react';
+import { CheckCircle, RotateCcw, X } from 'lucide-react';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -17,7 +17,15 @@ interface SuccessModalProps {
   onResetForm?: () => void;
 }
 
-export default function SuccessModal({ isOpen, onClose, formData, completionPercentage, emailSent, sentRecipient, onResetForm }: SuccessModalProps) {
+export default function SuccessModal({
+  isOpen,
+  onClose,
+  formData,
+  completionPercentage,
+  emailSent,
+  sentRecipient,
+  onResetForm,
+}: SuccessModalProps) {
   if (!isOpen) return null;
 
   const handleStartNewForm = () => {
@@ -28,109 +36,95 @@ export default function SuccessModal({ isOpen, onClose, formData, completionPerc
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-[#0F6E56] text-white p-6 rounded-t-xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-8 h-8" />
-            <h2 className="text-2xl font-bold">Formulaire soumis avec succès !</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      <div className="panel-glass w-full max-w-3xl overflow-hidden rounded-[30px] border border-white/70">
+        <div className="panel-dark flex items-center justify-between px-6 py-5 text-white md:px-8">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-emerald-400/12 p-3 text-emerald-100">
+              <CheckCircle className="h-7 w-7" />
+            </div>
+            <div>
+              <h2 className="display-font text-2xl font-semibold">Formulaire soumis avec succes</h2>
+              <p className="mt-1 text-sm text-white/70">Le dossier est enregistre et pret a etre exploite.</p>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
-          >
-            <X className="w-6 h-6" />
+
+          <button onClick={onClose} className="rounded-2xl p-2 text-white transition-colors hover:bg-white/10">
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="bg-[#EAF3DE] border-2 border-[#0F6E56] rounded-lg p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-[#0F6E56] rounded-full flex items-center justify-center">
-                <CheckCircle className="w-7 h-7 text-white" />
-              </div>
+        <div className="space-y-6 p-6 md:p-8">
+          <div className="audit-note audit-note-success">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="text-lg font-bold text-[#042C53]">Vos réponses ont été enregistrées</h3>
-                <p className="text-sm text-[#2C2C2A]">Taux de complétion : <strong>{completionPercentage}%</strong></p>
-              </div>
-            </div>
-            {emailSent && (
-              <div className="bg-white rounded-lg p-3 mt-3 border border-[#0F6E56]">
-                <p className="text-sm text-[#2C2C2A]">
-                  📧 Un email a été envoyé à <strong>{sentRecipient || formData.email_dest || formData.c_email || 'la destination configurée'}</strong>
+                <div className="text-sm font-semibold text-emerald-900">Soumission enregistree</div>
+                <p className="mt-1 text-sm text-emerald-950/80">
+                  Taux de completion : <strong>{completionPercentage}%</strong>
                 </p>
               </div>
-            )}
+              {emailSent && (
+                <div className="rounded-[18px] border border-emerald-200 bg-white/80 px-4 py-3 text-sm text-slate-700">
+                  Email envoye a <strong>{sentRecipient || formData.email_dest || formData.c_email || 'la destination configuree'}</strong>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="border border-[#D3D1C7] rounded-lg p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-[#042C53] pb-2 border-b border-[#D3D1C7]">
-              Récapitulatif de votre soumission
-            </h3>
-
-            <div className="grid gap-3">
-              <div className="bg-[#F5F5F0] rounded-lg p-3">
-                <p className="text-xs font-medium text-[#185FA5] uppercase mb-1">Nom complet</p>
-                <p className="text-sm font-semibold text-[#042C53]">{formData.c_nom || '—'}</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="audit-card !p-5">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Repondant</div>
+              <div className="mt-3 space-y-3 text-sm text-slate-600">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Nom</div>
+                  <div className="mt-1 font-semibold text-slate-900">{formData.c_nom || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Email</div>
+                  <div className="mt-1 font-semibold text-slate-900">{formData.c_email || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Poste</div>
+                  <div className="mt-1 font-semibold text-slate-900">{formData.c_poste || '-'}</div>
+                </div>
               </div>
+            </div>
 
-              <div className="bg-[#F5F5F0] rounded-lg p-3">
-                <p className="text-xs font-medium text-[#185FA5] uppercase mb-1">Email</p>
-                <p className="text-sm font-semibold text-[#042C53]">{formData.c_email || '—'}</p>
-              </div>
-
-              <div className="bg-[#F5F5F0] rounded-lg p-3">
-                <p className="text-xs font-medium text-[#185FA5] uppercase mb-1">Poste</p>
-                <p className="text-sm font-semibold text-[#042C53]">{formData.c_poste || '—'}</p>
-              </div>
-
-              <div className="bg-[#F5F5F0] rounded-lg p-3">
-                <p className="text-xs font-medium text-[#185FA5] uppercase mb-1">Entité</p>
-                <p className="text-sm font-semibold text-[#042C53]">{formData.c_entite || '—'}</p>
-              </div>
-
-              <div className="bg-[#F5F5F0] rounded-lg p-3">
-                <p className="text-xs font-medium text-[#185FA5] uppercase mb-1">Tâches libres ajoutées</p>
-                <p className="text-sm font-semibold text-[#042C53]">{formData.libreRowCount || 0} tâches</p>
+            <div className="audit-card !p-5">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Perimetre</div>
+              <div className="mt-3 space-y-3 text-sm text-slate-600">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Entite</div>
+                  <div className="mt-1 font-semibold text-slate-900">{formData.c_entite || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Taches libres</div>
+                  <div className="mt-1 font-semibold text-slate-900">{formData.libreRowCount || 0} taches</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Destinataire</div>
+                  <div className="mt-1 font-semibold text-slate-900">{formData.email_dest || formData.c_email || '-'}</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#E6F1FB] border border-[#185FA5] rounded-lg p-5">
-            <h4 className="font-semibold text-[#042C53] mb-2">Que se passe-t-il maintenant ?</h4>
-            <ul className="space-y-2 text-sm text-[#2C2C2A]">
-              <li className="flex gap-2">
-                <span className="text-[#185FA5] font-bold">1.</span>
-                <span>Vos données ont été sauvegardées de manière sécurisée dans la base de données</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#185FA5] font-bold">2.</span>
-                <span>Les administrateurs peuvent maintenant consulter votre audit IA via le tableau de bord</span>
-              </li>
-              {emailSent && (
-                <li className="flex gap-2">
-                  <span className="text-[#185FA5] font-bold">3.</span>
-                  <span>Un email récapitulatif a été envoyé à l'adresse indiquée</span>
-                </li>
-              )}
-              <li className="flex gap-2">
-                <span className="text-[#185FA5] font-bold">{emailSent ? '4' : '3'}.</span>
-                <span>Vous pouvez continuer à modifier vos réponses et les soumettre à nouveau si nécessaire</span>
-              </li>
+          <div className="audit-card !p-5">
+            <div className="text-sm font-semibold text-slate-900">Que se passe-t-il maintenant ?</div>
+            <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+              <li>Les donnees sont sauvegardees dans la base si le backend est configure.</li>
+              <li>Le dossier devient consultable depuis le tableau de bord admin.</li>
+              {emailSent && <li>Un email recapitulatif a ete envoye a l adresse configuree.</li>}
+              <li>Vous pouvez encore modifier la reponse et soumettre a nouveau si necessaire.</li>
             </ul>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition-all"
-            >
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button onClick={onClose} className="audit-button audit-button-secondary flex-1">
               Fermer
             </button>
-            <button
-              onClick={handleStartNewForm}
-              className="flex-1 bg-[#185FA5] text-white py-3 rounded-lg font-semibold hover:bg-[#042C53] transition-all"
-            >
+            <button onClick={handleStartNewForm} className="audit-button audit-button-primary flex-1 border-0">
+              <RotateCcw className="h-4 w-4" />
               Nouveau formulaire
             </button>
           </div>

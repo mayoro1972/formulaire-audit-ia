@@ -7,48 +7,54 @@ export default function Section2_Taches() {
   const profile = getCompetencyDomainProfile(formData.c_domaine);
 
   const renderTable = (title: string, tasks: string[][], prefix: string) => (
-    <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-      <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">{title}</div>
+    <div key={prefix} className="audit-card mb-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
+        <div>
+          <div className="text-sm font-semibold text-slate-900">{title}</div>
+          <p className="mt-1 text-sm text-slate-500">
+            Confirmez la frequence, le temps reel et le niveau de fiabilite de cette trame.
+          </p>
+        </div>
+        <span className="audit-pill bg-blue-100 text-blue-800">{tasks.length} taches</span>
+      </div>
+
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
+        <table>
           <thead>
-            <tr className="bg-[#042C53] text-white">
-              <th className="text-left p-3 font-medium text-xs">Tâche</th>
-              <th className="text-left p-3 font-medium text-xs">Fréquence réelle</th>
-              <th className="text-left p-3 font-medium text-xs">Temps réel/sem.</th>
-              <th className="text-left p-3 font-medium text-xs">Confirmer ?</th>
+            <tr>
+              <th className="p-3 text-left text-xs font-semibold">Tache</th>
+              <th className="p-3 text-left text-xs font-semibold">Frequence reelle</th>
+              <th className="p-3 text-left text-xs font-semibold">Temps reel / sem.</th>
+              <th className="p-3 text-left text-xs font-semibold">Statut</th>
             </tr>
           </thead>
           <tbody>
-            {tasks.map((task, idx) => (
-              <tr key={idx} className={idx % 2 === 1 ? 'bg-[#FAFAF8]' : ''}>
-                <td className="p-2 text-xs text-[#2C2C2A] border-b border-[#F1EFE8]">{task[0]}</td>
-                <td className="p-2 border-b border-[#F1EFE8]">
+            {tasks.map((task, index) => (
+              <tr key={`${prefix}-${index}`}>
+                <td className="p-3 text-sm text-slate-800">{task[0]}</td>
+                <td className="p-3">
                   <input
                     type="text"
-                    value={getInputValue(formData[`${prefix}_f${idx}`], task[1])}
-                    onChange={(e) => updateField(`${prefix}_f${idx}`, e.target.value)}
-                    className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
+                    value={getInputValue(formData[`${prefix}_f${index}`], task[1])}
+                    onChange={(event) => updateField(`${prefix}_f${index}`, event.target.value)}
                   />
                 </td>
-                <td className="p-2 border-b border-[#F1EFE8]">
+                <td className="p-3">
                   <input
                     type="text"
-                    value={getInputValue(formData[`${prefix}_t${idx}`], task[2])}
-                    onChange={(e) => updateField(`${prefix}_t${idx}`, e.target.value)}
-                    className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
+                    value={getInputValue(formData[`${prefix}_t${index}`], task[2])}
+                    onChange={(event) => updateField(`${prefix}_t${index}`, event.target.value)}
                   />
                 </td>
-                <td className="p-2 text-center border-b border-[#F1EFE8]">
+                <td className="p-3">
                   <select
-                    value={getInputValue(formData[`${prefix}_c${idx}`])}
-                    onChange={(e) => updateField(`${prefix}_c${idx}`, e.target.value)}
-                    className="border border-[#D3D1C7] rounded px-2 py-1 text-xs"
+                    value={getInputValue(formData[`${prefix}_c${index}`])}
+                    onChange={(event) => updateField(`${prefix}_c${index}`, event.target.value)}
                   >
-                    <option value="">—</option>
-                    <option value="oui">Confirmé</option>
-                    <option value="corr">Corrigé</option>
-                    <option value="non">À revoir</option>
+                    <option value="">A qualifier</option>
+                    <option value="oui">Confirme</option>
+                    <option value="corr">Corrige</option>
+                    <option value="non">A revoir</option>
                   </select>
                 </td>
               </tr>
@@ -61,29 +67,31 @@ export default function Section2_Taches() {
 
   return (
     <div>
-      <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-[#042C53]">B — Tâches déjà identifiées</h2>
-        <p className="text-sm text-[#185FA5] mt-1">Validez, corrigez et complétez les estimations de temps pour chaque tâche</p>
+      <div className="audit-section-header mb-6">
+        <span className="audit-pill bg-blue-100 text-blue-800">Section B</span>
+        <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
+          Taches deja identifiees
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          Cette partie traduit le README en trame metier prechargee : les groupes de taches
+          sont personnalises selon le domaine choisi et peuvent etre corriges librement.
+        </p>
       </div>
 
-      <div className="border-l-4 border-[#BA7517] bg-[#FAEEDA] rounded-r-lg p-4 mb-5 text-sm text-[#2C2C2A]">
-        Cette trame est générée à partir du domaine <strong className="text-[#854F0B]">{profile.label}</strong>. Corrigez les temps, fréquences et intitulés si les estimations ne correspondent pas à votre réalité.
+      <div className="audit-note audit-note-warn mb-5">
+        <strong className="text-amber-900">Adaptation active :</strong> la trame ci-dessous est
+        generee a partir du domaine <strong>{profile.label}</strong>. Corrigez sans hesiter les
+        temps, frequences ou formulations pour coller a votre realite.
       </div>
 
       {profile.taskGroups.map((group, index) => renderTable(group.title, group.tasks, `tb-${profile.key}-${index}`))}
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button
-          onClick={() => setCurrentSection(1)}
-          className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-[#2C2C2A] border border-[#D3D1C7] transition-all hover:bg-[#F1EFE8]"
-        >
-          ← Retour
+      <div className="section-actions">
+        <button onClick={() => setCurrentSection(1)} className="audit-button audit-button-secondary">
+          Retour
         </button>
-        <button
-          onClick={() => setCurrentSection(3)}
-          className="ml-auto px-6 py-2.5 rounded-lg text-sm font-medium bg-[#185FA5] text-white transition-all hover:bg-[#042C53]"
-        >
-          Section suivante →
+        <button onClick={() => setCurrentSection(3)} className="audit-button audit-button-primary sm:ml-auto">
+          Section suivante
         </button>
       </div>
     </div>

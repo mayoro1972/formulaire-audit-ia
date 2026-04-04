@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Mail, Plus, Trash2, Send, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Mail, Plus, Send, ShieldCheck, Trash2, UserRound } from 'lucide-react';
+import { isSupabaseConfigured, supabase, supabaseConfigMessage } from '../lib/supabase';
 import { useForm } from '../context/formContextCore';
 import { createInvitationDraft, hasDraftContent } from '../lib/formDefaults';
 import type { Database } from '../lib/database.types';
@@ -34,9 +34,8 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const responseEmailEditedRef = useRef(false);
   const responseCcEditedRef = useRef(false);
   const includeDraftEditedRef = useRef(false);
-  const [invitees, setInvitees] = useState<Invitee[]>([
-    { name: '', email: '' }
-  ]);
+
+  const [invitees, setInvitees] = useState<Invitee[]>([{ name: '', email: '' }]);
   const [responseEmail, setResponseEmail] = useState(formData.email_dest || 'contact@transferai.ci');
   const [responseCc, setResponseCc] = useState('');
   const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
@@ -45,18 +44,27 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const [error, setError] = useState('');
   const [customMessage, setCustomMessage] = useState('');
   const hasCurrentDraft = hasDraftContent(formData);
+  const validInvitees = invitees.filter((invitee) => invitee.name.trim() && invitee.email.trim());
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setResponseEmail((currentValue) =>
+        responseEmailEditedRef.current ? currentValue : initialRoutingRef.current.responseEmail || ''
+      );
+      setResponseCc((currentValue) =>
+        responseCcEditedRef.current ? currentValue : initialRoutingRef.current.responseCc || ''
+      );
+      setIncludeCurrentDraft((currentValue) =>
+        includeDraftEditedRef.current ? currentValue : initialRoutingRef.current.includeDraft
+      );
+      return;
+    }
+
     let isMounted = true;
 
     const loadDefaults = async () => {
       try {
-        const { data } = await supabase
-          .from('admin_settings')
-          .select('admin_email')
-          .limit(1)
-          .maybeSingle();
-
+        const { data } = await supabase.from('admin_settings').select('admin_email').limit(1).maybeSingle();
         const adminSettings = data as Pick<Database['public']['Tables']['admin_settings']['Row'], 'admin_email'> | null;
 
         if (!isMounted) return;
@@ -98,7 +106,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
   };
 
   const removeInvitee = (index: number) => {
-    setInvitees(invitees.filter((_, i) => i !== index));
+    setInvitees(invitees.filter((_, inviteeIndex) => inviteeIndex !== index));
   };
 
   const updateInvitee = (index: number, field: 'name' | 'email', value: string) => {
@@ -108,15 +116,18 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
   };
 
   const sendInvitations = async () => {
-    const validInvitees = invitees.filter(inv => inv.name.trim() && inv.email.trim());
+    if (!isSupabaseConfigured) {
+      setError(supabaseConfigMessage);
+      return;
+    }
 
     if (validInvitees.length === 0) {
-      setError('Veuillez ajouter au moins un destinataire avec nom et email');
+      setError('Veuillez ajouter au moins un destinataire avec nom et email.');
       return;
     }
 
     if (!responseEmail.trim()) {
-      setError("Veuillez renseigner l'email qui recevra les formulaires complétés.");
+      setError("Veuillez renseigner l email qui recevra les formulaires completes.");
       return;
     }
 
@@ -128,9 +139,9 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
       saveAll();
 
       const invitationDraft = includeCurrentDraft ? createInvitationDraft(formData) : {};
-      const invitationsToCreate = validInvitees.map(inv => ({
-        invitee_name: inv.name,
-        invitee_email: inv.email,
+      const invitationsToCreate = validInvitees.map((invitee) => ({
+        invitee_name: invitee.name,
+        invitee_email: invitee.email,
         invite_token: generateSecureInviteToken(),
         created_by: formData.c_nom || 'admin',
         response_email: responseEmail.trim(),
@@ -138,31 +149,25 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
         draft_form_data: invitationDraft,
       }));
 
-      const { data, error: insertError } = await supabase
-        .from('form_invitations')
-        .insert(invitationsToCreate)
-        .select();
+      const { data, error: insertError } = await supabase.from('form_invitations').insert(invitationsToCreate).select();
 
       if (insertError) {
-        console.error('Insert error details:', insertError);
-
         if (insertError.code === '23505') {
-          setError('Un ou plusieurs emails existent déjà dans les invitations. Veuillez vérifier.');
+          setError('Un ou plusieurs emails existent deja dans les invitations.');
         } else {
-          setError(`Erreur lors de la création: ${insertError.message || 'Erreur inconnue'}`);
+          setError(`Erreur lors de la creation: ${insertError.message || 'Erreur inconnue'}`);
         }
         setSending(false);
         return;
       }
 
       if (!data || data.length === 0) {
-        setError('Aucune invitation n\'a été créée');
+        setError("Aucune invitation n'a ete creee.");
         setSending(false);
         return;
       }
 
       const createdInvitations = data as Database['public']['Tables']['form_invitations']['Row'][];
-
       const edgeFunctionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invitation-email`;
 
       let successCount = 0;
@@ -177,7 +182,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             },
             body: JSON.stringify({
               invitee_name: invitation.invitee_name,
@@ -194,23 +199,18 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
             throw new Error(result.error || 'Failed to send email');
           }
 
-          console.log('Email sent successfully to:', invitation.invitee_email);
           successCount++;
-
           await supabase
             .from('form_invitations')
             .update({ email_sent_at: new Date().toISOString() })
             .eq('id', invitation.id);
-
         } catch (emailError: unknown) {
-          console.error('Error sending email to', invitation.invitee_email, emailError);
-          const emailMessage =
-            emailError instanceof Error ? emailError.message : 'Erreur d\'envoi';
+          const emailMessage = emailError instanceof Error ? emailError.message : "Erreur d'envoi";
           errorMessages.push(`${invitation.invitee_email}: ${emailMessage}`);
           failureCount++;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       if (successCount > 0) {
@@ -219,203 +219,280 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
       }
 
       if (failureCount > 0) {
-        const errorDetail = errorMessages.length > 0 ? `\n\nDétails: ${errorMessages.join('; ')}` : '';
-        setError(`${successCount} email(s) envoyé(s) avec succès, ${failureCount} échec(s)${errorDetail}`);
+        const errorDetail = errorMessages.length > 0 ? `\n\nDetails: ${errorMessages.join('; ')}` : '';
+        setError(`${successCount} email(s) envoye(s), ${failureCount} echec(s).${errorDetail}`);
       }
     } catch (err) {
       console.error('Error sending invitations:', err);
-      setError('Erreur lors de la création des invitations');
+      setError('Erreur lors de la creation des invitations.');
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E6F1FB] to-white">
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen pb-12">
+      <div className="mx-auto max-w-6xl px-4 pt-6 md:px-6">
+        <div className="audit-section-header mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="audit-pill bg-blue-100 text-blue-800">Invitations</span>
+            <span className="audit-pill bg-emerald-100 text-emerald-800">Lien unique + brouillon</span>
+          </div>
+          <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[#042C53]">Envoyer des invitations</h1>
-              <p className="text-[#888780] mt-2">Invitez des utilisateurs à remplir le formulaire d'audit IA</p>
+              <h1 className="display-font text-3xl font-semibold text-slate-950 md:text-4xl">
+                Envoyer des invitations nominatives
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                Creez des liens uniques, choisissez l email de retour et decidez si le client doit
+                recevoir un brouillon deja pre-rempli.
+              </p>
             </div>
+
             {onBack && (
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
+              <button onClick={onBack} className="audit-button audit-button-secondary">
+                <ArrowLeft className="h-4 w-4" />
                 Retour
               </button>
             )}
           </div>
+        </div>
 
-          <div className="space-y-4 mb-6">
-            {invitees.map((invitee, index) => (
-              <div key={index} className="flex gap-3 items-start">
-                <div className="flex-1 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-                      Nom complet
-                    </label>
-                    <input
-                      type="text"
-                      value={invitee.name}
-                      onChange={(e) => updateInvitee(index, 'name', e.target.value)}
-                      placeholder="ex: Jean Dupont"
-                      className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={invitee.email}
-                      onChange={(e) => updateInvitee(index, 'email', e.target.value)}
-                      placeholder="ex: nom@entreprise.com"
-                      className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
-                    />
-                  </div>
+        {!isSupabaseConfigured && (
+          <div className="audit-note audit-note-warn mb-6">
+            <div className="font-semibold text-amber-900">Backend non configure</div>
+            <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
+          </div>
+        )}
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
+          <div className="space-y-6">
+            <div className="audit-card">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Destinataires</div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Saisissez les contacts a inviter dans le parcours d audit.
+                  </p>
                 </div>
-                {invitees.length > 1 && (
-                  <button
-                    onClick={() => removeInvitee(index)}
-                    className="mt-7 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                )}
+                <span className="audit-pill bg-blue-100 text-blue-800">{validInvitees.length} pret(s) a envoyer</span>
               </div>
-            ))}
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-                Email qui recevra le formulaire complété <span className="text-[#712B13]">*</span>
-              </label>
-              <input
-                type="email"
-                value={responseEmail}
-                onChange={(e) => {
-                  responseEmailEditedRef.current = true;
-                  setResponseEmail(e.target.value);
-                }}
-                placeholder="ex: equipe.audit@entreprise.com"
-                className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
-              />
-              <p className="text-xs text-[#888780] mt-1">
-                C'est cette adresse qui recevra le formulaire complété par le client.
-              </p>
+              <div className="space-y-4">
+                {invitees.map((invitee, index) => (
+                  <div key={index} className="rounded-[22px] border border-slate-900/8 bg-white/75 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-2xl bg-blue-100 p-3 text-blue-800">
+                          <UserRound className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">Destinataire {index + 1}</div>
+                          <div className="text-xs text-slate-500">Lien d invitation unique</div>
+                        </div>
+                      </div>
+
+                      {invitees.length > 1 && (
+                        <button
+                          onClick={() => removeInvitee(index)}
+                          className="audit-button !rounded-2xl !border !border-red-200 !bg-red-50 !px-3 !py-2 !text-red-700"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block">Nom complet</label>
+                        <input
+                          type="text"
+                          value={invitee.name}
+                          onChange={(event) => updateInvitee(index, 'name', event.target.value)}
+                          placeholder="ex: Jean Dupont"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block">Email</label>
+                        <input
+                          type="email"
+                          value={invitee.email}
+                          onChange={(event) => updateInvitee(index, 'email', event.target.value)}
+                          placeholder="ex: nom@entreprise.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={addInvitee} className="audit-button audit-button-ghost mt-5">
+                <Plus className="h-4 w-4" />
+                Ajouter un destinataire
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-                Email de copie (optionnel)
-              </label>
-              <input
-                type="email"
-                value={responseCc}
-                onChange={(e) => {
-                  responseCcEditedRef.current = true;
-                  setResponseCc(e.target.value);
-                }}
-                placeholder="ex: supervision@entreprise.com"
-                className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
-              />
-              <p className="text-xs text-[#888780] mt-1">
-                Une copie du formulaire complété peut aussi être envoyée ici.
-              </p>
-            </div>
-          </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-              Message personnalisé (optionnel)
-            </label>
-            <textarea
-              value={customMessage}
-              onChange={(e) => setCustomMessage(e.target.value)}
-              placeholder="Ajoutez un message personnel qui sera inclus dans l'email d'invitation..."
-              rows={4}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5] resize-none"
-            />
-            <p className="text-xs text-[#888780] mt-1">
-              Ce message sera affiché dans l'email d'invitation après le lien.
-            </p>
-          </div>
-
-          <div className="bg-[#FAEEDA] border border-[#BA7517] rounded-lg p-4 mb-6">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeCurrentDraft}
-                onChange={(e) => {
-                  includeDraftEditedRef.current = true;
-                  setIncludeCurrentDraft(e.target.checked);
-                }}
-                disabled={!hasCurrentDraft}
-                className="w-4 h-4 mt-1 accent-[#185FA5]"
-              />
-              <div>
-                <div className="text-sm font-semibold text-[#854F0B]">
-                  Inclure le brouillon actuel comme premier snapshot
-                </div>
-                <p className="text-xs text-[#2C2C2A] mt-1">
-                  {hasCurrentDraft
-                    ? "Le client ouvrira le lien avec le brouillon actuel déjà prérempli et pourra le compléter."
-                    : "Aucun brouillon significatif n'a encore été saisi dans le formulaire principal."}
+            <div className="audit-card">
+              <div className="mb-5 border-b border-slate-900/8 pb-4">
+                <div className="text-sm font-semibold text-slate-900">Routage des reponses</div>
+                <p className="mt-1 text-sm text-slate-500">
+                  Choisissez ou le formulaire complete sera retourne.
                 </p>
               </div>
-            </label>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block">Email recevant le formulaire complete</label>
+                  <input
+                    type="email"
+                    value={responseEmail}
+                    onChange={(event) => {
+                      responseEmailEditedRef.current = true;
+                      setResponseEmail(event.target.value);
+                    }}
+                    placeholder="ex: equipe.audit@entreprise.com"
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Adresse principale de reception cote auditeur.
+                  </p>
+                </div>
+                <div>
+                  <label className="mb-2 block">Email en copie (optionnel)</label>
+                  <input
+                    type="email"
+                    value={responseCc}
+                    onChange={(event) => {
+                      responseCcEditedRef.current = true;
+                      setResponseCc(event.target.value);
+                    }}
+                    placeholder="ex: supervision@entreprise.com"
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Copie informative du formulaire complete.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="audit-card">
+              <div className="mb-5 border-b border-slate-900/8 pb-4">
+                <div className="text-sm font-semibold text-slate-900">Message personnalise</div>
+                <p className="mt-1 text-sm text-slate-500">
+                  Ce texte sera ajoute dans l email d invitation apres le lien.
+                </p>
+              </div>
+
+              <textarea
+                value={customMessage}
+                onChange={(event) => setCustomMessage(event.target.value)}
+                placeholder="Ajoutez un message personnel qui contextualise la demande."
+                rows={4}
+              />
+            </div>
+
+            <div className="audit-card">
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={includeCurrentDraft}
+                  onChange={(event) => {
+                    includeDraftEditedRef.current = true;
+                    setIncludeCurrentDraft(event.target.checked);
+                  }}
+                  disabled={!hasCurrentDraft}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">
+                    Inclure le brouillon actuel comme premier snapshot
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {hasCurrentDraft
+                      ? 'Le client ouvrira le lien avec le brouillon actuel deja pre-rempli et pourra le completer.'
+                      : "Aucun brouillon significatif n'a encore ete saisi dans le formulaire principal."}
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
 
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={addInvitee}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-[#185FA5] border border-[#185FA5] rounded-lg hover:bg-[#E6F1FB] transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Ajouter un destinataire
-            </button>
-            <button
-              onClick={sendInvitations}
-              disabled={sending}
-              className="flex items-center gap-2 px-6 py-2 bg-[#185FA5] text-white rounded-lg hover:bg-[#042C53] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4" />
-              {sending ? 'Envoi en cours...' : `Envoyer ${invitees.filter(inv => inv.name && inv.email).length} invitation(s)`}
-            </button>
-          </div>
+          <div className="space-y-6">
+            <div className="audit-card">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Synthese envoi</div>
+              <div className="display-font mt-2 text-4xl font-semibold text-slate-950">{validInvitees.length}</div>
+              <div className="mt-2 text-sm text-slate-500">invitation(s) prêtes.</div>
 
-          {success && (
-            <div className="bg-[#EAF3DE] border border-[#3B6D11] rounded-lg p-4 mb-4">
-              <p className="text-[#3B6D11] font-medium">
-                ✓ Invitations envoyées avec succès ! Les destinataires vont recevoir leurs emails d'invitation.
-              </p>
+              <div className="mt-5 space-y-3">
+                <div className="rounded-[20px] border border-slate-900/8 bg-white/75 px-4 py-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Email retour</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">{responseEmail || 'A renseigner'}</div>
+                </div>
+                <div className="rounded-[20px] border border-slate-900/8 bg-white/75 px-4 py-4">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Brouillon inclus</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">{includeCurrentDraft ? 'Oui' : 'Non'}</div>
+                </div>
+              </div>
+
+              <button
+                onClick={sendInvitations}
+                disabled={sending}
+                className="audit-button audit-button-primary mt-5 w-full border-0 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+                {sending ? 'Envoi en cours...' : `Envoyer ${validInvitees.length} invitation(s)`}
+              </button>
             </div>
-          )}
 
-          {error && (
-            <div className="bg-[#FAECE7] border border-[#712B13] rounded-lg p-4 mb-4">
-              <p className="text-[#712B13] whitespace-pre-line">{error}</p>
+            {success && (
+              <div className="audit-note audit-note-success">
+                <div className="font-semibold text-emerald-900">Invitations envoyees</div>
+                <p className="mt-1 text-emerald-950/80">
+                  Les destinataires vont recevoir leurs emails d invitation.
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className="audit-note audit-note-danger">
+                <div className="whitespace-pre-line text-red-950/90">{error}</div>
+              </div>
+            )}
+
+            <div className="audit-card">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="rounded-2xl bg-blue-100 p-3 text-blue-800">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Comment le flux fonctionne</div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Les invitations sont stockees en base puis expédiees via l Edge Function.
+                  </p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm leading-6 text-slate-600">
+                <li>Chaque invitation genere un lien unique.</li>
+                <li>Le formulaire pre-remplit nom, email et eventuel brouillon.</li>
+                <li>Quand le client soumet, le dossier repart vers l email de retour configure.</li>
+                <li>Toutes les soumissions restent visibles dans le dashboard admin.</li>
+              </ul>
             </div>
-          )}
 
-          <div className="bg-[#E6F1FB] rounded-lg p-6 border border-[#185FA5]">
-            <div className="flex gap-3 mb-3">
-              <Mail className="w-5 h-5 text-[#185FA5] flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-[#042C53] mb-2">Comment fonctionne le système d'invitations ?</h3>
-                <ul className="text-sm text-[#185FA5] space-y-2">
-                  <li>• Chaque invitation génère un lien unique valide 30 jours</li>
-                  <li>• L'utilisateur reçoit un email avec le lien personnalisé</li>
-                  <li>• Le formulaire pré-remplit son nom, son email et peut reprendre un brouillon déjà préparé</li>
-                  <li>• Quand il soumet le formulaire, il est envoyé à l'email de retour défini ci-dessus</li>
-                  <li>• Toutes les soumissions sont visibles dans le dashboard admin</li>
-                </ul>
+            <div className="audit-card">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-800">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Lien genere</div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Exemple de structure pour verifier le parcours.
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-[18px] border border-slate-900/8 bg-slate-50/85 px-4 py-3 text-xs text-slate-600 break-all">
+                {buildInviteUrl('invite_demo_token')}
               </div>
             </div>
           </div>

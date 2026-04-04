@@ -6,58 +6,61 @@ export default function Section7_Douleurs() {
 
   return (
     <div>
-      <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-[#042C53]">G — Points de douleur et irritants</h2>
-        <p className="text-sm text-[#185FA5] mt-1">Ce qui vous fait perdre du temps ou de l'énergie au quotidien</p>
+      <div className="audit-section-header mb-6">
+        <span className="audit-pill bg-blue-100 text-blue-800">Section G</span>
+        <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
+          Points de douleur et irritants
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          Les irritants les plus repetitifs sont souvent les meilleurs candidats a un pilote IA.
+        </p>
       </div>
 
-      <div className="border-l-4 border-[#712B13] bg-[#FAECE7] rounded-r-lg p-4 mb-5 text-sm text-[#2C2C2A]">
-        Les <strong className="text-[#712B13]">irritants</strong> sont souvent les meilleures opportunités d'automatisation IA — leur résolution a un impact fort sur la satisfaction au travail.
+      <div className="audit-note audit-note-danger mb-5">
+        Decrivez ici ce qui use du temps, de l energie ou de la concentration, meme si cela semble
+        aujourd hui normal dans le poste.
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">G.1 — Vos 5 plus grands irritants actuels</div>
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">G.1 - Top 5 des irritants</div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
+          <table>
             <thead>
-              <tr className="bg-[#042C53] text-white">
-                <th className="text-left p-3 font-medium text-xs w-12">Rg</th>
-                <th className="text-left p-3 font-medium text-xs">Décrivez l'irritant / point de douleur</th>
-                <th className="text-left p-3 font-medium text-xs w-32">Temps perdu/sem.</th>
-                <th className="text-left p-3 font-medium text-xs w-40">Solution IA possible ?</th>
+              <tr>
+                <th className="p-3 text-left text-xs font-semibold">Rang</th>
+                <th className="p-3 text-left text-xs font-semibold">Irritant</th>
+                <th className="p-3 text-left text-xs font-semibold">Temps perdu / semaine</th>
+                <th className="p-3 text-left text-xs font-semibold">Solution IA possible ?</th>
               </tr>
             </thead>
             <tbody>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className={i % 2 === 0 ? 'bg-[#FAFAF8]' : ''}>
-                  <td className="p-2 font-semibold text-[#712B13] border-b border-[#F1EFE8] text-center">{i}</td>
-                  <td className="p-2 border-b border-[#F1EFE8]">
+              {[1, 2, 3, 4, 5].map((index) => (
+                <tr key={index}>
+                  <td className="p-3 text-center font-semibold text-amber-700">{index}</td>
+                  <td className="p-3">
                     <input
                       type="text"
-                      value={getInputValue(formData[`irr${i}_desc`])}
-                      onChange={(e) => updateField(`irr${i}_desc`, e.target.value)}
-                      placeholder="Décrivez..."
-                      className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
+                      value={getInputValue(formData[`irr${index}_desc`])}
+                      onChange={(event) => updateField(`irr${index}_desc`, event.target.value)}
+                      placeholder="Decrivez l irritant"
                     />
                   </td>
-                  <td className="p-2 border-b border-[#F1EFE8]">
+                  <td className="p-3">
                     <input
                       type="text"
-                      value={getInputValue(formData[`irr${i}_t`])}
-                      onChange={(e) => updateField(`irr${i}_t`, e.target.value)}
+                      value={getInputValue(formData[`irr${index}_t`])}
+                      onChange={(event) => updateField(`irr${index}_t`, event.target.value)}
                       placeholder="ex: 3h"
-                      className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
                     />
                   </td>
-                  <td className="p-2 border-b border-[#F1EFE8]">
+                  <td className="p-3">
                     <select
-                      value={getInputValue(formData[`irr${i}_s`])}
-                      onChange={(e) => updateField(`irr${i}_s`, e.target.value)}
-                      className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
+                      value={getInputValue(formData[`irr${index}_s`])}
+                      onChange={(event) => updateField(`irr${index}_s`, event.target.value)}
                     >
-                      <option value="">—</option>
+                      <option value="">A estimer</option>
                       <option>Oui, clairement</option>
-                      <option>Peut-être</option>
+                      <option>Peut-etre</option>
                       <option>Je ne sais pas</option>
                     </select>
                   </td>
@@ -68,37 +71,33 @@ export default function Section7_Douleurs() {
         </div>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">G.2 — Doublons et redondances</div>
-        <div>
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Tâches que vous faites deux fois ou plus (ressaisies, reformatages, re-vérifications) :</label>
-          <textarea
-            value={formData.g_doublons}
-            onChange={(e) => updateField('g_doublons', e.target.value)}
-            placeholder="ex: Je saisis les données dans Excel, puis je les recopie dans le rapport Word, puis dans le tableau de bord PowerPoint..."
-            rows={4}
-            className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
-          />
-        </div>
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">G.2 - Doublons et redondances</div>
+        <label className="mb-2 block">Quelles taches sont faites deux fois ou plus ?</label>
+        <textarea
+          value={formData.g_doublons}
+          onChange={(event) => updateField('g_doublons', event.target.value)}
+          rows={4}
+        />
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">G.3 — Travail hors heures de bureau</div>
-        <div>
-          <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Tâches effectuées le soir, la nuit ou le week-end :</label>
-          <textarea
-            value={formData.g_nuit}
-            onChange={(e) => updateField('g_nuit', e.target.value)}
-            placeholder="ex: Je lis les alertes réglementaires le dimanche soir pour être prêt le lundi matin..."
-            rows={4}
-            className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
-          />
-        </div>
+      <div className="audit-card">
+        <div className="mb-4 text-sm font-semibold text-slate-900">G.3 - Travail hors horaires</div>
+        <label className="mb-2 block">Quelles taches se deplacent le soir, la nuit ou le week-end ?</label>
+        <textarea
+          value={formData.g_nuit}
+          onChange={(event) => updateField('g_nuit', event.target.value)}
+          rows={4}
+        />
       </div>
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button onClick={() => setCurrentSection(6)} className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-[#2C2C2A] border border-[#D3D1C7] transition-all hover:bg-[#F1EFE8]">← Retour</button>
-        <button onClick={() => setCurrentSection(8)} className="ml-auto px-6 py-2.5 rounded-lg text-sm font-medium bg-[#185FA5] text-white transition-all hover:bg-[#042C53]">Section suivante →</button>
+      <div className="section-actions">
+        <button onClick={() => setCurrentSection(6)} className="audit-button audit-button-secondary">
+          Retour
+        </button>
+        <button onClick={() => setCurrentSection(8)} className="audit-button audit-button-primary sm:ml-auto">
+          Section suivante
+        </button>
       </div>
     </div>
   );

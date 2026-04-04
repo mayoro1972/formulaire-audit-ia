@@ -7,104 +7,102 @@ export default function Section8_Vision() {
 
   return (
     <div>
-      <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-[#042C53]">H — Votre vision de l'IA pour votre métier</h2>
-        <p className="text-sm text-[#185FA5] mt-1">Ce que vous rêvez d'automatiser et votre ambition à 18 mois</p>
+      <div className="audit-section-header mb-6">
+        <span className="audit-pill bg-blue-100 text-blue-800">Section H</span>
+        <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
+          Vision IA pour le metier
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          Cette section transforme les irritants en ambition cible, pour prioriser une feuille de route.
+        </p>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">H.1 — Idéal à 6 mois</div>
-        <div className="space-y-3">
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">H.1 - Ideal a 6 mois</div>
+        <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-              Si vous ne pouviez automatiser qu'UNE seule tâche dans 6 mois, laquelle serait-ce ? <span className="text-[#712B13]">*</span>
-            </label>
+            <label className="mb-2 block">Si une seule tache pouvait etre automatisee dans 6 mois, laquelle ?</label>
             <textarea
               value={formData.h_une}
-              onChange={(e) => updateField('h_une', e.target.value)}
-              placeholder="Soyez précis..."
+              onChange={(event) => updateField('h_une', event.target.value)}
+              placeholder="Soyez tres precis sur la tache ou le flux vise."
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Pourquoi cette tâche en priorité ?</label>
+            <label className="mb-2 block">Pourquoi cette priorite ?</label>
             <textarea
               value={formData.h_pourquoi}
-              onChange={(e) => updateField('h_pourquoi', e.target.value)}
-              placeholder="Impact sur votre temps, votre stress, votre efficacité..."
+              onChange={(event) => updateField('h_pourquoi', event.target.value)}
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">H.2 — Vision à 18 mois</div>
-        <div className="space-y-3">
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">H.2 - Vision a 18 mois</div>
+        <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Comment imaginez-vous votre journée type avec l'IA dans 18 mois ?</label>
+            <label className="mb-2 block">A quoi ressemble votre journee type avec l IA ?</label>
             <textarea
               value={formData.h_vision}
-              onChange={(e) => updateField('h_vision', e.target.value)}
-              placeholder="Décrivez votre journée idéale..."
+              onChange={(event) => updateField('h_vision', event.target.value)}
               rows={4}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Quelles tâches aurez-vous entièrement déléguées à l'IA ?</label>
+            <label className="mb-2 block">Taches totalement deleguees a l IA</label>
             <textarea
               value={formData.h_delegate}
-              onChange={(e) => updateField('h_delegate', e.target.value)}
+              onChange={(event) => updateField('h_delegate', event.target.value)}
               placeholder={profile.vision.delegate}
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Sur quoi concentrerez-vous votre expertise humaine irremplaçable ?</label>
+            <label className="mb-2 block">Expertise humaine a conserver</label>
             <textarea
               value={formData.h_humain}
-              onChange={(e) => updateField('h_humain', e.target.value)}
+              onChange={(event) => updateField('h_humain', event.target.value)}
               placeholder={profile.vision.human}
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">H.3 — Ambition de déploiement métier</div>
-        <div className="space-y-3">
+      <div className="audit-card">
+        <div className="mb-4 text-sm font-semibold text-slate-900">H.3 - Deploiement metier et KPI</div>
+        <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Comment voyez-vous le déploiement IA dans votre équipe, service ou réseau ?</label>
+            <label className="mb-2 block">Comment deployer ces usages dans l equipe ou le reseau ?</label>
             <textarea
               value={formData.h_awa}
-              onChange={(e) => updateField('h_awa', e.target.value)}
+              onChange={(event) => updateField('h_awa', event.target.value)}
               placeholder={profile.vision.deployment}
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Indicateurs de succès — comment mesurez-vous l'impact de l'IA ?</label>
+            <label className="mb-2 block">Quels indicateurs prouveront le succes ?</label>
             <textarea
               value={formData.h_kpi}
-              onChange={(e) => updateField('h_kpi', e.target.value)}
+              onChange={(event) => updateField('h_kpi', event.target.value)}
               placeholder={profile.vision.kpis}
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
         </div>
       </div>
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button onClick={() => setCurrentSection(7)} className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-[#2C2C2A] border border-[#D3D1C7] transition-all hover:bg-[#F1EFE8]">← Retour</button>
-        <button onClick={() => setCurrentSection(9)} className="ml-auto px-6 py-2.5 rounded-lg text-sm font-medium bg-[#185FA5] text-white transition-all hover:bg-[#042C53]">Section suivante →</button>
+      <div className="section-actions">
+        <button onClick={() => setCurrentSection(7)} className="audit-button audit-button-secondary">
+          Retour
+        </button>
+        <button onClick={() => setCurrentSection(9)} className="audit-button audit-button-primary sm:ml-auto">
+          Section suivante
+        </button>
       </div>
     </div>
   );

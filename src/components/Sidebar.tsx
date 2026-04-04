@@ -1,87 +1,74 @@
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useForm } from '../context/formContextCore';
-
-const sections = [
-  { id: 0, label: 'Accueil' },
-  { id: 1, label: 'A · Charge de travail' },
-  { id: 2, label: 'B · Tâches identifiées' },
-  { id: 3, label: 'C · Ajustements' },
-  { id: 4, label: 'D · Profil early adopter' },
-  { id: 5, label: 'E · Tâches libres' },
-  { id: 6, label: 'F · Journal de bord' },
-  { id: 7, label: 'G · Points de douleur' },
-  { id: 8, label: 'H · Vision IA' },
-  { id: 9, label: 'I · Contraintes' },
-  { id: 10, label: 'Envoi & récapitulatif' },
-];
+import { auditSections, calculateOverallProgress, calculateSectionProgress } from '../lib/formProgress';
 
 export default function Sidebar() {
   const { currentSection, setCurrentSection, formData } = useForm();
-
-  const calculateSectionProgress = (sectionId: number) => {
-    const sectionFields: Record<number, { ids: string[]; libre?: boolean }> = {
-      0: { ids: ['c_nom', 'c_email', 'c_domaine'] },
-      1: { ids: ['ch1_h', 'ch2_h', 'a_emails'] },
-      2: { ids: [] },
-      3: { ids: ['c_prio1', 'c_attentes'] },
-      4: { ids: ['sc1', 'sc2', 'd_outils'] },
-      5: { ids: [], libre: true },
-      6: { ids: ['f_matin', 'f_matinee', 'f_mois'] },
-      7: { ids: ['irr1_desc'] },
-      8: { ids: ['h_une', 'h_vision'] },
-      9: { ids: ['i_conf', 'i_sys'] },
-    };
-
-    const sec = sectionFields[sectionId];
-    if (!sec) return 0;
-
-    if (sec.libre) {
-      return formData.libreRowCount > 0 ? Math.min(100, formData.libreRowCount * 20) : 0;
-    }
-
-    if (sec.ids.length === 0) return 0;
-
-    const filled = sec.ids.filter(id => {
-      const val = formData[id];
-      return val && String(val).trim().length > 0;
-    }).length;
-
-    return Math.round(filled / sec.ids.length * 100);
-  };
+  const progress = calculateOverallProgress(formData);
 
   return (
-    <div className="w-56 flex-shrink-0 bg-white border-r border-[#D3D1C7] py-5 sticky top-[59px] h-[calc(100vh-59px)] overflow-y-auto">
-      {sections.map((section) => {
-        const progress = section.id <= 9 ? calculateSectionProgress(section.id) : 0;
-        const isActive = currentSection === section.id;
-        const isDone = progress >= 60;
+    <aside className="panel-glass rounded-[28px] border border-white/70 p-3 lg:sticky lg:top-28 lg:h-[calc(100vh-9rem)] lg:overflow-hidden">
+      <div className="mb-4 rounded-[22px] border border-slate-900/8 bg-slate-950 px-4 py-4 text-white">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">Parcours</div>
+        <div className="display-font mt-2 text-xl font-semibold">{progress.overall}% complete</div>
+        <div className="mt-2 text-sm text-white/72">
+          {progress.done} etapes bien renseignees sur {progress.total} suivies.
+        </div>
+      </div>
 
-        return (
-          <div
-            key={section.id}
-            onClick={() => {
-              setCurrentSection(section.id);
-              window.scrollTo(0, 0);
-            }}
-            className={`flex items-center gap-2.5 px-4 py-2 text-sm cursor-pointer border-l-[3px] transition-all ${
-              isActive
-                ? 'bg-[#E6F1FB] text-[#185FA5] font-medium border-l-[#185FA5]'
-                : isDone
-                ? 'text-[#3B6D11] border-l-transparent hover:bg-[#F1EFE8]'
-                : 'text-[#888780] border-l-transparent hover:bg-[#F1EFE8] hover:text-[#042C53]'
-            }`}
-          >
-            <div
-              className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                isActive ? 'bg-[#185FA5]' : isDone ? 'bg-[#3B6D11]' : 'bg-[#D3D1C7]'
+      <div className="audit-mobile-scroll flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 lg:block lg:space-y-2 lg:overflow-y-auto lg:pb-0">
+        {auditSections.map((section) => {
+          const sectionProgress = section.id <= 9 ? calculateSectionProgress(formData, section.id) : progress.overall;
+          const isActive = currentSection === section.id;
+          const isDone = section.id <= 9 ? sectionProgress >= 60 : progress.overall >= 70;
+
+          return (
+            <button
+              key={section.id}
+              type="button"
+              onClick={() => {
+                setCurrentSection(section.id);
+                window.scrollTo(0, 0);
+              }}
+              className={`group min-w-[220px] snap-start rounded-[22px] border p-4 text-left transition-all duration-200 lg:block lg:w-full ${
+                isActive
+                  ? 'border-blue-300 bg-blue-50/90 shadow-[0_14px_30px_rgba(20,71,166,0.12)]'
+                  : 'border-slate-900/8 bg-white/68 hover:border-slate-900/14 hover:bg-white'
               }`}
-            />
-            <span className="flex-1">{section.label}</span>
-            {section.id <= 9 && section.id > 0 && (
-              <span className="text-xs text-[#888780] ml-auto">{progress}%</span>
-            )}
-          </div>
-        );
-      })}
-    </div>
+            >
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Etape {section.code}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">{section.label}</div>
+                </div>
+                {isDone ? (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                ) : (
+                  <ArrowRight className={`h-4 w-4 text-slate-400 transition-transform ${isActive ? 'translate-x-0.5 text-blue-700' : 'group-hover:translate-x-0.5'}`} />
+                )}
+              </div>
+
+              <p className="text-xs leading-5 text-slate-600">{section.description}</p>
+
+              <div className="mt-4 flex items-center gap-3">
+                <div className="h-2 flex-1 rounded-full bg-slate-200">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      isDone ? 'bg-emerald-500' : isActive ? 'bg-blue-600' : 'bg-slate-400'
+                    }`}
+                    style={{ width: `${Math.max(sectionProgress, section.id === 0 ? 8 : 0)}%` }}
+                  />
+                </div>
+                <div className="text-xs font-semibold text-slate-500">
+                  {section.id <= 9 ? `${sectionProgress}%` : `${progress.overall}%`}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </aside>
   );
 }

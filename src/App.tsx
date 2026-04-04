@@ -1,9 +1,16 @@
+import { Settings2, SendHorizontal } from 'lucide-react';
 import { useState } from 'react';
-import { FormProvider } from './context/FormContext';
-import { useForm } from './context/formContextCore';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import { FormProvider } from './context/FormContext';
+import { useForm } from './context/formContextCore';
+import { getCompetencyDomainProfile } from './lib/competencyDomains';
+import { calculateOverallProgress, getCurrentSectionMeta } from './lib/formProgress';
+import { isSupabaseConfigured, supabaseConfigMessage } from './lib/supabase';
+import AdminDashboard from './pages/AdminDashboard';
+import SendInvitations from './pages/SendInvitations';
 import Section0_Accueil from './sections/Section0_Accueil';
+import Section10_Envoi from './sections/Section10_Envoi';
 import Section1_Charge from './sections/Section1_Charge';
 import Section2_Taches from './sections/Section2_Taches';
 import Section3_Ajustements from './sections/Section3_Ajustements';
@@ -13,18 +20,18 @@ import Section6_Journal from './sections/Section6_Journal';
 import Section7_Douleurs from './sections/Section7_Douleurs';
 import Section8_Vision from './sections/Section8_Vision';
 import Section9_Contraintes from './sections/Section9_Contraintes';
-import Section10_Envoi from './sections/Section10_Envoi';
-import AdminDashboard from './pages/AdminDashboard';
-import SendInvitations from './pages/SendInvitations';
 
 interface AppContentProps {
   invitationToken?: string | null;
 }
 
 function AppContent({ invitationToken }: AppContentProps) {
-  const { currentSection } = useForm();
+  const { currentSection, formData } = useForm();
   const [showAdmin, setShowAdmin] = useState(false);
   const [showInvitations, setShowInvitations] = useState(false);
+  const profile = getCompetencyDomainProfile(formData.c_domaine);
+  const currentMeta = getCurrentSectionMeta(currentSection);
+  const progress = calculateOverallProgress(formData);
 
   if (showAdmin) {
     return <AdminDashboard onBack={() => setShowAdmin(false)} />;
@@ -35,39 +42,104 @@ function AppContent({ invitationToken }: AppContentProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
-      <Navbar />
-      <div className="flex min-h-[calc(100vh-59px)]">
-        <Sidebar />
-        <main className="flex-1 p-8 max-w-4xl">
-          {currentSection === 0 && <Section0_Accueil />}
-          {currentSection === 1 && <Section1_Charge />}
-          {currentSection === 2 && <Section2_Taches />}
-          {currentSection === 3 && <Section3_Ajustements />}
-          {currentSection === 4 && <Section4_Profil />}
-          {currentSection === 5 && <Section5_TachesLibres />}
-          {currentSection === 6 && <Section6_Journal />}
-          {currentSection === 7 && <Section7_Douleurs />}
-          {currentSection === 8 && <Section8_Vision />}
-          {currentSection === 9 && <Section9_Contraintes />}
-          {currentSection === 10 && <Section10_Envoi />}
-        </main>
+    <div className="min-h-screen pb-12">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[-8rem] top-[10rem] h-72 w-72 rounded-full bg-cyan-200/20 blur-3xl" />
+        <div className="absolute right-[-6rem] top-[12rem] h-80 w-80 rounded-full bg-amber-200/30 blur-3xl" />
+        <div className="absolute bottom-[-4rem] left-[18%] h-72 w-72 rounded-full bg-blue-200/20 blur-3xl" />
       </div>
+
+      <Navbar />
+
+      <div className="relative mx-auto mt-5 max-w-[1560px] px-3 md:px-5">
+        <div className="grid gap-6 lg:grid-cols-[310px_minmax(0,1fr)]">
+          <Sidebar />
+
+          <main className="audit-form min-w-0 pb-28 sm:pb-8">
+            <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <section className="audit-section-header">
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <span className="audit-pill bg-blue-100 text-blue-800">Etape {currentMeta.code}</span>
+                  <span className="audit-pill bg-amber-100 text-amber-800">{profile.label}</span>
+                </div>
+                <div className="display-font text-3xl font-semibold text-slate-950 md:text-4xl">
+                  {currentMeta.label}
+                </div>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-[15px]">
+                  {currentMeta.description} Cette vue garde le cadre du README :
+                  collecte structuree, sauvegarde navigateur, persistence Supabase,
+                  invitations nominatives et export final.
+                </p>
+              </section>
+
+              <aside className="audit-soft-card">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  Synthese session
+                </div>
+                <div className="mt-3 display-font text-4xl font-semibold text-slate-950">
+                  {progress.overall}%
+                </div>
+                <div className="mt-1 text-sm text-slate-600">
+                  {progress.done} etapes bien renseignees sur {progress.total}
+                </div>
+                <div className="mt-5 space-y-3 text-sm text-slate-600">
+                  <div className="rounded-2xl border border-slate-900/8 bg-white/70 px-4 py-3">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Repondant</div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {formData.c_nom?.trim() || 'A completer'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">{formData.c_email?.trim() || 'Aucun email'}</div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-900/8 bg-white/70 px-4 py-3">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Perimetre</div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {formData.c_entite?.trim() || 'Entite non renseignee'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">{formData.c_poste?.trim() || profile.summary}</div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            {!isSupabaseConfigured && (
+              <div className="audit-note audit-note-warn mb-6">
+                <div className="font-semibold text-amber-900">Mode local sans backend</div>
+                <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
+              </div>
+            )}
+
+            {currentSection === 0 && <Section0_Accueil />}
+            {currentSection === 1 && <Section1_Charge />}
+            {currentSection === 2 && <Section2_Taches />}
+            {currentSection === 3 && <Section3_Ajustements />}
+            {currentSection === 4 && <Section4_Profil />}
+            {currentSection === 5 && <Section5_TachesLibres />}
+            {currentSection === 6 && <Section6_Journal />}
+            {currentSection === 7 && <Section7_Douleurs />}
+            {currentSection === 8 && <Section8_Vision />}
+            {currentSection === 9 && <Section9_Contraintes />}
+            {currentSection === 10 && <Section10_Envoi />}
+          </main>
+        </div>
+      </div>
+
       {!invitationToken && (
-        <>
-          <button
-            onClick={() => setShowAdmin(true)}
-            className="fixed bottom-4 left-4 px-4 py-2 bg-[#042C53] text-white rounded-lg shadow-lg hover:bg-[#185FA5] transition-all text-sm"
-          >
-            Mode Admin
-          </button>
+        <div className="fixed bottom-3 left-3 right-3 z-40 flex flex-col gap-3 sm:left-auto sm:right-4 sm:w-auto">
           <button
             onClick={() => setShowInvitations(true)}
-            className="fixed bottom-16 left-4 px-4 py-2 bg-[#0F6E56] text-white rounded-lg shadow-lg hover:bg-[#3B6D11] transition-all text-sm"
+            className="audit-button audit-button-primary w-full border-0 shadow-[0_20px_34px_rgba(15,118,110,0.28)] sm:w-auto"
           >
-            Envoyer invitations
+            <SendHorizontal className="h-4 w-4" />
+            Envoyer des invitations
           </button>
-        </>
+          <button
+            onClick={() => setShowAdmin(true)}
+            className="audit-button audit-button-secondary w-full shadow-[0_16px_28px_rgba(15,37,66,0.08)] sm:w-auto"
+          >
+            <Settings2 className="h-4 w-4" />
+            Ouvrir le mode admin
+          </button>
+        </div>
       )}
     </div>
   );

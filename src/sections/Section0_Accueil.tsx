@@ -1,244 +1,258 @@
+import { ArrowRight, ClipboardCheck, Link2, Mail, Shield, Sparkles } from 'lucide-react';
 import { useForm } from '../context/formContextCore';
-import { Link2 } from 'lucide-react';
 import {
   buildDomainAutomationBlueprint,
   competencyDomains,
   getCompetencyDomainProfile,
 } from '../lib/competencyDomains';
+import { calculateOverallProgress } from '../lib/formProgress';
+
+const coveredJourneys = [
+  {
+    title: 'Repondant standard',
+    description: 'Remplit le questionnaire, enregistre la reponse et peut envoyer un export par email.',
+  },
+  {
+    title: 'Repondant invite',
+    description: 'Recupere un lien unique avec identite pre-remplie pour reprendre ou completer un brouillon.',
+  },
+  {
+    title: 'Administrateur',
+    description: 'Consulte les soumissions, exporte les reponses et envoie des invitations nominatives.',
+  },
+];
+
+const platformFeatures = [
+  { icon: ClipboardCheck, label: '9 sections metier + envoi' },
+  { icon: Shield, label: 'Sauvegarde locale + persistence Supabase' },
+  { icon: Mail, label: 'Exports email CSV, PDF ou Word' },
+  { icon: Sparkles, label: 'Adaptation dynamique selon le domaine' },
+];
 
 export default function Section0_Accueil() {
   const { formData, updateField, setCurrentSection } = useForm();
   const domainProfile = getCompetencyDomainProfile(formData.c_domaine);
   const automationBlueprint = buildDomainAutomationBlueprint(formData);
+  const progress = calculateOverallProgress(formData);
 
-  const calculateProgress = () => {
-    const sections = [
-      { ids: ['c_nom', 'c_email', 'c_domaine'], weight: 10 },
-      { ids: ['ch1_h', 'ch2_h', 'a_emails'], weight: 10 },
-      { ids: [], weight: 10 },
-      { ids: ['c_prio1', 'c_attentes'], weight: 10 },
-      { ids: ['sc1', 'sc2', 'd_outils'], weight: 10 },
-      { ids: [], libre: true, weight: 15 },
-      { ids: ['f_matin', 'f_matinee', 'f_mois'], weight: 10 },
-      { ids: ['irr1_desc'], weight: 10 },
-      { ids: ['h_une', 'h_vision'], weight: 10 },
-      { ids: ['i_conf', 'i_sys'], weight: 5 },
-    ];
-
-    let done = 0;
-    sections.forEach((sec) => {
-      let pct = 0;
-      if (sec.libre) {
-        pct = formData.libreRowCount > 0 ? Math.min(100, formData.libreRowCount * 20) : 0;
-      } else if (sec.ids.length > 0) {
-        const filled = sec.ids.filter(id => formData[id] && String(formData[id]).trim().length > 0).length;
-        pct = Math.round(filled / sec.ids.length * 100);
-      }
-      if (pct >= 60) done++;
-    });
-
-    return { done, total: 9 };
-  };
-
-  const { done, total } = calculateProgress();
-
-  const handleCopyLink = () => {
-    const appUrl = window.location.href;
-    navigator.clipboard.writeText(appUrl).then(() => {
-      alert('Lien copié dans le presse-papiers !');
-    });
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    alert('Lien copie dans le presse-papiers.');
   };
 
   return (
     <div>
-      <div className="bg-[#042C53] text-white rounded-xl p-10 mb-6">
-        <div className="text-sm opacity-75 mb-1">Audit IA · Trame adaptative par métier</div>
-        <h1 className="text-3xl font-bold mb-6">Formulaire d&apos;Audit IA</h1>
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-white/10 rounded-lg p-3">
-            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">Nom complet</label>
+      <div className="audit-section-header mb-6 overflow-hidden">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_360px]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="audit-pill bg-blue-100 text-blue-800">README transforme en parcours</span>
+              <span className="audit-pill bg-emerald-100 text-emerald-800">Audit IA metier</span>
+            </div>
+            <h1 className="display-font mt-5 text-3xl font-semibold text-slate-950 md:text-5xl">
+              Formulaire d audit IA pour cartographier, prioriser et transmettre les usages.
+            </h1>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 md:text-[15px]">
+              Cette experience reprend le scope du README dans un parcours simple a renseigner :
+              collecte structuree, sauvegarde automatique, enregistrement Supabase,
+              invitations nominatives, dashboard admin et restitution par email.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {platformFeatures.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={feature.label} className="rounded-[20px] border border-slate-900/8 bg-white/70 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-2xl bg-blue-100 p-3 text-blue-800">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="text-sm font-medium text-slate-800">{feature.label}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-slate-900/8 bg-slate-950 p-5 text-white shadow-[0_24px_50px_rgba(15,37,66,0.18)]">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-white/55">Etat du dossier</div>
+            <div className="display-font mt-3 text-5xl font-semibold">{progress.overall}%</div>
+            <div className="mt-2 text-sm text-white/70">
+              {progress.done} sections confirmees sur {progress.total}
+            </div>
+            <div className="mt-5 h-2.5 rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-300 via-teal-300 to-cyan-200"
+                style={{ width: `${progress.overall}%` }}
+              />
+            </div>
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-white/50">Domaine actif</div>
+                <div className="mt-1 font-semibold">{domainProfile.label}</div>
+                <div className="mt-1 text-xs text-white/60">{domainProfile.summary}</div>
+              </div>
+              <div className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-white/50">Parcours couverts</div>
+                <div className="mt-1 font-semibold">Standard, invite et admin</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="audit-card mb-5">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Identite du repondant</div>
+            <p className="mt-1 text-sm text-slate-500">
+              Ces informations servent de fil rouge pour la personnalisation du questionnaire et des exports.
+            </p>
+          </div>
+          <button onClick={handleCopyLink} className="audit-button audit-button-secondary">
+            <Link2 className="h-4 w-4" />
+            Copier le lien
+          </button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div>
+            <label className="mb-2 block">Nom complet</label>
             <input
               type="text"
               value={formData.c_nom}
-              onChange={(e) => updateField('c_nom', e.target.value)}
+              onChange={(event) => updateField('c_nom', event.target.value)}
               placeholder="ex: Jean Dupont"
-              className="bg-transparent border-none text-white text-sm font-medium w-full outline-none placeholder:opacity-40"
             />
           </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">Email du répondant</label>
+          <div>
+            <label className="mb-2 block">Email du repondant</label>
             <input
               type="email"
               value={formData.c_email}
-              onChange={(e) => updateField('c_email', e.target.value)}
+              onChange={(event) => updateField('c_email', event.target.value)}
               placeholder="ex: nom@entreprise.com"
-              className="bg-transparent border-none text-white text-sm font-medium w-full outline-none placeholder:opacity-40"
             />
           </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">Fonction</label>
+          <div>
+            <label className="mb-2 block">Fonction</label>
             <input
               type="text"
               value={formData.c_poste}
-              onChange={(e) => updateField('c_poste', e.target.value)}
-              placeholder="ex: Directeur des Opérations"
-              className="bg-transparent border-none text-white text-sm font-medium w-full outline-none placeholder:opacity-40"
+              onChange={(event) => updateField('c_poste', event.target.value)}
+              placeholder="ex: Directeur des Operations"
             />
           </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">Entité</label>
+          <div>
+            <label className="mb-2 block">Entite</label>
             <input
               type="text"
               value={formData.c_entite}
-              onChange={(e) => updateField('c_entite', e.target.value)}
+              onChange={(event) => updateField('c_entite', event.target.value)}
               placeholder="ex: Nom de votre entreprise"
-              className="bg-transparent border-none text-white text-sm font-medium w-full outline-none placeholder:opacity-40"
             />
           </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">Domaine principal</label>
-            <select
-              value={formData.c_domaine}
-              onChange={(e) => updateField('c_domaine', e.target.value)}
-              className="bg-transparent border-none text-white text-sm font-medium w-full outline-none"
-            >
-              <option value="" className="text-[#042C53]">Sélectionner un domaine</option>
+          <div>
+            <label className="mb-2 block">Domaine principal</label>
+            <select value={formData.c_domaine} onChange={(event) => updateField('c_domaine', event.target.value)}>
+              <option value="">Selectionner un domaine</option>
               {competencyDomains.map((domain) => (
-                <option key={domain.key} value={domain.key} className="text-[#042C53]">
+                <option key={domain.key} value={domain.key}>
                   {domain.label}
                 </option>
               ))}
             </select>
           </div>
-          <div className="bg-white/10 rounded-lg p-3">
-            <label className="text-xs opacity-60 uppercase tracking-wide block mb-1">
-              Domaines associés / contexte
-            </label>
+          <div>
+            <label className="mb-2 block">Domaines associes ou contexte</label>
             <input
               type="text"
               value={formData.c_domaines_associes}
-              onChange={(e) => updateField('c_domaines_associes', e.target.value)}
-              placeholder="ex: conformité, reporting, coordination siège"
-              className="bg-transparent border-none text-white text-sm font-medium w-full outline-none placeholder:opacity-40"
+              onChange={(event) => updateField('c_domaines_associes', event.target.value)}
+              placeholder="ex: conformite, reporting, coordination siege"
             />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white/10 rounded-lg p-4 text-center">
-            <div className="text-4xl font-bold text-[#9FE1CB]">9</div>
-            <div className="text-xs opacity-60 mt-1">Sections à remplir</div>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="audit-card">
+          <div className="mb-4 text-sm font-semibold text-slate-900">Trame IA proposee pour ce domaine</div>
+          <p className="text-sm leading-7 text-slate-600">{automationBlueprint.recommendation}</p>
+
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <div>
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Axes d audit a cadrer
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {automationBlueprint.priorityAreas.map((area) => (
+                  <span key={area} className="rounded-full bg-blue-100 px-3 py-2 text-xs font-medium text-blue-800">
+                    {area}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Automatisations suggerees
+              </div>
+              <ul className="space-y-2 text-sm text-slate-700">
+                {automationBlueprint.automationIdeas.map((idea) => (
+                  <li key={idea} className="flex gap-2">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                    <span>{idea}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="bg-white/10 rounded-lg p-4 text-center">
-            <div className="text-4xl font-bold text-[#9FE1CB]">{done}</div>
-            <div className="text-xs opacity-60 mt-1">Sections complètes</div>
-          </div>
-          <div className="bg-white/10 rounded-lg p-4 text-center">
-            <div className="text-4xl font-bold text-[#9FE1CB]">{Math.round((done / total) * 100)}%</div>
-            <div className="text-xs opacity-60 mt-1">Progression globale</div>
+        </div>
+
+        <div className="audit-card">
+          <div className="mb-4 text-sm font-semibold text-slate-900">Parcours couverts par l application</div>
+          <div className="space-y-3">
+            {coveredJourneys.map((journey) => (
+              <div key={journey.title} className="rounded-[20px] border border-slate-900/8 bg-white/70 p-4">
+                <div className="font-semibold text-slate-900">{journey.title}</div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{journey.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-5">
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <div>
-            <div className="text-sm font-semibold text-[#042C53]">Trame IA générée pour le domaine</div>
-            <div className="text-xs text-[#888780] mt-1">
-              {domainProfile.label} · {domainProfile.summary}
-            </div>
-          </div>
-          <div className="px-3 py-1 bg-[#E6F1FB] text-[#185FA5] rounded-full text-xs font-semibold">
-            Adaptation métier active
-          </div>
-        </div>
-        <p className="text-sm text-[#2C2C2A] mb-4">{automationBlueprint.recommendation}</p>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-[#888780] mb-2">
-              Axes d&apos;audit à cadrer
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {automationBlueprint.priorityAreas.map((area) => (
-                <span key={area} className="px-2.5 py-1 bg-[#F1EFE8] text-[#2C2C2A] rounded-full text-xs">
-                  {area}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-[#888780] mb-2">
-              Automatisations IA suggérées
-            </div>
-            <ul className="space-y-1 text-sm text-[#2C2C2A]">
-              {automationBlueprint.automationIdeas.map((idea) => (
-                <li key={idea}>• {idea}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-l-4 border-[#0F6E56] bg-[#E1F5EE] rounded-r-lg p-4 mb-5 text-sm text-[#2C2C2A]">
-        <strong className="text-[#0F6E56]">Comment utiliser ce formulaire :</strong> Remplissez les sections dans l'ordre ou dans l'ordre que vous préférez.
-        Votre progression est <strong>sauvegardée automatiquement</strong> dans votre navigateur toutes les 30 secondes.
-        Vous pouvez fermer et reprendre à tout moment. Quand vous avez terminé, cliquez sur <strong>"Envoi &amp; récapitulatif"</strong>
-        pour envoyer votre réponse par email.
-      </div>
-
-      <div className="bg-[#FAEEDA] border-l-4 border-[#BA7517] rounded-r-lg p-4 mb-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1">
-            <strong className="text-[#854F0B] text-sm">Partager ce formulaire :</strong>
-            <p className="text-xs text-[#2C2C2A] mt-1">
-              Copiez le lien pour le partager avec d'autres personnes
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleCopyLink}
-              className="flex items-center gap-1.5 px-3 py-2 bg-[#185FA5] text-white rounded-lg text-xs font-medium hover:bg-[#042C53] transition-all"
-              title="Copier le lien"
-            >
-              <Link2 className="w-4 h-4" />
-              Copier le lien
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">
-          Engagement
-        </div>
-        <div className="flex flex-col gap-2">
+      <div className="audit-card mt-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">Engagement du repondant</div>
+        <div className="grid gap-3">
           {[
-            { id: 'eng1', text: "Je m'engage à tester les premiers modules IA dès leur disponibilité" },
-            { id: 'eng2', text: "Je m'engage à donner un feedback régulier pour améliorer les outils" },
-            { id: 'eng3', text: "Je m'engage à partager mes apprentissages avec mon équipe" },
-            { id: 'eng4', text: 'Je valide les informations fournies comme reflet de ma réalité quotidienne' },
+            { id: 'eng1', text: "Je m engage a tester les premiers modules IA des qu ils seront disponibles." },
+            { id: 'eng2', text: 'Je m engage a donner un feedback regulier pour ameliorer les outils.' },
+            { id: 'eng3', text: 'Je m engage a partager les apprentissages utiles avec mon equipe.' },
+            { id: 'eng4', text: 'Je confirme que les informations fournies refletent ma realite de travail.' },
           ].map((item) => (
-            <label
-              key={item.id}
-              className="flex items-start gap-2.5 p-3 border border-[#D3D1C7] rounded-lg cursor-pointer transition-all hover:border-[#B5D4F4] hover:bg-[#E6F1FB]"
-            >
+            <label key={item.id} className="flex items-start gap-3 rounded-[20px] border border-slate-900/8 bg-white/80 p-4">
               <input
                 type="checkbox"
                 checked={formData[item.id] as boolean}
-                onChange={(e) => updateField(item.id, e.target.checked)}
-                className="w-4 h-4 flex-shrink-0 mt-0.5 cursor-pointer accent-[#185FA5]"
+                onChange={(event) => updateField(item.id, event.target.checked)}
+                className="mt-1"
               />
-              <span className="text-sm text-[#2C2C2A]">{item.text}</span>
+              <span className="text-sm leading-6 text-slate-700">{item.text}</span>
             </label>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button
-          onClick={() => setCurrentSection(1)}
-          className="ml-auto px-6 py-2.5 rounded-lg text-sm font-medium bg-[#185FA5] text-white transition-all hover:bg-[#042C53]"
-        >
-          Commencer →
+      <div className="section-actions">
+        <div className="audit-note audit-note-info flex-1">
+          Vous pouvez avancer dans l ordre ou naviguer librement. Vos reponses sont sauvegardees
+          localement, puis pourront etre enregistrees ou envoyees au format CSV, PDF ou Word.
+        </div>
+        <button onClick={() => setCurrentSection(1)} className="audit-button audit-button-primary sm:self-end">
+          Commencer le questionnaire
+          <ArrowRight className="h-4 w-4" />
         </button>
       </div>
     </div>

@@ -1,7 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import {
+  ArrowLeft,
+  Download,
+  Eye,
+  Mail,
+  RefreshCw,
+  Search,
+  Settings,
+  ShieldCheck,
+  Trash2,
+} from 'lucide-react';
+import { isSupabaseConfigured, supabase, supabaseConfigMessage } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
-import { Download, RefreshCw, Eye, Trash2, Search, ArrowLeft, Mail, Settings } from 'lucide-react';
 
 type FormResponse = Database['public']['Tables']['form_responses']['Row'];
 type FilterCompleted = 'all' | 'completed' | 'incomplete';
@@ -10,7 +20,7 @@ interface AdminDashboardProps {
   onBack?: () => void;
 }
 
-function getSafeText(value: string | null | undefined, fallback = '—') {
+function getSafeText(value: string | null | undefined, fallback = '-') {
   const trimmedValue = typeof value === 'string' ? value.trim() : '';
   return trimmedValue || fallback;
 }
@@ -20,12 +30,14 @@ function escapeCsvCell(value: string | null | undefined) {
 }
 
 function slugifyFilePart(value: string | null | undefined, fallback: string) {
-  return getSafeText(value, fallback)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 60) || fallback;
+  return (
+    getSafeText(value, fallback)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 60) || fallback
+  );
 }
 
 export default function AdminDashboard({ onBack }: AdminDashboardProps) {
@@ -38,12 +50,15 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [savingSettings, setSavingSettings] = useState(false);
 
   const loadResponses = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setResponses([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      let query = supabase
-        .from('form_responses')
-        .select('*')
-        .order('submitted_at', { ascending: false });
+      let query = supabase.from('form_responses').select('*').order('submitted_at', { ascending: false });
 
       if (filterCompleted === 'completed') {
         query = query.eq('is_completed', true);
@@ -57,19 +72,17 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       setResponses((data || []) as FormResponse[]);
     } catch (error) {
       console.error('Error loading responses:', error);
-      alert('Erreur lors du chargement des réponses');
+      alert('Erreur lors du chargement des reponses');
     } finally {
       setLoading(false);
     }
   }, [filterCompleted]);
 
   const loadAdminSettings = useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+
     try {
-      const { data, error } = await supabase
-        .from('admin_settings')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await supabase.from('admin_settings').select('*').limit(1).maybeSingle();
 
       if (error) throw error;
       const adminSettings = data as Database['public']['Tables']['admin_settings']['Row'] | null;
@@ -87,14 +100,14 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   }, [loadAdminSettings, loadResponses]);
 
   const saveAdminSettings = async () => {
+    if (!isSupabaseConfigured) {
+      alert(supabaseConfigMessage);
+      return;
+    }
+
     setSavingSettings(true);
     try {
-      const { data: existing } = await supabase
-        .from('admin_settings')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
-
+      const { data: existing } = await supabase.from('admin_settings').select('id').limit(1).maybeSingle();
       const existingSettings = existing as Pick<Database['public']['Tables']['admin_settings']['Row'], 'id'> | null;
 
       if (existingSettings) {
@@ -108,34 +121,34 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from('admin_settings')
-          .insert({
-            admin_email: adminEmail,
-            notification_enabled: true,
-          });
+        const { error } = await supabase.from('admin_settings').insert({
+          admin_email: adminEmail,
+          notification_enabled: true,
+        });
 
         if (error) throw error;
       }
 
-      alert('Paramètres sauvegardés avec succès');
+      alert('Parametres sauvegardes avec succes');
       setShowSettings(false);
     } catch (error) {
       console.error('Error saving admin settings:', error);
-      alert('Erreur lors de la sauvegarde des paramètres');
+      alert('Erreur lors de la sauvegarde des parametres');
     } finally {
       setSavingSettings(false);
     }
   };
 
   const deleteResponse = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?')) return;
+    if (!isSupabaseConfigured) {
+      alert(supabaseConfigMessage);
+      return;
+    }
+
+    if (!confirm('Etes-vous sur de vouloir supprimer cette reponse ?')) return;
 
     try {
-      const { error } = await supabase
-        .from('form_responses')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('form_responses').delete().eq('id', id);
 
       if (error) throw error;
       loadResponses();
@@ -146,23 +159,19 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   };
 
   const exportToCSV = () => {
-    const headers = ['Date soumission', 'Date envoi', 'Nom', 'Email', 'Poste', 'Entité', 'Complétion', 'Statut'];
-    const rows = filteredResponses.map(r => [
-      new Date(r.submitted_at).toLocaleString('fr-FR'),
-      r.email_sent_at ? new Date(r.email_sent_at).toLocaleString('fr-FR') : 'Non envoyé',
-      getSafeText(r.user_name),
-      getSafeText(r.user_email),
-      getSafeText(r.user_position),
-      getSafeText(r.user_entity),
-      `${r.completion_percentage}%`,
-      r.is_completed ? 'Complété' : 'En cours',
+    const headers = ['Date soumission', 'Date envoi', 'Nom', 'Email', 'Poste', 'Entite', 'Completion', 'Statut'];
+    const rows = filteredResponses.map((response) => [
+      new Date(response.submitted_at).toLocaleString('fr-FR'),
+      response.email_sent_at ? new Date(response.email_sent_at).toLocaleString('fr-FR') : 'Non envoye',
+      getSafeText(response.user_name),
+      getSafeText(response.user_email),
+      getSafeText(response.user_position),
+      getSafeText(response.user_entity),
+      `${response.completion_percentage}%`,
+      response.is_completed ? 'Complete' : 'En cours',
     ]);
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => escapeCsvCell(String(cell))).join(','))
-    ].join('\n');
-
+    const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => escapeCsvCell(String(cell))).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const objectUrl = URL.createObjectURL(blob);
@@ -197,60 +206,67 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       .some((value) => value.includes(normalizedSearchTerm));
   });
 
+  const completedCount = responses.filter((response) => response.is_completed).length;
+  const inProgressCount = responses.filter((response) => !response.is_completed).length;
+
   if (showSettings) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#E6F1FB] to-white">
-        <div className="max-w-2xl mx-auto p-8">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-[#042C53]">Paramètres Admin</h1>
-                <p className="text-[#888780] mt-2">Configurez les notifications par email</p>
+      <div className="min-h-screen pb-12">
+        <div className="mx-auto max-w-4xl px-4 pt-6 md:px-6">
+          <div className="audit-section-header mb-6">
+            <span className="audit-pill bg-blue-100 text-blue-800">Admin settings</span>
+            <h1 className="display-font mt-4 text-3xl font-semibold text-slate-950 md:text-4xl">
+              Parametres de notification
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+              Configurez l adresse qui recevra les alertes apres chaque soumission.
+            </p>
+          </div>
+
+          <div className="audit-card">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-blue-100 p-3 text-blue-800">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Notifications automatiques</div>
+                  <div className="text-sm text-slate-500">Chaque soumission peut declencher un email admin.</div>
+                </div>
               </div>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all"
-              >
-                <ArrowLeft className="w-4 h-4" />
+              <button onClick={() => setShowSettings(false)} className="audit-button audit-button-secondary">
+                <ArrowLeft className="h-4 w-4" />
                 Retour
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-[#2C2C2A] mb-2">
-                  Email administrateur
-                </label>
+                <label className="mb-2 block">Email administrateur</label>
                 <input
                   type="email"
                   value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
+                  onChange={(event) => setAdminEmail(event.target.value)}
                   placeholder="admin@entreprise.com"
-                  className="w-full border border-[#D3D1C7] rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
                 />
-                <p className="text-xs text-[#888780] mt-2">
-                  Cet email recevra une notification à chaque fois qu'un formulaire est soumis
+                <p className="mt-2 text-xs text-slate-500">
+                  Cet email recevra une notification a chaque fois qu un formulaire est soumis.
                 </p>
               </div>
 
-              <div className="bg-[#E6F1FB] border border-[#185FA5] rounded-lg p-4">
-                <div className="flex gap-3">
-                  <Mail className="w-5 h-5 text-[#185FA5] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-[#042C53] mb-2">Notifications automatiques</h3>
-                    <p className="text-sm text-[#185FA5]">
-                      Chaque fois qu'un utilisateur soumet un formulaire, vous recevrez automatiquement un email avec les informations du répondant et un lien vers le tableau de bord.
-                    </p>
-                  </div>
-                </div>
+              <div className="audit-note audit-note-info">
+                <div className="font-semibold text-blue-900">Bon a savoir</div>
+                <p className="mt-1 text-blue-950/80">
+                  L email admin UI doit rester coherent avec le fallback backend pour eviter toute confusion.
+                </p>
               </div>
 
               <button
                 onClick={saveAdminSettings}
                 disabled={savingSettings || !adminEmail}
-                className="w-full bg-[#185FA5] text-white py-3 rounded-lg font-semibold hover:bg-[#042C53] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="audit-button audit-button-primary border-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {savingSettings ? 'Sauvegarde...' : 'Sauvegarder les paramètres'}
+                {savingSettings ? 'Sauvegarde...' : 'Sauvegarder les parametres'}
               </button>
             </div>
           </div>
@@ -260,186 +276,203 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E6F1FB] to-white">
-      <div className="max-w-7xl mx-auto p-8">
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen pb-12">
+      <div className="mx-auto max-w-[1500px] px-4 pt-6 md:px-6">
+        <div className="audit-section-header mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="audit-pill bg-blue-100 text-blue-800">Mode admin</span>
+            <span className="audit-pill bg-emerald-100 text-emerald-800">Pilotage des soumissions</span>
+          </div>
+          <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[#042C53]">Tableau de bord Admin</h1>
-              <p className="text-[#888780] mt-2">Gestion des réponses du formulaire d'audit IA</p>
+              <h1 className="display-font text-3xl font-semibold text-slate-950 md:text-4xl">
+                Tableau de bord des reponses
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                Visualisez les soumissions, exportez les donnees et suivez les envois email dans une seule vue.
+              </p>
               {adminEmail && (
-                <p className="text-xs text-[#185FA5] mt-1">
-                  Notifications envoyées à : {adminEmail}
+                <p className="mt-2 text-sm text-slate-500">
+                  Notifications actives vers <strong>{adminEmail}</strong>
                 </p>
               )}
             </div>
-            <div className="flex gap-3">
+
+            <div className="flex flex-wrap gap-3">
               {onBack && (
-                <button
-                  onClick={onBack}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all"
-                >
-                  <ArrowLeft className="w-4 h-4" />
+                <button onClick={onBack} className="audit-button audit-button-secondary">
+                  <ArrowLeft className="h-4 w-4" />
                   Retour
                 </button>
               )}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all"
-              >
-                <Settings className="w-4 h-4" />
-                Paramètres
+              <button onClick={() => setShowSettings(true)} className="audit-button audit-button-secondary">
+                <Settings className="h-4 w-4" />
+                Parametres
               </button>
-              <button
-                onClick={loadResponses}
-                className="flex items-center gap-2 px-4 py-2 bg-[#185FA5] text-white rounded-lg hover:bg-[#042C53] transition-all"
-              >
-                <RefreshCw className="w-4 h-4" />
+              <button onClick={loadResponses} className="audit-button audit-button-secondary">
+                <RefreshCw className="h-4 w-4" />
                 Actualiser
               </button>
-              <button
-                onClick={exportToCSV}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
-              >
-                <Download className="w-4 h-4" />
+              <button onClick={exportToCSV} className="audit-button audit-button-primary border-0">
+                <Download className="h-4 w-4" />
                 Exporter CSV
               </button>
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888780]" />
+        {!isSupabaseConfigured && (
+          <div className="audit-note audit-note-warn mb-6">
+            <div className="font-semibold text-amber-900">Backend non configure</div>
+            <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
+          </div>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <div className="audit-card">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Total reponses</div>
+            <div className="display-font mt-2 text-4xl font-semibold text-slate-950">{responses.length}</div>
+            <div className="mt-2 text-sm text-slate-500">Toutes soumissions confondues.</div>
+          </div>
+          <div className="audit-card">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Completes</div>
+            <div className="display-font mt-2 text-4xl font-semibold text-emerald-700">{completedCount}</div>
+            <div className="mt-2 text-sm text-slate-500">Reponses juges finalisees.</div>
+          </div>
+          <div className="audit-card">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">En cours</div>
+            <div className="display-font mt-2 text-4xl font-semibold text-amber-700">{inProgressCount}</div>
+            <div className="mt-2 text-sm text-slate-500">Dossiers partiels ou brouillons.</div>
+          </div>
+        </div>
+
+        <div className="audit-card mb-6">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, email ou poste..."
+                placeholder="Rechercher par nom, email, poste ou entite"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-[#D9D6CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="pl-12"
               />
             </div>
-            <select
-              value={filterCompleted}
-              onChange={(e) => handleFilterCompletedChange(e.target.value)}
-              className="px-4 py-2 border border-[#D9D6CF] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#185FA5]"
-            >
+            <select value={filterCompleted} onChange={(event) => handleFilterCompletedChange(event.target.value)}>
               <option value="all">Tous les statuts</option>
-              <option value="completed">Complétés uniquement</option>
+              <option value="completed">Completes uniquement</option>
               <option value="incomplete">En cours uniquement</option>
             </select>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
-              <div className="text-3xl font-bold text-[#042C53]">{responses.length}</div>
-              <div className="text-sm text-[#888780] mt-1">Total réponses</div>
-            </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
-              <div className="text-3xl font-bold text-green-700">
-                {responses.filter(r => r.is_completed).length}
-              </div>
-              <div className="text-sm text-[#888780] mt-1">Formulaires complétés</div>
-            </div>
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg">
-              <div className="text-3xl font-bold text-orange-700">
-                {responses.filter(r => !r.is_completed).length}
-              </div>
-              <div className="text-sm text-[#888780] mt-1">En cours</div>
-            </div>
+        {loading ? (
+          <div className="audit-card text-center py-14">
+            <div className="mx-auto inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-blue-700" />
+            <p className="mt-4 text-slate-500">Chargement des reponses...</p>
           </div>
-
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#185FA5]"></div>
-              <p className="text-[#888780] mt-4">Chargement des réponses...</p>
+        ) : filteredResponses.length === 0 ? (
+          <div className="audit-card text-center py-14">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <ShieldCheck className="h-8 w-8" />
             </div>
-          ) : filteredResponses.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-[#888780] text-lg">Aucune réponse trouvée</p>
-            </div>
-          ) : (
+            <p className="mt-4 text-lg font-medium text-slate-900">Aucune reponse trouvee</p>
+            <p className="mt-2 text-sm text-slate-500">Ajustez vos filtres ou attendez les prochaines soumissions.</p>
+          </div>
+        ) : (
+          <div className="audit-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table>
                 <thead>
-                  <tr className="border-b-2 border-[#D9D6CF]">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-[#042C53]">Date soumission</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-[#042C53]">Date envoi</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-[#042C53]">Nom</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-[#042C53]">Email</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-[#042C53]">Poste</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-[#042C53]">Complétion</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-[#042C53]">Statut</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-[#042C53]">Actions</th>
+                  <tr>
+                    <th className="p-3 text-left text-xs font-semibold">Soumission</th>
+                    <th className="p-3 text-left text-xs font-semibold">Envoi</th>
+                    <th className="p-3 text-left text-xs font-semibold">Repondant</th>
+                    <th className="p-3 text-left text-xs font-semibold">Poste</th>
+                    <th className="p-3 text-left text-xs font-semibold">Completion</th>
+                    <th className="p-3 text-left text-xs font-semibold">Statut</th>
+                    <th className="p-3 text-right text-xs font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredResponses.map((response) => (
-                    <tr key={response.id} className="border-b border-[#D9D6CF] hover:bg-[#E6F1FB] transition-colors">
-                      <td className="py-3 px-4 text-sm text-[#042C53]">
+                    <tr key={response.id}>
+                      <td className="p-3 text-sm text-slate-700">
                         {new Date(response.submitted_at).toLocaleDateString('fr-FR')}
-                        <div className="text-xs text-[#888780]">
-                          {new Date(response.submitted_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        <div className="mt-1 text-xs text-slate-500">
+                          {new Date(response.submitted_at).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm text-[#042C53]">
+                      <td className="p-3 text-sm text-slate-700">
                         {response.email_sent_at ? (
                           <>
                             {new Date(response.email_sent_at).toLocaleDateString('fr-FR')}
-                            <div className="text-xs text-[#888780]">
-                              {new Date(response.email_sent_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            <div className="mt-1 text-xs text-slate-500">
+                              {new Date(response.email_sent_at).toLocaleTimeString('fr-FR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </div>
                           </>
                         ) : (
-                          <span className="text-xs text-[#888780]">Non envoyé</span>
+                          <span className="text-xs text-slate-500">Non envoye</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-sm font-medium text-[#042C53]">{response.user_name}</td>
-                      <td className="py-3 px-4 text-sm text-[#888780]">{response.user_email}</td>
-                      <td className="py-3 px-4 text-sm text-[#888780]">{response.user_position}</td>
-                      <td className="py-3 px-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[100px]">
+                      <td className="p-3">
+                        <div className="font-semibold text-slate-900">{getSafeText(response.user_name)}</div>
+                        <div className="mt-1 text-xs text-slate-500">{getSafeText(response.user_email)}</div>
+                        <div className="mt-1 text-xs text-slate-500">{getSafeText(response.user_entity)}</div>
+                      </td>
+                      <td className="p-3 text-sm text-slate-600">{getSafeText(response.user_position)}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-full max-w-[110px] rounded-full bg-slate-200">
                             <div
-                              className="bg-[#185FA5] h-2 rounded-full"
+                              className="h-full rounded-full bg-gradient-to-r from-blue-600 to-teal-500"
                               style={{ width: `${response.completion_percentage}%` }}
-                            ></div>
+                            />
                           </div>
-                          <span className="text-xs text-[#888780] w-10">{response.completion_percentage}%</span>
+                          <span className="text-xs font-semibold text-slate-500">{response.completion_percentage}%</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          response.is_completed
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-orange-100 text-orange-700'
-                        }`}>
-                          {response.is_completed ? 'Complété' : 'En cours'}
+                      <td className="p-3">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            response.is_completed
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {response.is_completed ? 'Complete' : 'En cours'}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="p-3">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => exportResponseJSON(response)}
-                            className="p-2 text-[#185FA5] hover:bg-[#E6F1FB] rounded-lg transition-all"
-                            title="Télécharger JSON"
+                            className="audit-button audit-button-secondary !rounded-2xl !px-3 !py-2"
+                            title="Telecharger JSON"
                           >
-                            <Download className="w-4 h-4" />
+                            <Download className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => {
-                              alert(`ID de session: ${response.session_id}\n\nVous pouvez voir les détails complets dans le JSON exporté.`);
+                              alert(`ID de session: ${response.session_id}\n\nVous pouvez voir les details complets dans le JSON exporte.`);
                             }}
-                            className="p-2 text-[#185FA5] hover:bg-[#E6F1FB] rounded-lg transition-all"
-                            title="Voir détails"
+                            className="audit-button audit-button-secondary !rounded-2xl !px-3 !py-2"
+                            title="Voir details"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => deleteResponse(response.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            className="audit-button !rounded-2xl !border !border-red-200 !bg-red-50 !px-3 !py-2 !text-red-700"
                             title="Supprimer"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -448,8 +481,8 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -7,117 +7,114 @@ export default function Section5_TachesLibres() {
   const addLibreRow = () => {
     const count = formData.libreRowCount + 1;
     updateField('libreRowCount', count);
-    updateField(`lib_rowcount`, count.toString());
-  };
-
-  const renderLibreRows = () => {
-    const rows = [];
-    for (let i = 1; i <= formData.libreRowCount; i++) {
-      rows.push(
-        <tr key={i} className={i % 2 === 1 ? 'bg-[#FAFAF8]' : ''}>
-          <td className="p-2 text-center text-[#BA7517] font-semibold border-b border-[#F1EFE8]">{i}</td>
-          <td className="p-2 border-b border-[#F1EFE8]">
-            <input
-              type="text"
-              value={getInputValue(formData[`lib_d${i}`])}
-              onChange={(e) => updateField(`lib_d${i}`, e.target.value)}
-              placeholder="Décrivez la tâche en détail..."
-              className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
-            />
-          </td>
-          <td className="p-2 border-b border-[#F1EFE8]">
-            <select
-              value={getInputValue(formData[`lib_f${i}`])}
-              onChange={(e) => updateField(`lib_f${i}`, e.target.value)}
-              className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
-            >
-              <option value="">—</option>
-              <option>Quotidienne</option>
-              <option>Hebdomadaire</option>
-              <option>Mensuelle</option>
-              <option>Trimestrielle</option>
-              <option>Annuelle</option>
-              <option>Ponctuelle</option>
-            </select>
-          </td>
-          <td className="p-2 border-b border-[#F1EFE8]">
-            <input
-              type="text"
-              value={getInputValue(formData[`lib_t${i}`])}
-              onChange={(e) => updateField(`lib_t${i}`, e.target.value)}
-              placeholder="ex: 2h"
-              className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-sm"
-            />
-          </td>
-          <td className="p-2 text-center border-b border-[#F1EFE8]">
-            <select
-              value={getInputValue(formData[`lib_a${i}`])}
-              onChange={(e) => updateField(`lib_a${i}`, e.target.value)}
-              className="w-full border border-[#D3D1C7] rounded px-2 py-1 text-xs"
-            >
-              <option value="">—</option>
-              <option value="oui">Oui</option>
-              <option value="non">Non</option>
-              <option value="?">Incertain</option>
-            </select>
-          </td>
-        </tr>
-      );
-    }
-    return rows;
+    updateField('lib_rowcount', count.toString());
   };
 
   return (
     <div>
-      <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-[#042C53]">E — Vos tâches non encore mentionnées</h2>
-        <p className="text-sm text-[#185FA5] mt-1">La section la plus importante — aucune limite, aucun filtre</p>
+      <div className="audit-section-header mb-6">
+        <span className="audit-pill bg-blue-100 text-blue-800">Section E</span>
+        <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
+          Taches non encore mentionnees
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          C est ici que l audit capture les angles morts du metier : routines discretes, validations
+          manuelles, relectures, deplacements, rattrapages et taches atypiques.
+        </p>
       </div>
 
-      <div className="border-l-4 border-[#712B13] bg-[#FAECE7] rounded-r-lg p-4 mb-5 text-sm text-[#2C2C2A]">
-        <strong className="text-[#712B13]">Instruction :</strong> Listez ICI toutes les tâches que vous effectuez et qui n'ont pas été mentionnées dans les sections précédentes.
-        Ne filtrez pas — même une tâche qui semble banale peut révéler une opportunité IA inattendue.
-        Pensez à vos matins, fins de semaine, fins de mois, déplacements, validations de documents, lectures, communications...
+      <div className="audit-note audit-note-danger mb-5">
+        <strong className="text-red-900">Instruction :</strong> ne filtrez pas. Une tache banale ou
+        ponctuelle peut reveler une opportunite IA importante.
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">
-          E.1 — Ajoutez toutes vos tâches non mentionnées
+      <div className="audit-card">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">E.1 - Inventaire libre</div>
+            <p className="mt-1 text-sm text-slate-500">
+              Ajoutez autant de lignes que necessaire pour decrire la realite terrain.
+            </p>
+          </div>
+          <span className="audit-pill bg-emerald-100 text-emerald-800">{formData.libreRowCount} lignes</span>
         </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
+          <table>
             <thead>
-              <tr className="bg-[#042C53] text-white">
-                <th className="text-left p-3 font-medium text-xs">#</th>
-                <th className="text-left p-3 font-medium text-xs">Description détaillée de la tâche</th>
-                <th className="text-left p-3 font-medium text-xs">Fréquence</th>
-                <th className="text-left p-3 font-medium text-xs">Durée</th>
-                <th className="text-left p-3 font-medium text-xs">Automatisable ?</th>
+              <tr>
+                <th className="p-3 text-left text-xs font-semibold">#</th>
+                <th className="p-3 text-left text-xs font-semibold">Description</th>
+                <th className="p-3 text-left text-xs font-semibold">Frequence</th>
+                <th className="p-3 text-left text-xs font-semibold">Duree</th>
+                <th className="p-3 text-left text-xs font-semibold">Automatisable ?</th>
               </tr>
             </thead>
-            <tbody>{renderLibreRows()}</tbody>
+            <tbody>
+              {Array.from({ length: formData.libreRowCount }, (_, offset) => {
+                const index = offset + 1;
+                return (
+                  <tr key={index}>
+                    <td className="p-3 text-center font-semibold text-amber-700">{index}</td>
+                    <td className="p-3">
+                      <input
+                        type="text"
+                        value={getInputValue(formData[`lib_d${index}`])}
+                        onChange={(event) => updateField(`lib_d${index}`, event.target.value)}
+                        placeholder="Decrivez la tache en detail"
+                      />
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={getInputValue(formData[`lib_f${index}`])}
+                        onChange={(event) => updateField(`lib_f${index}`, event.target.value)}
+                      >
+                        <option value="">Choisir</option>
+                        <option>Quotidienne</option>
+                        <option>Hebdomadaire</option>
+                        <option>Mensuelle</option>
+                        <option>Trimestrielle</option>
+                        <option>Annuelle</option>
+                        <option>Ponctuelle</option>
+                      </select>
+                    </td>
+                    <td className="p-3">
+                      <input
+                        type="text"
+                        value={getInputValue(formData[`lib_t${index}`])}
+                        onChange={(event) => updateField(`lib_t${index}`, event.target.value)}
+                        placeholder="ex: 2h"
+                      />
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={getInputValue(formData[`lib_a${index}`])}
+                        onChange={(event) => updateField(`lib_a${index}`, event.target.value)}
+                      >
+                        <option value="">Choisir</option>
+                        <option value="oui">Oui</option>
+                        <option value="non">Non</option>
+                        <option value="?">Incertain</option>
+                      </select>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </table>
         </div>
-        <button
-          onClick={addLibreRow}
-          className="inline-flex items-center gap-2 px-4 py-2 border-2 border-dashed border-[#B5D4F4] rounded-lg text-[#185FA5] text-sm mt-3 transition-all hover:bg-[#E6F1FB] hover:border-solid"
-        >
-          + Ajouter une tâche
+
+        <button onClick={addLibreRow} className="audit-button audit-button-ghost mt-5">
+          Ajouter une tache
         </button>
       </div>
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button
-          onClick={() => setCurrentSection(4)}
-          className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-[#2C2C2A] border border-[#D3D1C7] transition-all hover:bg-[#F1EFE8]"
-        >
-          ← Retour
+      <div className="section-actions">
+        <button onClick={() => setCurrentSection(4)} className="audit-button audit-button-secondary">
+          Retour
         </button>
-        <button
-          onClick={() => setCurrentSection(6)}
-          className="ml-auto px-6 py-2.5 rounded-lg text-sm font-medium bg-[#185FA5] text-white transition-all hover:bg-[#042C53]"
-        >
-          Section suivante →
+        <button onClick={() => setCurrentSection(6)} className="audit-button audit-button-primary sm:ml-auto">
+          Section suivante
         </button>
       </div>
     </div>

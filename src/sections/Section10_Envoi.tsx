@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { useForm } from '../context/formContextCore';
 import SuccessModal from '../components/SuccessModal';
+import { useForm } from '../context/formContextCore';
+import { calculateOverallProgress } from '../lib/formProgress';
+import { isSupabaseConfigured, supabaseConfigMessage } from '../lib/supabase';
 
 export default function Section10_Envoi() {
   const { formData, updateField, setCurrentSection, saveAll, submitToSupabase, resetForm } = useForm();
@@ -14,47 +16,18 @@ export default function Section10_Envoi() {
   const [protectWord, setProtectWord] = useState(true);
   const [documentPassword, setDocumentPassword] = useState('');
 
+  const progress = calculateOverallProgress(formData);
   const urlParams = new URLSearchParams(window.location.search);
   const hasInviteToken = urlParams.get('invite') !== null;
 
-  const calculateProgress = () => {
-    const sections = [
-      { ids: ['c_nom', 'c_email'], weight: 10 },
-      { ids: ['ch1_h', 'ch2_h', 'a_emails'], weight: 10 },
-      { ids: [], weight: 10 },
-      { ids: ['c_prio1', 'c_attentes'], weight: 10 },
-      { ids: ['sc1', 'sc2', 'd_outils'], weight: 10 },
-      { ids: [], libre: true, weight: 15 },
-      { ids: ['f_matin', 'f_matinee', 'f_mois'], weight: 10 },
-      { ids: ['irr1_desc'], weight: 10 },
-      { ids: ['h_une', 'h_vision'], weight: 10 },
-      { ids: ['i_conf', 'i_sys'], weight: 5 },
-    ];
-
-    let totalPct = 0;
-    let done = 0;
-
-    sections.forEach((sec) => {
-      let pct = 0;
-      if (sec.libre) {
-        pct = formData.libreRowCount > 0 ? Math.min(100, formData.libreRowCount * 20) : 0;
-      } else if (sec.ids.length > 0) {
-        const filled = sec.ids.filter(id => formData[id] && String(formData[id]).trim().length > 0).length;
-        pct = Math.round(filled / sec.ids.length * 100);
-      }
-      totalPct += pct * sec.weight / 100;
-      if (pct >= 60) done++;
-    });
-
-    return { overall: Math.round(totalPct), done };
-  };
-
-  const { overall, done } = calculateProgress();
-
   const notifyAdmin = async (responseId: string) => {
+    if (!isSupabaseConfigured) {
+      return;
+    }
+
     const notifyAdminUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-admin`;
     const notifyHeaders = {
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json',
     };
 
@@ -65,18 +38,23 @@ export default function Section10_Envoi() {
         user_name: formData.c_nom,
         user_email: formData.c_email,
         user_position: formData.c_poste,
-        completion_percentage: overall,
+        completion_percentage: progress.overall,
         response_id: responseId,
       }),
     });
 
     if (!response.ok) {
       const responseData = await response.json().catch(() => null);
-      throw new Error(responseData?.error || "La notification admin n'a pas pu être envoyée.");
+      throw new Error(responseData?.error || "La notification admin n'a pas pu etre envoyee.");
     }
   };
 
   const handleSubmitToDatabase = async () => {
+    if (!isSupabaseConfigured) {
+      setError(supabaseConfigMessage);
+      return;
+    }
+
     setSending(true);
     setError('');
     setSavedToDatabase(false);
@@ -88,12 +66,12 @@ export default function Section10_Envoi() {
         setSavedToDatabase(true);
         saveAll();
         setShowSuccessModal(true);
-        await notifyAdmin(result.responseId).catch(err => console.log('Admin notification error:', err));
+        await notifyAdmin(result.responseId).catch((err) => console.log('Admin notification error:', err));
       } else {
-        setError(`Erreur lors de l'enregistrement: ${result.error || 'Erreur inconnue'}`);
+        setError(`Erreur lors de l enregistrement: ${result.error || 'Erreur inconnue'}`);
       }
     } catch (err) {
-      setError("Erreur lors de l'enregistrement dans la base de données.");
+      setError("Erreur lors de l enregistrement dans la base de donnees.");
       console.error('Database error:', err);
     } finally {
       setSending(false);
@@ -101,16 +79,20 @@ export default function Section10_Envoi() {
   };
 
   const handleSendEmail = async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteToken = urlParams.get('invite');
+    if (!isSupabaseConfigured) {
+      setError(supabaseConfigMessage);
+      return;
+    }
+
+    const inviteToken = new URLSearchParams(window.location.search).get('invite');
 
     if (!inviteToken && !formData.email_dest) {
-      alert("Veuillez renseigner l'email de destination.");
+      alert("Veuillez renseigner l email de destination.");
       return;
     }
 
     if (selectedFormat === 'word' && protectWord && !documentPassword.trim()) {
-      alert("Veuillez renseigner un mot de passe pour protéger le document Word.");
+      alert('Veuillez renseigner un mot de passe pour proteger le document Word.');
       return;
     }
 
@@ -121,33 +103,28 @@ export default function Section10_Envoi() {
       const result = await submitToSupabase();
 
       if (!result.success) {
-        setError(`Erreur lors de l'enregistrement: ${result.error || 'Erreur inconnue'}`);
+        setError(`Erreur lors de l enregistrement: ${result.error || 'Erreur inconnue'}`);
         setSending(false);
         return;
       }
 
-      await notifyAdmin(result.responseId).catch(err => console.log('Admin notification error:', err));
+      await notifyAdmin(result.responseId).catch((err) => console.log('Admin notification error:', err));
 
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-form-email`;
-
-      const headers = {
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-      };
-
-      const payload = {
-        formData: formData,
-        inviteToken: inviteToken || undefined,
-        email_msg: formData.email_msg,
-        format: selectedFormat,
-        responseId: result.responseId,
-        documentPassword: selectedFormat === 'word' && protectWord ? documentPassword.trim() : undefined,
-      };
-
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: headers,
-        body: JSON.stringify(payload),
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData,
+          inviteToken: inviteToken || undefined,
+          email_msg: formData.email_msg,
+          format: selectedFormat,
+          responseId: result.responseId,
+          documentPassword: selectedFormat === 'word' && protectWord ? documentPassword.trim() : undefined,
+        }),
       });
 
       const responseData = await response.json();
@@ -162,7 +139,7 @@ export default function Section10_Envoi() {
       saveAll();
       setShowSuccessModal(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email.");
+      setError(err instanceof Error ? err.message : "Erreur lors de l envoi de l email.");
       console.error('Email error:', err);
     } finally {
       setSending(false);
@@ -173,10 +150,10 @@ export default function Section10_Envoi() {
     const dataStr = JSON.stringify(formData, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit_ia_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `audit_ia_${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
     URL.revokeObjectURL(url);
   };
 
@@ -190,174 +167,217 @@ export default function Section10_Envoi() {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         formData={formData}
-        completionPercentage={overall}
+        completionPercentage={progress.overall}
         emailSent={emailSent}
         sentRecipient={sentRecipient}
         onResetForm={resetForm}
       />
 
-      <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-[#042C53]">Récapitulatif &amp; envoi</h2>
-        <p className="text-sm text-[#185FA5] mt-1">Vérifiez votre progression et envoyez votre formulaire complété</p>
+      <div className="audit-section-header mb-6">
+        <span className="audit-pill bg-blue-100 text-blue-800">Section 10</span>
+        <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
+          Recapitulatif, sauvegarde et envoi
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          Derniere etape du parcours README : sauvegarder en base, notifier l admin,
+          exporter et transmettre le dossier dans le format attendu.
+        </p>
       </div>
 
-      <div className="flex items-center gap-5 p-6 bg-[#E6F1FB] rounded-xl mb-5">
-        <div>
-          <div className="text-5xl font-bold text-[#185FA5]">{overall}%</div>
-          <div className="text-xs text-[#185FA5] mt-1">formulaire complété</div>
+      {!isSupabaseConfigured && (
+        <div className="audit-note audit-note-warn mb-6">
+          <div className="font-semibold text-amber-900">Backend non configure</div>
+          <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
         </div>
-        <div className="flex-1 text-sm text-[#185FA5] leading-8">
-          <div>Tâches libres ajoutées : <strong>{formData.libreRowCount}</strong></div>
-          <div>Sections remplies : <strong>{done} / 9</strong></div>
-          <div>
-            Email de destination : <strong>{hasInviteToken ? (sentRecipient || "personne qui vous a invité(e)") : (formData.email_dest || '(à renseigner)')}</strong>
-          </div>
-        </div>
-      </div>
+      )}
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">
-          Envoi par email
-        </div>
-        <div className="space-y-3">
-          {hasInviteToken && (
-            <div className="bg-[#E6F1FB] border border-[#185FA5] rounded-lg p-3 text-sm text-[#185FA5]">
-              ✓ Votre réponse sera envoyée à la personne ou à l'équipe qui vous a invité(e). Votre email de réponse restera celui du répondant.
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="audit-card">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">Etat du dossier</div>
+              <p className="mt-1 text-sm text-slate-500">
+                Synthese de completion avant sauvegarde ou envoi.
+              </p>
             </div>
-          )}
-          {!hasInviteToken && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-                  Email de destination <span className="text-[#712B13]">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={formData.email_dest}
-                  onChange={(e) => updateField('email_dest', e.target.value)}
-                  placeholder="ex: destinataire@entreprise.com"
-                  className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Email de copie (CC — optionnel)</label>
-                <input
-                  type="email"
-                  value={formData.email_cc}
-                  onChange={(e) => updateField('email_cc', e.target.value)}
-                  placeholder="ex: collaborateur@entreprise.com"
-                  className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-            </>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Message d'accompagnement (optionnel)</label>
-            <textarea
-              value={formData.email_msg}
-              onChange={(e) => updateField('email_msg', e.target.value)}
-              placeholder="ex: Ci-joint mon audit IA complété. Je reste disponible pour en discuter..."
-              rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
-            />
+            <span className="audit-pill bg-emerald-100 text-emerald-800">{progress.overall}% renseigne</span>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Format de fichier à envoyer</label>
-            <select
-              value={selectedFormat}
-              onChange={(e) => setSelectedFormat(e.target.value as 'csv' | 'pdf' | 'word')}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="csv">CSV (Excel compatible)</option>
-              <option value="pdf">PDF</option>
-              <option value="word">Word (.docx)</option>
-            </select>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[22px] border border-slate-900/8 bg-slate-950 p-5 text-white">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">Progression</div>
+              <div className="display-font mt-2 text-5xl font-semibold">{progress.overall}%</div>
+              <div className="mt-2 text-sm text-white/70">
+                {progress.done} sections confirmees sur {progress.total}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Taches libres</div>
+                <div className="mt-1 text-xl font-semibold text-slate-900">{formData.libreRowCount}</div>
+              </div>
+              <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Destinataire</div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">
+                  {hasInviteToken
+                    ? sentRecipient || 'Equipe invitante'
+                    : formData.email_dest || 'A renseigner'}
+                </div>
+              </div>
+            </div>
           </div>
-          {selectedFormat === 'word' && (
-            <div className="space-y-3 rounded-lg border border-[#D3D1C7] bg-[#F9F7F2] p-4">
-              <label className="flex items-center gap-2 text-sm text-[#2C2C2A]">
-                <input
-                  type="checkbox"
-                  checked={protectWord}
-                  onChange={(e) => setProtectWord(e.target.checked)}
-                />
-                Protéger le document Word par mot de passe
-              </label>
-              {protectWord && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">
-                      Mot de passe du document <span className="text-[#712B13]">*</span>
-                    </label>
+
+          <div className="mt-5 space-y-3">
+            <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
+              <div className="text-sm font-semibold text-slate-900">Ce que cette etape permet</div>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                <li>Enregistrement des reponses dans Supabase.</li>
+                <li>Notification admin cote backend si le projet est configure.</li>
+                <li>Envoi de l export au format CSV, PDF ou Word.</li>
+                <li>Disponibilite du dossier dans le dashboard admin.</li>
+              </ul>
+            </div>
+
+            {(savedToDatabase || emailSent || error) && (
+              <div
+                className={`audit-note ${
+                  error ? 'audit-note-danger' : emailSent ? 'audit-note-success' : 'audit-note-info'
+                }`}
+              >
+                {error && <div className="font-medium text-red-900">{error}</div>}
+                {!error && savedToDatabase && !emailSent && (
+                  <div className="font-medium text-blue-900">
+                    Les reponses ont ete enregistrees et sont accessibles depuis le tableau de bord admin.
+                  </div>
+                )}
+                {!error && emailSent && (
+                <div className="font-medium text-emerald-900">
+                    L export a bien ete envoye a {sentRecipient || formData.email_dest || formData.c_email}.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="audit-card">
+          <div className="mb-5 border-b border-slate-900/8 pb-4">
+              <div className="text-sm font-semibold text-slate-900">Parametres de restitution</div>
+              <p className="mt-1 text-sm text-slate-500">
+              Choisissez le destinataire, le message d accompagnement et le format du livrable.
+              </p>
+            </div>
+
+          <div className="space-y-4">
+            {hasInviteToken ? (
+              <div className="audit-note audit-note-info">
+                Votre reponse partira vers la personne ou l equipe qui vous a invite.
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="mb-2 block">Email de destination</label>
+                  <input
+                    type="email"
+                    value={formData.email_dest}
+                    onChange={(event) => updateField('email_dest', event.target.value)}
+                    placeholder="ex: destinataire@entreprise.com"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block">Email en copie</label>
+                  <input
+                    type="email"
+                    value={formData.email_cc}
+                    onChange={(event) => updateField('email_cc', event.target.value)}
+                    placeholder="ex: collegue@entreprise.com"
+                  />
+                </div>
+              </>
+            )}
+
+            <div>
+              <label className="mb-2 block">Message d accompagnement</label>
+              <textarea
+                value={formData.email_msg}
+                onChange={(event) => updateField('email_msg', event.target.value)}
+                rows={3}
+                placeholder="ex: Ci-joint mon audit IA complete. Je reste disponible pour en discuter."
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block">Format du document</label>
+              <select
+                value={selectedFormat}
+                onChange={(event) => setSelectedFormat(event.target.value as 'csv' | 'pdf' | 'word')}
+              >
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+                <option value="word">Word (.docx)</option>
+              </select>
+            </div>
+
+            {selectedFormat === 'word' && (
+              <div className="rounded-[20px] border border-slate-900/8 bg-slate-50/85 p-4">
+                <label className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={protectWord}
+                    onChange={(event) => setProtectWord(event.target.checked)}
+                  />
+                    <span>Proteger le document Word par mot de passe</span>
+                  </label>
+
+                {protectWord && (
+                  <div className="mt-4">
+                    <label className="mb-2 block">Mot de passe du document</label>
                     <input
                       type="text"
                       value={documentPassword}
-                      onChange={(e) => setDocumentPassword(e.target.value)}
+                      onChange={(event) => setDocumentPassword(event.target.value)}
                       placeholder="ex: TransferAI-2026"
-                      className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm"
                     />
+                    <p className="mt-2 text-xs text-slate-500">
+                      Ce mot de passe n est pas stocke en base et doit etre communique separement.
+                    </p>
                   </div>
-                  <div className="text-xs text-[#6B7280]">
-                    Ce mot de passe n&apos;est pas enregistré dans la base. Il doit être communiqué séparément au destinataire.
-                  </div>
-                </>
-              )}
+                )}
+              </div>
+            )}
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <button
+                onClick={handleSubmitToDatabase}
+                disabled={sending || savedToDatabase}
+                className="audit-button audit-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {sending ? 'Enregistrement...' : savedToDatabase ? 'Donnees enregistrees' : 'Sauvegarder en base'}
+              </button>
+              <button
+                onClick={handleSendEmail}
+                disabled={sending || emailSent}
+                className="audit-button audit-button-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {sending ? 'Envoi en cours...' : emailSent ? 'Export envoye' : 'Sauvegarder et envoyer'}
+              </button>
             </div>
-          )}
-          <div className="flex gap-3">
-            <button
-              onClick={handleSubmitToDatabase}
-              disabled={sending || savedToDatabase}
-              className="flex-1 bg-[#185FA5] text-white py-3 rounded-lg text-sm font-semibold transition-all hover:bg-[#042C53] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sending ? 'Enregistrement...' : savedToDatabase ? 'Données enregistrées !' : 'Enregistrer dans la base de données'}
-            </button>
-            <button
-              onClick={handleSendEmail}
-              disabled={sending || emailSent}
-              className="flex-1 bg-[#0F6E56] text-white py-3 rounded-lg text-sm font-semibold transition-all hover:bg-[#3B6D11] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sending ? 'Envoi en cours...' : emailSent ? 'Email envoyé !' : 'Enregistrer + Envoyer par email'}
-            </button>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <button onClick={exportJSON} className="audit-button audit-button-secondary">
+                Exporter en JSON
+              </button>
+              <button onClick={handlePrint} className="audit-button audit-button-secondary">
+                Imprimer ou sauvegarder en PDF
+              </button>
+            </div>
           </div>
-          {savedToDatabase && (
-            <div className="bg-[#E6F1FB] border border-[#185FA5] rounded-lg p-4 text-center text-[#185FA5] font-medium">
-              ✓ Vos réponses ont été enregistrées dans la base de données et sont accessibles depuis le tableau de bord admin.
-            </div>
-          )}
-          {emailSent && (
-            <div className="bg-[#EAF3DE] border border-[#3B6D11] rounded-lg p-4 text-center text-[#3B6D11] font-medium">
-              ✓ Email envoyé avec succès à <strong>{sentRecipient || formData.email_dest || formData.c_email}</strong> — vérifiez la boîte de réception correspondante.
-            </div>
-          )}
-          {error && (
-            <div className="bg-[#FAECE7] border border-[#712B13] rounded-lg p-4 text-center text-[#712B13] text-sm">
-              {error}
-            </div>
-          )}
-        </div>
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={exportJSON}
-            className="flex-1 px-4 py-2 bg-white text-[#2C2C2A] border border-[#D3D1C7] rounded-lg text-sm font-medium transition-all hover:bg-[#F1EFE8]"
-          >
-            Exporter en JSON (sauvegarde)
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex-1 px-4 py-2 bg-white text-[#2C2C2A] border border-[#D3D1C7] rounded-lg text-sm font-medium transition-all hover:bg-[#F1EFE8]"
-          >
-            Imprimer / Sauvegarder en PDF
-          </button>
         </div>
       </div>
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button
-          onClick={() => setCurrentSection(9)}
-          className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-[#2C2C2A] border border-[#D3D1C7] transition-all hover:bg-[#F1EFE8]"
-        >
-          ← Retour
+      <div className="section-actions">
+        <button onClick={() => setCurrentSection(9)} className="audit-button audit-button-secondary">
+          Retour
         </button>
       </div>
     </div>

@@ -6,92 +6,102 @@ export default function Section6_Journal() {
   const { formData, updateField, setCurrentSection } = useForm();
   const profile = getCompetencyDomainProfile(formData.c_domaine);
 
+  const routineFields = [
+    { id: 'f_matin', label: 'En arrivant le matin', placeholder: profile.routinePrompts.morning },
+    { id: 'f_matinee', label: 'Pendant la matinee', placeholder: profile.routinePrompts.midday },
+    { id: 'f_apm', label: 'Apres-midi', placeholder: profile.routinePrompts.afternoon },
+    { id: 'f_soir', label: 'En fin de journee', placeholder: profile.routinePrompts.endOfDay },
+  ];
+
+  const cycleFields = [
+    { id: 'f_mois', label: 'Debut ou fin de mois', placeholder: profile.routinePrompts.month },
+    { id: 'f_trim', label: 'Taches trimestrielles', placeholder: profile.routinePrompts.quarter },
+    { id: 'f_annuel', label: 'Taches annuelles', placeholder: profile.routinePrompts.year },
+    { id: 'f_deplac', label: 'Deplacements ou coordination multisites', placeholder: profile.routinePrompts.travel },
+  ];
+
   return (
     <div>
-      <div className="border-l-4 border-[#185FA5] bg-[#E6F1FB] rounded-r-lg p-4 mb-6">
-        <h2 className="text-lg font-semibold text-[#042C53]">F — Journal de bord par rythme</h2>
-        <p className="text-sm text-[#185FA5] mt-1">Retrouvez les tâches oubliées en pensant à vos routines</p>
+      <div className="audit-section-header mb-6">
+        <span className="audit-pill bg-blue-100 text-blue-800">Section F</span>
+        <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
+          Journal de bord par rythme
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          Cette approche fait remonter les taches devenues invisibles parce qu elles sont integrees a la routine.
+        </p>
       </div>
 
-      <div className="border-l-4 border-[#0F6E56] bg-[#E1F5EE] rounded-r-lg p-4 mb-5 text-sm text-[#2C2C2A]">
-        Décrivez ce que vous faites à chaque moment. Cette approche permet de retrouver des tâches qu'on a tendance à oublier car elles sont devenues automatiques.
+      <div className="audit-note audit-note-success mb-5">
+        Pensez en sequences reelles : demarrage de journee, debut de semaine, cloture mensuelle,
+        missions, deplacements, arbitrages de fin de journee.
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">F.1 — Votre routine quotidienne</div>
-        <div className="space-y-3">
-          {[
-            { id: 'f_matin', label: 'En arrivant le matin (premières 30 minutes) :', placeholder: profile.routinePrompts.morning },
-            { id: 'f_matinee', label: 'Pendant la matinée :', placeholder: profile.routinePrompts.midday },
-            { id: 'f_apm', label: 'Après-midi :', placeholder: profile.routinePrompts.afternoon },
-            { id: 'f_soir', label: 'En fin de journée :', placeholder: profile.routinePrompts.endOfDay },
-          ].map((field) => (
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">F.1 - Routine quotidienne</div>
+        <div className="grid gap-4">
+          {routineFields.map((field) => (
             <div key={field.id}>
-              <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{field.label}</label>
+              <label className="mb-2 block">{field.label}</label>
               <textarea
                 value={getInputValue(formData[field.id])}
-                onChange={(e) => updateField(field.id, e.target.value)}
+                onChange={(event) => updateField(field.id, event.target.value)}
                 placeholder={field.placeholder}
                 rows={3}
-                className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
               />
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">F.2 — Routine hebdomadaire</div>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="audit-card mb-5">
+        <div className="mb-4 text-sm font-semibold text-slate-900">F.2 - Routine hebdomadaire</div>
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Début de semaine (lundi) :</label>
+            <label className="mb-2 block">Debut de semaine</label>
             <textarea
               value={formData.f_lundi}
-              onChange={(e) => updateField('f_lundi', e.target.value)}
+              onChange={(event) => updateField('f_lundi', event.target.value)}
               placeholder={profile.routinePrompts.monday}
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">Fin de semaine (vendredi) :</label>
+            <label className="mb-2 block">Fin de semaine</label>
             <textarea
               value={formData.f_vendredi}
-              onChange={(e) => updateField('f_vendredi', e.target.value)}
+              onChange={(event) => updateField('f_vendredi', event.target.value)}
               placeholder={profile.routinePrompts.friday}
               rows={3}
-              className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-5 mb-4">
-        <div className="text-sm font-semibold text-[#042C53] mb-3 pb-2 border-b border-[#F1EFE8]">F.3 — Routine mensuelle et trimestrielle</div>
-        <div className="space-y-3">
-          {[
-            { id: 'f_mois', label: 'Début du mois (clôtures, reporting, consolidations) :', placeholder: profile.routinePrompts.month },
-            { id: 'f_trim', label: 'Tâches trimestrielles / périodiques :', placeholder: profile.routinePrompts.quarter },
-            { id: 'f_annuel', label: 'Tâches annuelles (planification, budget, revues) :', placeholder: profile.routinePrompts.year },
-            { id: 'f_deplac', label: 'Tâches liées aux déplacements / coordination multi-sites :', placeholder: profile.routinePrompts.travel },
-          ].map((field) => (
+      <div className="audit-card">
+        <div className="mb-4 text-sm font-semibold text-slate-900">F.3 - Cycles mensuels et periodiques</div>
+        <div className="grid gap-4">
+          {cycleFields.map((field) => (
             <div key={field.id}>
-              <label className="block text-sm font-medium text-[#2C2C2A] mb-1.5">{field.label}</label>
+              <label className="mb-2 block">{field.label}</label>
               <textarea
                 value={getInputValue(formData[field.id])}
-                onChange={(e) => updateField(field.id, e.target.value)}
+                onChange={(event) => updateField(field.id, event.target.value)}
                 placeholder={field.placeholder}
                 rows={3}
-                className="w-full border border-[#D3D1C7] rounded-lg px-3 py-2 text-sm resize-y"
               />
             </div>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-3 mt-7 pt-5 border-t border-[#D3D1C7]">
-        <button onClick={() => setCurrentSection(5)} className="px-6 py-2.5 rounded-lg text-sm font-medium bg-white text-[#2C2C2A] border border-[#D3D1C7] transition-all hover:bg-[#F1EFE8]">← Retour</button>
-        <button onClick={() => setCurrentSection(7)} className="ml-auto px-6 py-2.5 rounded-lg text-sm font-medium bg-[#185FA5] text-white transition-all hover:bg-[#042C53]">Section suivante →</button>
+      <div className="section-actions">
+        <button onClick={() => setCurrentSection(5)} className="audit-button audit-button-secondary">
+          Retour
+        </button>
+        <button onClick={() => setCurrentSection(7)} className="audit-button audit-button-primary sm:ml-auto">
+          Section suivante
+        </button>
       </div>
     </div>
   );
