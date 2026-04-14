@@ -895,12 +895,19 @@ Deno.serve(async (req: Request) => {
       }
 
       if (!emailJsResult.success) {
+        const missingSecrets: string[] = [];
+        if (!Deno.env.get('RESEND_API_KEY')) missingSecrets.push('RESEND_API_KEY');
+        if (!Deno.env.get('EMAILJS_RETURN_SERVICE_ID') && !Deno.env.get('EMAILJS_SERVICE_ID')) missingSecrets.push('EMAILJS_SERVICE_ID (or EMAILJS_RETURN_SERVICE_ID)');
+        if (!Deno.env.get('EMAILJS_RETURN_TEMPLATE_ID') && !Deno.env.get('EMAILJS_TEMPLATE_ID')) missingSecrets.push('EMAILJS_TEMPLATE_ID (or EMAILJS_RETURN_TEMPLATE_ID)');
+        if (!Deno.env.get('EMAILJS_PUBLIC_KEY')) missingSecrets.push('EMAILJS_PUBLIC_KEY');
+
         return new Response(
           JSON.stringify({
             error: 'Failed to send form email',
             details: {
               resend: resendResult.error,
               emailjs: emailJsResult.error,
+              ...(missingSecrets.length > 0 && { missing_secrets: missingSecrets }),
             }
           }),
           {
