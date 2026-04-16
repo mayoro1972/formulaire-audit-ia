@@ -10,6 +10,35 @@ import {
   supabaseConfigMessage,
 } from '../lib/supabase';
 
+interface SendFormEmailErrorDetails {
+  resend?: string;
+  emailjs?: string;
+}
+
+function getFriendlyEmailFailureMessage(details?: SendFormEmailErrorDetails | null) {
+  const resendDetail = details?.resend || '';
+  const emailJsDetail = details?.emailjs || '';
+  const providerHints: string[] = [];
+
+  if (resendDetail.includes('domain is not verified')) {
+    providerHints.push("Le domaine d’envoi Resend n’est pas encore vérifié.");
+  }
+
+  if (emailJsDetail.includes('no Private Key was provided')) {
+    providerHints.push("La clé privée EmailJS n’est pas configurée côté backend.");
+  }
+
+  if (emailJsDetail.includes('Variables size limit')) {
+    providerHints.push("Le mode de secours EmailJS a dépassé sa limite de taille.");
+  }
+
+  if (providerHints.length > 0) {
+    return `Les réponses ont bien été enregistrées, mais l’email n’a pas pu être envoyé. ${providerHints.join(' ')}`;
+  }
+
+  return "Les réponses ont bien été enregistrées, mais l’email n’a pas pu être envoyé. Vérifiez la configuration des fournisseurs email (Resend / EmailJS).";
+}
+
 export default function Section10_Envoi() {
   const { formData, updateField, setCurrentSection, saveAll, submitToSupabase, resetForm } = useForm();
   const [sending, setSending] = useState(false);
@@ -106,6 +135,8 @@ export default function Section10_Envoi() {
         return;
       }
 
+      setSavedToDatabase(true);
+
       await notifyAdmin(result.responseId).catch((err) => console.log('Admin notification error:', err));
 
       const apiUrl = getSupabaseFunctionUrl('send-form-email');
@@ -122,14 +153,16 @@ export default function Section10_Envoi() {
         }),
       });
 
-      const responseData = await response.json();
+      const responseData = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(responseData.error || 'Email sending failed');
+        const friendlyMessage = getFriendlyEmailFailureMessage(
+          (responseData?.details as SendFormEmailErrorDetails | undefined) || null
+        );
+        throw new Error(friendlyMessage);
       }
 
       setEmailSent(true);
-      setSavedToDatabase(true);
       setSentRecipient(responseData.sent_to || '');
       saveAll();
       setShowSuccessModal(true);

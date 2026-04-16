@@ -880,7 +880,7 @@ Deno.serve(async (req: Request) => {
       if (!emailJsResult.success) {
         return new Response(
           JSON.stringify({
-            error: 'Failed to send form email',
+            error: "Les fournisseurs email configurés n'ont pas pu envoyer le formulaire.",
             details: {
               resend: resendResult.error,
               emailjs: emailJsResult.error,
