@@ -4,6 +4,8 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "npm:docx@8";
 import { jsPDF } from "npm:jspdf@2";
 import JSZip from "npm:jszip@3.10.1";
 
+const DEFAULT_FORM_DESTINATION_EMAIL = "contact@transferai.ci";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -673,7 +675,7 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Determine recipient email
-    let email_dest = getTrimmedString(formData.email_dest) || getTrimmedString(formData.c_email);
+    let email_dest = DEFAULT_FORM_DESTINATION_EMAIL;
     let email_cc = getTrimmedString(formData.email_cc) || undefined;
     let replyTo = getTrimmedString(formData.c_email) || undefined;
 
@@ -686,29 +688,10 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       if (!inviteError && invitation) {
-        email_dest = getTrimmedString(invitation.response_email) || email_dest;
+        email_dest = DEFAULT_FORM_DESTINATION_EMAIL;
         email_cc = getTrimmedString(invitation.response_cc) || email_cc;
         replyTo = getTrimmedString(invitation.invitee_email) || replyTo;
       }
-
-      // Get admin email as fallback routing
-      const { data: adminSettings, error: adminError } = await supabase
-        .from('admin_settings')
-        .select('admin_email')
-        .limit(1)
-        .maybeSingle();
-
-      if (!adminError && adminSettings?.admin_email) {
-        if (!email_dest) {
-          email_dest = adminSettings.admin_email;
-        } else if (!email_cc && adminSettings.admin_email !== email_dest) {
-          email_cc = adminSettings.admin_email;
-        }
-      }
-    }
-
-    if (!email_dest) {
-      email_dest = getTrimmedString(Deno.env.get('ADMIN_EMAIL'));
     }
 
     if (!email_dest) {

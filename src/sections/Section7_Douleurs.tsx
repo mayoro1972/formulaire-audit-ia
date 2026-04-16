@@ -12,13 +12,13 @@ export default function Section7_Douleurs() {
           Points de douleur et irritants
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          Les irritants les plus repetitifs sont souvent les meilleurs candidats a un pilote IA.
+          Les irritants les plus répétitifs sont souvent les meilleurs candidats à un pilote IA.
         </p>
       </div>
 
       <div className="audit-note audit-note-danger mb-5">
-        Decrivez ici ce qui use du temps, de l energie ou de la concentration, meme si cela semble
-        aujourd hui normal dans le poste.
+        Décrivez ici ce qui use du temps, de l’énergie ou de la concentration, même si cela semble
+        aujourd’hui normal dans le poste.
       </div>
 
       <div className="audit-card mb-5">
@@ -42,7 +42,7 @@ export default function Section7_Douleurs() {
                       type="text"
                       value={getInputValue(formData[`irr${index}_desc`])}
                       onChange={(event) => updateField(`irr${index}_desc`, event.target.value)}
-                      placeholder="Decrivez l irritant"
+                      placeholder="Décrivez l’irritant"
                     />
                   </td>
                   <td className="p-3">
@@ -58,9 +58,9 @@ export default function Section7_Douleurs() {
                       value={getInputValue(formData[`irr${index}_s`])}
                       onChange={(event) => updateField(`irr${index}_s`, event.target.value)}
                     >
-                      <option value="">A estimer</option>
+                      <option value="">À estimer</option>
                       <option>Oui, clairement</option>
-                      <option>Peut-etre</option>
+                      <option>Peut-être</option>
                       <option>Je ne sais pas</option>
                     </select>
                   </td>
@@ -73,7 +73,7 @@ export default function Section7_Douleurs() {
 
       <div className="audit-card mb-5">
         <div className="mb-4 text-sm font-semibold text-slate-900">G.2 - Doublons et redondances</div>
-        <label className="mb-2 block">Quelles taches sont faites deux fois ou plus ?</label>
+        <label className="mb-2 block">Quelles tâches sont faites deux fois ou plus ?</label>
         <textarea
           value={formData.g_doublons}
           onChange={(event) => updateField('g_doublons', event.target.value)}
@@ -83,7 +83,7 @@ export default function Section7_Douleurs() {
 
       <div className="audit-card">
         <div className="mb-4 text-sm font-semibold text-slate-900">G.3 - Travail hors horaires</div>
-        <label className="mb-2 block">Quelles taches se deplacent le soir, la nuit ou le week-end ?</label>
+        <label className="mb-2 block">Quelles tâches se déplacent le soir, la nuit ou le week-end ?</label>
         <textarea
           value={formData.g_nuit}
           onChange={(event) => updateField('g_nuit', event.target.value)}

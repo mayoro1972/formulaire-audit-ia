@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Mail, Plus, Send, ShieldCheck, Trash2, UserRound } from 'lucide-react';
-import { isSupabaseConfigured, supabase, supabaseConfigMessage } from '../lib/supabase';
+import {
+  getSupabaseFunctionHeaders,
+  getSupabaseFunctionUrl,
+  isSupabaseConfigured,
+  supabase,
+  supabaseConfigMessage,
+} from '../lib/supabase';
 import { useForm } from '../context/formContextCore';
+import { DEFAULT_FORM_DESTINATION_EMAIL } from '../lib/emailRouting';
 import { createInvitationDraft, hasDraftContent } from '../lib/formDefaults';
 import type { Database } from '../lib/database.types';
 import { buildInviteUrl } from '../lib/appUrl';
@@ -27,16 +34,15 @@ function generateSecureInviteToken() {
 export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const { formData, saveAll } = useForm();
   const initialRoutingRef = useRef({
-    responseEmail: formData.email_dest,
+    responseEmail: DEFAULT_FORM_DESTINATION_EMAIL,
     responseCc: formData.email_cc,
     includeDraft: hasDraftContent(formData),
   });
-  const responseEmailEditedRef = useRef(false);
   const responseCcEditedRef = useRef(false);
   const includeDraftEditedRef = useRef(false);
 
   const [invitees, setInvitees] = useState<Invitee[]>([{ name: '', email: '' }]);
-  const [responseEmail, setResponseEmail] = useState(formData.email_dest || 'contact@transferai.ci');
+  const [responseEmail, setResponseEmail] = useState(DEFAULT_FORM_DESTINATION_EMAIL);
   const [responseCc, setResponseCc] = useState('');
   const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
   const [sending, setSending] = useState(false);
@@ -48,9 +54,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
-      setResponseEmail((currentValue) =>
-        responseEmailEditedRef.current ? currentValue : initialRoutingRef.current.responseEmail || ''
-      );
+      setResponseEmail(DEFAULT_FORM_DESTINATION_EMAIL);
       setResponseCc((currentValue) =>
         responseCcEditedRef.current ? currentValue : initialRoutingRef.current.responseCc || ''
       );
@@ -69,11 +73,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
         if (!isMounted) return;
 
-        setResponseEmail((currentValue) =>
-          responseEmailEditedRef.current
-            ? currentValue
-            : initialRoutingRef.current.responseEmail || adminSettings?.admin_email || ''
-        );
+        setResponseEmail(initialRoutingRef.current.responseEmail || adminSettings?.admin_email || DEFAULT_FORM_DESTINATION_EMAIL);
         setResponseCc((currentValue) =>
           responseCcEditedRef.current ? currentValue : initialRoutingRef.current.responseCc || ''
         );
@@ -82,9 +82,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
         );
       } catch {
         if (!isMounted) return;
-        setResponseEmail((currentValue) =>
-          responseEmailEditedRef.current ? currentValue : initialRoutingRef.current.responseEmail || ''
-        );
+        setResponseEmail(DEFAULT_FORM_DESTINATION_EMAIL);
         setResponseCc((currentValue) =>
           responseCcEditedRef.current ? currentValue : initialRoutingRef.current.responseCc || ''
         );
@@ -127,7 +125,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
     }
 
     if (!responseEmail.trim()) {
-      setError("Veuillez renseigner l email qui recevra les formulaires completes.");
+      setError("Veuillez renseigner l’email qui recevra les formulaires complétés.");
       return;
     }
 
@@ -153,22 +151,23 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
       if (insertError) {
         if (insertError.code === '23505') {
-          setError('Un ou plusieurs emails existent deja dans les invitations.');
+          setError('Un ou plusieurs emails existent déjà dans les invitations.');
         } else {
-          setError(`Erreur lors de la creation: ${insertError.message || 'Erreur inconnue'}`);
+          setError(`Erreur lors de la création : ${insertError.message || 'Erreur inconnue'}`);
         }
         setSending(false);
         return;
       }
 
       if (!data || data.length === 0) {
-        setError("Aucune invitation n'a ete creee.");
+        setError("Aucune invitation n'a été créée.");
         setSending(false);
         return;
       }
 
       const createdInvitations = data as Database['public']['Tables']['form_invitations']['Row'][];
-      const edgeFunctionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invitation-email`;
+      const edgeFunctionUrl = getSupabaseFunctionUrl('send-invitation-email');
+      const functionHeaders = await getSupabaseFunctionHeaders();
 
       let successCount = 0;
       let failureCount = 0;
@@ -180,10 +179,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
         try {
           const response = await fetch(edgeFunctionUrl, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
+            headers: functionHeaders,
             body: JSON.stringify({
               invitee_name: invitation.invitee_name,
               invitee_email: invitation.invitee_email,
@@ -219,12 +215,12 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
       }
 
       if (failureCount > 0) {
-        const errorDetail = errorMessages.length > 0 ? `\n\nDetails: ${errorMessages.join('; ')}` : '';
-        setError(`${successCount} email(s) envoye(s), ${failureCount} echec(s).${errorDetail}`);
+        const errorDetail = errorMessages.length > 0 ? `\n\nDétails : ${errorMessages.join('; ')}` : '';
+        setError(`${successCount} email(s) envoyé(s), ${failureCount} échec(s).${errorDetail}`);
       }
     } catch (err) {
       console.error('Error sending invitations:', err);
-      setError('Erreur lors de la creation des invitations.');
+      setError('Erreur lors de la création des invitations.');
     } finally {
       setSending(false);
     }
@@ -244,8 +240,8 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                 Envoyer des invitations nominatives
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Creez des liens uniques, choisissez l email de retour et decidez si le client doit
-                recevoir un brouillon deja pre-rempli.
+                Créez des liens uniques, choisissez l’email de retour et décidez si le client doit
+                recevoir un brouillon déjà prérempli.
               </p>
             </div>
 
@@ -260,7 +256,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
         {!isSupabaseConfigured && (
           <div className="audit-note audit-note-warn mb-6">
-            <div className="font-semibold text-amber-900">Backend non configure</div>
+            <div className="font-semibold text-amber-900">Backend non configuré</div>
             <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
           </div>
         )}
@@ -272,10 +268,10 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                 <div>
                   <div className="text-sm font-semibold text-slate-900">Destinataires</div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Saisissez les contacts a inviter dans le parcours d audit.
+                    Saisissez les contacts à inviter dans le parcours d’audit.
                   </p>
                 </div>
-                <span className="audit-pill bg-blue-100 text-blue-800">{validInvitees.length} pret(s) a envoyer</span>
+                <span className="audit-pill bg-blue-100 text-blue-800">{validInvitees.length} prêt(s) à envoyer</span>
               </div>
 
               <div className="space-y-4">
@@ -288,7 +284,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                         </div>
                         <div>
                           <div className="text-sm font-semibold text-slate-900">Destinataire {index + 1}</div>
-                          <div className="text-xs text-slate-500">Lien d invitation unique</div>
+                          <div className="text-xs text-slate-500">Lien d’invitation unique</div>
                         </div>
                       </div>
 
@@ -335,26 +331,22 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
             <div className="audit-card">
               <div className="mb-5 border-b border-slate-900/8 pb-4">
-                <div className="text-sm font-semibold text-slate-900">Routage des reponses</div>
-                <p className="mt-1 text-sm text-slate-500">
-                  Choisissez ou le formulaire complete sera retourne.
-                </p>
+                  <div className="text-sm font-semibold text-slate-900">Routage des réponses</div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Choisissez où le formulaire complété sera retourné.
+                  </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block">Email recevant le formulaire complete</label>
+                  <label className="mb-2 block">Email recevant le formulaire complété</label>
                   <input
                     type="email"
                     value={responseEmail}
-                    onChange={(event) => {
-                      responseEmailEditedRef.current = true;
-                      setResponseEmail(event.target.value);
-                    }}
-                    placeholder="ex: equipe.audit@entreprise.com"
+                    readOnly
                   />
                   <p className="mt-2 text-xs text-slate-500">
-                    Adresse principale de reception cote auditeur.
+                    Les formulaires complétés sont routés automatiquement vers {DEFAULT_FORM_DESTINATION_EMAIL}.
                   </p>
                 </div>
                 <div>
@@ -369,7 +361,7 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                     placeholder="ex: supervision@entreprise.com"
                   />
                   <p className="mt-2 text-xs text-slate-500">
-                    Copie informative du formulaire complete.
+                    Copie informative du formulaire complété.
                   </p>
                 </div>
               </div>
@@ -377,9 +369,9 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
             <div className="audit-card">
               <div className="mb-5 border-b border-slate-900/8 pb-4">
-                <div className="text-sm font-semibold text-slate-900">Message personnalise</div>
+                <div className="text-sm font-semibold text-slate-900">Message personnalisé</div>
                 <p className="mt-1 text-sm text-slate-500">
-                  Ce texte sera ajoute dans l email d invitation apres le lien.
+                  Ce texte sera ajouté dans l’email d’invitation après le lien.
                 </p>
               </div>
 
@@ -409,8 +401,8 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                   </div>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     {hasCurrentDraft
-                      ? 'Le client ouvrira le lien avec le brouillon actuel deja pre-rempli et pourra le completer.'
-                      : "Aucun brouillon significatif n'a encore ete saisi dans le formulaire principal."}
+                      ? 'Le client ouvrira le lien avec le brouillon actuel déjà prérempli et pourra le compléter.'
+                      : "Aucun brouillon significatif n'a encore été saisi dans le formulaire principal."}
                   </p>
                 </div>
               </label>
@@ -419,13 +411,13 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
           <div className="space-y-6">
             <div className="audit-card">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Synthese envoi</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Synthèse envoi</div>
               <div className="display-font mt-2 text-4xl font-semibold text-slate-950">{validInvitees.length}</div>
-              <div className="mt-2 text-sm text-slate-500">invitation(s) prêtes.</div>
+              <div className="mt-2 text-sm text-slate-500">invitation(s) prête(s).</div>
 
               <div className="mt-5 space-y-3">
                 <div className="rounded-[20px] border border-slate-900/8 bg-white/75 px-4 py-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Email retour</div>
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Email de retour</div>
                   <div className="mt-1 text-sm font-semibold text-slate-900">{responseEmail || 'A renseigner'}</div>
                 </div>
                 <div className="rounded-[20px] border border-slate-900/8 bg-white/75 px-4 py-4">
@@ -446,9 +438,9 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
 
             {success && (
               <div className="audit-note audit-note-success">
-                <div className="font-semibold text-emerald-900">Invitations envoyees</div>
+                <div className="font-semibold text-emerald-900">Invitations envoyées</div>
                 <p className="mt-1 text-emerald-950/80">
-                  Les destinataires vont recevoir leurs emails d invitation.
+                  Les destinataires vont recevoir leurs emails d’invitation.
                 </p>
               </div>
             )}
@@ -467,14 +459,14 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                 <div>
                   <div className="text-sm font-semibold text-slate-900">Comment le flux fonctionne</div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Les invitations sont stockees en base puis expédiees via l Edge Function.
+                    Les invitations sont stockées en base puis expédiées via l’Edge Function.
                   </p>
                 </div>
               </div>
               <ul className="space-y-2 text-sm leading-6 text-slate-600">
-                <li>Chaque invitation genere un lien unique.</li>
-                <li>Le formulaire pre-remplit nom, email et eventuel brouillon.</li>
-                <li>Quand le client soumet, le dossier repart vers l email de retour configure.</li>
+                <li>Chaque invitation génère un lien unique.</li>
+                <li>Le formulaire préremplit le nom, l’email et l’éventuel brouillon.</li>
+                <li>Quand le client soumet, le dossier repart vers l’email de retour configuré.</li>
                 <li>Toutes les soumissions restent visibles dans le dashboard admin.</li>
               </ul>
             </div>
@@ -485,9 +477,9 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">Lien genere</div>
+                  <div className="text-sm font-semibold text-slate-900">Lien généré</div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Exemple de structure pour verifier le parcours.
+                    Exemple de structure pour vérifier le parcours.
                   </p>
                 </div>
               </div>

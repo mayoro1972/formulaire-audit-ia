@@ -3,24 +3,24 @@ import { Copy, Mail, Sparkles } from 'lucide-react';
 export default function InvitationEmail() {
   const appUrl = window.location.href;
 
-  const emailSubject = encodeURIComponent("Formulaire d'Audit IA - A completer");
+  const emailSubject = encodeURIComponent("Formulaire d'audit IA - À compléter");
   const emailBody = encodeURIComponent(`Bonjour,
 
-Veuillez completer le formulaire d'audit IA via le lien ci-dessous :
+Veuillez compléter le formulaire d'audit IA via le lien ci-dessous :
 
 ${appUrl}
 
 Le formulaire :
 - se sauvegarde automatiquement
-- peut etre rempli en plusieurs fois
-- prend environ 30 a 45 minutes
-- couvre 9 sections metier plus un recapitulatif
+- peut être rempli en plusieurs fois
+- prend environ 30 à 45 minutes
+- couvre 9 sections métier plus un récapitulatif
 
 Instructions :
 1. Ouvrez le lien
-2. Renseignez les sections dans l'ordre souhaite
+2. Renseignez les sections dans l'ordre souhaité
 3. Sauvegardez ou reprenez si besoin
-4. Terminez par l'etape d'envoi et recapitulatif
+4. Terminez par l'étape d'envoi et de récapitulatif
 
 Cordialement`);
 
@@ -35,7 +35,7 @@ Cordialement`);
         <div>
           <div className="text-sm font-semibold text-slate-900">Partager ce formulaire</div>
           <div className="mt-1 text-xs leading-5 text-slate-500">
-            Envoyez un lien propre et contextualise a votre contact.
+            Envoyez un lien propre et contextualisé à votre contact.
           </div>
         </div>
       </div>
@@ -52,7 +52,7 @@ Cordialement`);
         <button
           onClick={() => {
             navigator.clipboard.writeText(appUrl);
-            alert('Lien copie dans le presse-papiers.');
+            alert('Lien copié dans le presse-papiers.');
           }}
           className="audit-button audit-button-secondary w-full"
         >

@@ -1,4 +1,5 @@
 import { CheckCircle, RotateCcw, X } from 'lucide-react';
+import { DEFAULT_FORM_DESTINATION_EMAIL } from '../lib/emailRouting';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -44,8 +45,8 @@ export default function SuccessModal({
               <CheckCircle className="h-7 w-7" />
             </div>
             <div>
-              <h2 className="display-font text-2xl font-semibold">Formulaire soumis avec succes</h2>
-              <p className="mt-1 text-sm text-white/70">Le dossier est enregistre et pret a etre exploite.</p>
+              <h2 className="display-font text-2xl font-semibold">Formulaire soumis avec succès</h2>
+              <p className="mt-1 text-sm text-white/70">Le dossier est enregistré et prêt à être exploité.</p>
             </div>
           </div>
 
@@ -58,14 +59,14 @@ export default function SuccessModal({
           <div className="audit-note audit-note-success">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="text-sm font-semibold text-emerald-900">Soumission enregistree</div>
+                <div className="text-sm font-semibold text-emerald-900">Soumission enregistrée</div>
                 <p className="mt-1 text-sm text-emerald-950/80">
-                  Taux de completion : <strong>{completionPercentage}%</strong>
+                  Taux de complétion : <strong>{completionPercentage}%</strong>
                 </p>
               </div>
               {emailSent && (
                 <div className="rounded-[18px] border border-emerald-200 bg-white/80 px-4 py-3 text-sm text-slate-700">
-                  Email envoye a <strong>{sentRecipient || formData.email_dest || formData.c_email || 'la destination configuree'}</strong>
+                  Email envoyé à <strong>{sentRecipient || DEFAULT_FORM_DESTINATION_EMAIL}</strong>
                 </div>
               )}
             </div>
@@ -73,7 +74,7 @@ export default function SuccessModal({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="audit-card !p-5">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Repondant</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Répondant</div>
               <div className="mt-3 space-y-3 text-sm text-slate-600">
                 <div>
                   <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Nom</div>
@@ -91,19 +92,19 @@ export default function SuccessModal({
             </div>
 
             <div className="audit-card !p-5">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Perimetre</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Périmètre</div>
               <div className="mt-3 space-y-3 text-sm text-slate-600">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Entite</div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Entité</div>
                   <div className="mt-1 font-semibold text-slate-900">{formData.c_entite || '-'}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Taches libres</div>
-                  <div className="mt-1 font-semibold text-slate-900">{formData.libreRowCount || 0} taches</div>
+                  <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Tâches libres</div>
+                  <div className="mt-1 font-semibold text-slate-900">{formData.libreRowCount || 0} tâches</div>
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-[0.12em] text-slate-400">Destinataire</div>
-                  <div className="mt-1 font-semibold text-slate-900">{formData.email_dest || formData.c_email || '-'}</div>
+                  <div className="mt-1 font-semibold text-slate-900">{sentRecipient || DEFAULT_FORM_DESTINATION_EMAIL}</div>
                 </div>
               </div>
             </div>
@@ -112,10 +113,10 @@ export default function SuccessModal({
           <div className="audit-card !p-5">
             <div className="text-sm font-semibold text-slate-900">Que se passe-t-il maintenant ?</div>
             <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-              <li>Les donnees sont sauvegardees dans la base si le backend est configure.</li>
+              <li>Les données sont sauvegardées dans la base si le backend est configuré.</li>
               <li>Le dossier devient consultable depuis le tableau de bord admin.</li>
-              {emailSent && <li>Un email recapitulatif a ete envoye a l adresse configuree.</li>}
-              <li>Vous pouvez encore modifier la reponse et soumettre a nouveau si necessaire.</li>
+              {emailSent && <li>Un email récapitulatif a été envoyé à l’adresse configurée.</li>}
+              <li>Vous pouvez encore modifier la réponse et soumettre à nouveau si nécessaire.</li>
             </ul>
           </div>
 

@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { FormData, FormFieldValue } from '../types/form';
-import { supabase } from '../lib/supabase';
 import { createInitialFormData, mergeWithInitialFormData } from '../lib/formDefaults';
 import { getAppBaseUrl } from '../lib/appUrl';
+import {
+  getSupabaseFunctionHeaders,
+  getSupabaseFunctionUrl,
+  isSupabaseConfigured,
+  supabaseConfigMessage,
+} from '../lib/supabase';
 import { FormContext, LoadFormDataOptions, SubmitResult } from './formContextCore';
 
 const SAVE_KEY = 'audit_ia_gerard_v2';
 const SESSION_KEY = 'audit_session_id';
+const RESPONSE_ID_KEY = 'audit_response_id';
 
 function createStableRandomId(prefix: string): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -42,7 +48,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
 
   const [saveStatus, setSaveStatus] = useState('Non sauvegardé');
   const [currentSection, setCurrentSection] = useState(0);
-  const [responseId, setResponseId] = useState<string | null>(null);
+  const [responseId, setResponseId] = useState<string | null>(() => localStorage.getItem(RESPONSE_ID_KEY));
   const [sessionId] = useState<string>(getOrCreateSessionId());
   const autoSaveTimerRef = useRef<number | null>(null);
   const hasHydratedRef = useRef(false);
@@ -95,6 +101,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
 
     if (options.clearResponseId ?? options.reset) {
       setResponseId(null);
+      localStorage.removeItem(RESPONSE_ID_KEY);
     }
 
     if (typeof options.section === 'number') {
@@ -104,79 +111,46 @@ export function FormProvider({ children }: { children: ReactNode }) {
 
   const submitToSupabase = useCallback(async (): Promise<SubmitResult> => {
     try {
+      if (!isSupabaseConfigured) {
+        return { success: false, error: supabaseConfigMessage };
+      }
+
       const completionPercentage = calculateCompletionPercentage(formData);
       const urlParams = new URLSearchParams(window.location.search);
       const inviteToken = urlParams.get('invite') || '';
-      let targetResponseId = responseId;
+      const response = await fetch(getSupabaseFunctionUrl('save-form-response'), {
+        method: 'POST',
+        headers: await getSupabaseFunctionHeaders(),
+        body: JSON.stringify({
+          formData,
+          completionPercentage,
+          sessionId,
+          inviteToken: inviteToken || undefined,
+          responseId: responseId || undefined,
+        }),
+      });
+      const result = await response.json().catch(() => null);
 
-      const payload = {
-        user_name: formData.c_nom || '',
-        user_email: formData.c_email || '',
-        user_position: formData.c_poste || '',
-        user_entity: formData.c_entite || '',
-        form_data: formData,
-        is_completed: completionPercentage >= 80,
-        completion_percentage: completionPercentage,
-        session_id: sessionId,
-        invitation_token: inviteToken,
-      };
-
-      if (!targetResponseId) {
-        const existingResponseQuery = supabase
-          .from('form_responses')
-          .select('id')
-          .order('submitted_at', { ascending: false })
-          .limit(1);
-
-        const { data: existingResponse, error: existingError } = inviteToken
-          ? await existingResponseQuery.eq('invitation_token', inviteToken).maybeSingle()
-          : await existingResponseQuery.eq('session_id', sessionId).maybeSingle();
-
-        if (existingError) throw existingError;
-        if (existingResponse?.id) {
-          targetResponseId = existingResponse.id;
-          setResponseId(existingResponse.id);
-        }
+      if (!response.ok || !result?.responseId) {
+        throw new Error(result?.error || 'Impossible d’enregistrer la réponse.');
       }
 
-      if (targetResponseId) {
-        const { error } = await supabase
-          .from('form_responses')
-          .update(payload)
-          .eq('id', targetResponseId);
-
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('form_responses')
-          .insert(payload)
-          .select('id')
-          .single();
-
-        if (error) throw error;
-        if (data) {
-          targetResponseId = data.id;
-          setResponseId(data.id);
-        }
-      }
-
-      if (inviteToken && targetResponseId) {
-        await supabase
-          .from('form_invitations')
-          .update({
-            status: 'completed',
-            response_id: targetResponseId,
-          })
-          .eq('invite_token', inviteToken);
-      }
-
+      const targetResponseId = String(result.responseId);
+      setResponseId(targetResponseId);
+      localStorage.setItem(RESPONSE_ID_KEY, targetResponseId);
       setSaveStatus(`Envoyé à Supabase ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`);
-      return { success: true, responseId: targetResponseId || '' };
+      return { success: true, responseId: targetResponseId };
     } catch (error) {
       console.error('Error submitting to Supabase:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }, [calculateCompletionPercentage, formData, responseId, sessionId]);
+
+  useEffect(() => {
+    if (responseId) {
+      localStorage.setItem(RESPONSE_ID_KEY, responseId);
+    }
+  }, [responseId]);
 
   const updateField = useCallback((field: string, value: FormFieldValue) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -188,6 +162,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
     setResponseId(null);
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(RESPONSE_ID_KEY);
     setSaveStatus('Formulaire réinitialisé');
     window.location.href = getAppBaseUrl();
   }, []);

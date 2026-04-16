@@ -7,8 +7,8 @@ export default function Navbar() {
   const { saveStatus, saveAll, formData } = useForm();
   const profile = getCompetencyDomainProfile(formData.c_domaine);
   const progress = calculateOverallProgress(formData);
-  const activeLabel = formData.c_poste?.trim() || profile.label || 'Audit metier';
-  const activeEntity = formData.c_entite?.trim() || 'Session en preparation';
+  const activeLabel = formData.c_poste?.trim() || profile.label || 'Audit métier';
+  const activeEntity = formData.c_entite?.trim() || 'Session en préparation';
 
   return (
     <div className="sticky top-0 z-50 px-3 pt-3 md:px-5 md:pt-4">
@@ -23,11 +23,11 @@ export default function Navbar() {
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/72">
               <span className="inline-flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4" />
-                Questionnaire adapte au domaine choisi
+                Questionnaire adapté au domaine choisi
               </span>
               <span className="inline-flex items-center gap-2">
                 <Database className="h-4 w-4" />
-                {progress.done}/{progress.total} etapes bien renseignees
+                {progress.done}/{progress.total} étapes bien renseignées
               </span>
             </div>
           </div>
@@ -49,7 +49,7 @@ export default function Navbar() {
 
             <button onClick={saveAll} className="audit-button audit-button-primary w-full border-0">
               <Save className="h-4 w-4" />
-              Sauvegarder mes reponses
+              Sauvegarder mes réponses
             </button>
           </div>
         </div>

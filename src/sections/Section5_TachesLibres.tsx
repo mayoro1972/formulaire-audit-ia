@@ -15,17 +15,17 @@ export default function Section5_TachesLibres() {
       <div className="audit-section-header mb-6">
         <span className="audit-pill bg-blue-100 text-blue-800">Section E</span>
         <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
-          Taches non encore mentionnees
+          Tâches non encore mentionnées
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          C est ici que l audit capture les angles morts du metier : routines discretes, validations
-          manuelles, relectures, deplacements, rattrapages et taches atypiques.
+          C’est ici que l’audit capture les angles morts du métier : routines discrètes, validations
+          manuelles, relectures, déplacements, rattrapages et tâches atypiques.
         </p>
       </div>
 
       <div className="audit-note audit-note-danger mb-5">
-        <strong className="text-red-900">Instruction :</strong> ne filtrez pas. Une tache banale ou
-        ponctuelle peut reveler une opportunite IA importante.
+        <strong className="text-red-900">Instruction :</strong> ne filtrez pas. Une tâche banale ou
+        ponctuelle peut révéler une opportunité IA importante.
       </div>
 
       <div className="audit-card">
@@ -33,7 +33,7 @@ export default function Section5_TachesLibres() {
           <div>
             <div className="text-sm font-semibold text-slate-900">E.1 - Inventaire libre</div>
             <p className="mt-1 text-sm text-slate-500">
-              Ajoutez autant de lignes que necessaire pour decrire la realite terrain.
+              Ajoutez autant de lignes que nécessaire pour décrire la réalité terrain.
             </p>
           </div>
           <span className="audit-pill bg-emerald-100 text-emerald-800">{formData.libreRowCount} lignes</span>
@@ -45,8 +45,8 @@ export default function Section5_TachesLibres() {
               <tr>
                 <th className="p-3 text-left text-xs font-semibold">#</th>
                 <th className="p-3 text-left text-xs font-semibold">Description</th>
-                <th className="p-3 text-left text-xs font-semibold">Frequence</th>
-                <th className="p-3 text-left text-xs font-semibold">Duree</th>
+                <th className="p-3 text-left text-xs font-semibold">Fréquence</th>
+                <th className="p-3 text-left text-xs font-semibold">Durée</th>
                 <th className="p-3 text-left text-xs font-semibold">Automatisable ?</th>
               </tr>
             </thead>
@@ -61,7 +61,7 @@ export default function Section5_TachesLibres() {
                         type="text"
                         value={getInputValue(formData[`lib_d${index}`])}
                         onChange={(event) => updateField(`lib_d${index}`, event.target.value)}
-                        placeholder="Decrivez la tache en detail"
+                        placeholder="Décrivez la tâche en détail"
                       />
                     </td>
                     <td className="p-3">
@@ -105,7 +105,7 @@ export default function Section5_TachesLibres() {
         </div>
 
         <button onClick={addLibreRow} className="audit-button audit-button-ghost mt-5">
-          Ajouter une tache
+          Ajouter une tâche
         </button>
       </div>
 

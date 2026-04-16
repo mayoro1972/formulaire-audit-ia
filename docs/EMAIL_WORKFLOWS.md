@@ -101,8 +101,8 @@ Le formulaire complété, lui, est renvoyé vers `response_email` et éventuelle
 
 Le destinataire est déterminé comme suit :
 
-- mode invitation : email récupéré depuis `form_invitations.response_email`
-- mode standard : `formData.email_dest`, avec fallback `formData.c_email`
+- tous les formulaires complétés sont désormais routés vers `contact@transferai.ci`
+- `response_cc` ou `formData.email_cc` peuvent encore être utilisés pour ajouter une copie selon le contexte
 
 ### Copie email
 

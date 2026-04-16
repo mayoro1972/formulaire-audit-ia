@@ -1,5 +1,6 @@
 import { Settings2, SendHorizontal } from 'lucide-react';
 import { useState } from 'react';
+import AdminAccessGate from './components/AdminAccessGate';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import { FormProvider } from './context/FormContext';
@@ -34,11 +35,27 @@ function AppContent({ invitationToken }: AppContentProps) {
   const progress = calculateOverallProgress(formData);
 
   if (showAdmin) {
-    return <AdminDashboard onBack={() => setShowAdmin(false)} />;
+    return (
+      <AdminAccessGate
+        title="Accès au tableau de bord admin"
+        description="Connexion requise pour consulter les réponses, les exports et les paramètres."
+        onBack={() => setShowAdmin(false)}
+      >
+        <AdminDashboard onBack={() => setShowAdmin(false)} />
+      </AdminAccessGate>
+    );
   }
 
   if (showInvitations) {
-    return <SendInvitations onBack={() => setShowInvitations(false)} />;
+    return (
+      <AdminAccessGate
+        title="Accès à l’envoi d’invitations"
+        description="Connexion admin requise pour générer des liens nominatifs et piloter les retours."
+        onBack={() => setShowInvitations(false)}
+      >
+        <SendInvitations onBack={() => setShowInvitations(false)} />
+      </AdminAccessGate>
+    );
   }
 
   return (
@@ -59,7 +76,7 @@ function AppContent({ invitationToken }: AppContentProps) {
             <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
               <section className="audit-section-header">
                 <div className="mb-4 flex flex-wrap items-center gap-2">
-                  <span className="audit-pill bg-blue-100 text-blue-800">Etape {currentMeta.code}</span>
+                  <span className="audit-pill bg-blue-100 text-blue-800">Étape {currentMeta.code}</span>
                   <span className="audit-pill bg-amber-100 text-amber-800">{profile.label}</span>
                 </div>
                 <div className="display-font text-3xl font-semibold text-slate-950 md:text-4xl">
@@ -67,33 +84,33 @@ function AppContent({ invitationToken }: AppContentProps) {
                 </div>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-[15px]">
                   {currentMeta.description} Cette vue garde le cadre du README :
-                  collecte structuree, sauvegarde navigateur, persistence Supabase,
+                  collecte structurée, sauvegarde navigateur, persistance Supabase,
                   invitations nominatives et export final.
                 </p>
               </section>
 
               <aside className="audit-soft-card">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Synthese session
+                  Synthèse de session
                 </div>
                 <div className="mt-3 display-font text-4xl font-semibold text-slate-950">
                   {progress.overall}%
                 </div>
                 <div className="mt-1 text-sm text-slate-600">
-                  {progress.done} etapes bien renseignees sur {progress.total}
+                  {progress.done} étapes bien renseignées sur {progress.total}
                 </div>
                 <div className="mt-5 space-y-3 text-sm text-slate-600">
                   <div className="rounded-2xl border border-slate-900/8 bg-white/70 px-4 py-3">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Repondant</div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Répondant</div>
                     <div className="mt-1 font-semibold text-slate-900">
-                      {formData.c_nom?.trim() || 'A completer'}
+                      {formData.c_nom?.trim() || 'À compléter'}
                     </div>
                     <div className="mt-1 text-xs text-slate-500">{formData.c_email?.trim() || 'Aucun email'}</div>
                   </div>
                   <div className="rounded-2xl border border-slate-900/8 bg-white/70 px-4 py-3">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Perimetre</div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Périmètre</div>
                     <div className="mt-1 font-semibold text-slate-900">
-                      {formData.c_entite?.trim() || 'Entite non renseignee'}
+                      {formData.c_entite?.trim() || 'Entité non renseignée'}
                     </div>
                     <div className="mt-1 text-xs text-slate-500">{formData.c_poste?.trim() || profile.summary}</div>
                   </div>
@@ -147,9 +164,14 @@ function AppContent({ invitationToken }: AppContentProps) {
 
 interface AppProps {
   invitationToken?: string | null;
+  withProvider?: boolean;
 }
 
-export default function App({ invitationToken }: AppProps = {}) {
+export default function App({ invitationToken, withProvider = true }: AppProps = {}) {
+  if (!withProvider) {
+    return <AppContent invitationToken={invitationToken} />;
+  }
+
   return (
     <FormProvider>
       <AppContent invitationToken={invitationToken} />

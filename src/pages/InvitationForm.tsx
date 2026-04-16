@@ -2,16 +2,26 @@ import { useState, useEffect, useCallback } from 'react';
 import { ArrowRight, MailCheck, ShieldAlert } from 'lucide-react';
 import { FormProvider } from '../context/FormContext';
 import { useForm } from '../context/formContextCore';
-import { isSupabaseConfigured, supabase, supabaseConfigMessage } from '../lib/supabase';
-import type { Database } from '../lib/database.types';
+import {
+  getSupabaseFunctionHeaders,
+  getSupabaseFunctionUrl,
+  isSupabaseConfigured,
+  supabaseConfigMessage,
+} from '../lib/supabase';
 import type { FormData } from '../types/form';
 import { getAppBaseUrl } from '../lib/appUrl';
 import App from '../App';
 
+interface InvitationPayload {
+  invitee_name: string;
+  invitee_email: string;
+  expires_at: string;
+  draft_form_data: Partial<FormData>;
+}
+
 function InvitationFormContent() {
   const [token, setToken] = useState<string | null>(null);
-  const [invitation, setInvitation] =
-    useState<Database['public']['Tables']['form_invitations']['Row'] | null>(null);
+  const [invitation, setInvitation] = useState<InvitationPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { loadFormData } = useForm();
@@ -25,34 +35,20 @@ function InvitationFormContent() {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('form_invitations')
-          .select('*')
-          .eq('invite_token', inviteToken)
-          .maybeSingle();
+        const response = await fetch(getSupabaseFunctionUrl('resolve-invitation'), {
+          method: 'POST',
+          headers: await getSupabaseFunctionHeaders(),
+          body: JSON.stringify({ inviteToken }),
+        });
+        const payload = await response.json().catch(() => null);
 
-        if (error) throw error;
-        const invitationData = data as Database['public']['Tables']['form_invitations']['Row'] | null;
-
-        if (!invitationData) {
-          setError('Invitation invalide ou expiree');
+        if (!response.ok || !payload?.invitation) {
+          setError(payload?.error || 'Invitation invalide ou expirée');
           setLoading(false);
           return;
         }
 
-        if (invitationData.status === 'completed') {
-          setError('Cette invitation a deja ete utilisee');
-          setLoading(false);
-          return;
-        }
-
-        if (new Date(invitationData.expires_at) < new Date()) {
-          await supabase.from('form_invitations').update({ status: 'expired' }).eq('id', invitationData.id);
-          setError('Cette invitation a expire');
-          setLoading(false);
-          return;
-        }
-
+        const invitationData = payload.invitation as InvitationPayload;
         setInvitation(invitationData);
         const draftFormData =
           invitationData.draft_form_data &&
@@ -73,7 +69,7 @@ function InvitationFormContent() {
           {
             reset: true,
             clearResponseId: true,
-            saveStatus: 'Formulaire pre-rempli depuis une invitation',
+            saveStatus: 'Formulaire prérempli depuis une invitation',
             section: 0,
           }
         );
@@ -107,7 +103,7 @@ function InvitationFormContent() {
           <div className="mx-auto inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-blue-700" />
           <h1 className="display-font mt-5 text-3xl font-semibold text-slate-950">Chargement de votre invitation</h1>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            Nous verifions le lien, chargeons le brouillon eventuel puis preparons votre session.
+            Nous vérifions le lien, chargeons le brouillon éventuel puis préparons votre session.
           </p>
         </div>
       </div>
@@ -129,7 +125,7 @@ function InvitationFormContent() {
             }}
             className="audit-button audit-button-primary mt-6 border-0"
           >
-            Revenir a l accueil
+            Revenir à l’accueil
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -149,7 +145,7 @@ function InvitationFormContent() {
                   Bonjour {invitation.invitee_name}
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-white/72">
-                  Votre lien est valide et votre formulaire a ete pre-rempli avec les informations connues.
+                  Votre lien est valide et votre formulaire a été prérempli avec les informations connues.
                 </p>
               </div>
               <div className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-4">
@@ -166,7 +162,7 @@ function InvitationFormContent() {
             </div>
           </div>
         </div>
-        <App invitationToken={token} />
+        <App invitationToken={token} withProvider={false} />
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import type { FormData } from '../types/form';
+import { DEFAULT_FORM_DESTINATION_EMAIL } from './emailRouting';
 
 export function createInitialFormData(): FormData {
   return {
@@ -33,7 +34,7 @@ export function createInitialFormData(): FormData {
     h_awa: '', h_kpi: '',
     i_conf: '', i_rgpd: '', i_heberg: '', i_appro: '', i_sys: '', i_cal: '',
     i_pol: '', i_autres: '',
-    email_dest: 'contact@transferai.ci', email_cc: '', email_msg: '',
+    email_dest: DEFAULT_FORM_DESTINATION_EMAIL, email_cc: '', email_msg: '',
   };
 }
 

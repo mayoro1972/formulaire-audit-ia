@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import SuccessModal from '../components/SuccessModal';
 import { useForm } from '../context/formContextCore';
+import { DEFAULT_FORM_DESTINATION_EMAIL } from '../lib/emailRouting';
 import { calculateOverallProgress } from '../lib/formProgress';
-import { isSupabaseConfigured, supabaseConfigMessage } from '../lib/supabase';
+import {
+  getSupabaseFunctionHeaders,
+  getSupabaseFunctionUrl,
+  isSupabaseConfigured,
+  supabaseConfigMessage,
+} from '../lib/supabase';
 
 export default function Section10_Envoi() {
   const { formData, updateField, setCurrentSection, saveAll, submitToSupabase, resetForm } = useForm();
@@ -25,11 +31,8 @@ export default function Section10_Envoi() {
       return;
     }
 
-    const notifyAdminUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-admin`;
-    const notifyHeaders = {
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-    };
+    const notifyAdminUrl = getSupabaseFunctionUrl('notify-admin');
+    const notifyHeaders = await getSupabaseFunctionHeaders();
 
     const response = await fetch(notifyAdminUrl, {
       method: 'POST',
@@ -45,7 +48,7 @@ export default function Section10_Envoi() {
 
     if (!response.ok) {
       const responseData = await response.json().catch(() => null);
-      throw new Error(responseData?.error || "La notification admin n'a pas pu etre envoyee.");
+      throw new Error(responseData?.error || "La notification admin n'a pas pu être envoyée.");
     }
   };
 
@@ -68,10 +71,10 @@ export default function Section10_Envoi() {
         setShowSuccessModal(true);
         await notifyAdmin(result.responseId).catch((err) => console.log('Admin notification error:', err));
       } else {
-        setError(`Erreur lors de l enregistrement: ${result.error || 'Erreur inconnue'}`);
+        setError(`Erreur lors de l’enregistrement : ${result.error || 'Erreur inconnue'}`);
       }
     } catch (err) {
-      setError("Erreur lors de l enregistrement dans la base de donnees.");
+      setError("Erreur lors de l’enregistrement dans la base de données.");
       console.error('Database error:', err);
     } finally {
       setSending(false);
@@ -86,13 +89,8 @@ export default function Section10_Envoi() {
 
     const inviteToken = new URLSearchParams(window.location.search).get('invite');
 
-    if (!inviteToken && !formData.email_dest) {
-      alert("Veuillez renseigner l email de destination.");
-      return;
-    }
-
     if (selectedFormat === 'word' && protectWord && !documentPassword.trim()) {
-      alert('Veuillez renseigner un mot de passe pour proteger le document Word.');
+      alert('Veuillez renseigner un mot de passe pour protéger le document Word.');
       return;
     }
 
@@ -103,20 +101,17 @@ export default function Section10_Envoi() {
       const result = await submitToSupabase();
 
       if (!result.success) {
-        setError(`Erreur lors de l enregistrement: ${result.error || 'Erreur inconnue'}`);
+        setError(`Erreur lors de l’enregistrement : ${result.error || 'Erreur inconnue'}`);
         setSending(false);
         return;
       }
 
       await notifyAdmin(result.responseId).catch((err) => console.log('Admin notification error:', err));
 
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-form-email`;
+      const apiUrl = getSupabaseFunctionUrl('send-form-email');
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: await getSupabaseFunctionHeaders(),
         body: JSON.stringify({
           formData,
           inviteToken: inviteToken || undefined,
@@ -139,7 +134,7 @@ export default function Section10_Envoi() {
       saveAll();
       setShowSuccessModal(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l envoi de l email.");
+      setError(err instanceof Error ? err.message : "Erreur lors de l’envoi de l’email.");
       console.error('Email error:', err);
     } finally {
       setSending(false);
@@ -176,31 +171,31 @@ export default function Section10_Envoi() {
       <div className="audit-section-header mb-6">
         <span className="audit-pill bg-blue-100 text-blue-800">Section 10</span>
         <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
-          Recapitulatif, sauvegarde et envoi
+          Récapitulatif, sauvegarde et envoi
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          Derniere etape du parcours README : sauvegarder en base, notifier l admin,
+          Dernière étape du parcours README : sauvegarder en base, notifier l’admin,
           exporter et transmettre le dossier dans le format attendu.
         </p>
       </div>
 
       {!isSupabaseConfigured && (
-        <div className="audit-note audit-note-warn mb-6">
-          <div className="font-semibold text-amber-900">Backend non configure</div>
-          <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
-        </div>
+          <div className="audit-note audit-note-warn mb-6">
+            <div className="font-semibold text-amber-900">Backend non configuré</div>
+            <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
+          </div>
       )}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <div className="audit-card">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
             <div>
-              <div className="text-sm font-semibold text-slate-900">Etat du dossier</div>
+              <div className="text-sm font-semibold text-slate-900">État du dossier</div>
               <p className="mt-1 text-sm text-slate-500">
-                Synthese de completion avant sauvegarde ou envoi.
+                Synthèse de complétion avant sauvegarde ou envoi.
               </p>
             </div>
-            <span className="audit-pill bg-emerald-100 text-emerald-800">{progress.overall}% renseigne</span>
+            <span className="audit-pill bg-emerald-100 text-emerald-800">{progress.overall}% renseigné</span>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -208,20 +203,18 @@ export default function Section10_Envoi() {
               <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">Progression</div>
               <div className="display-font mt-2 text-5xl font-semibold">{progress.overall}%</div>
               <div className="mt-2 text-sm text-white/70">
-                {progress.done} sections confirmees sur {progress.total}
+                {progress.done} sections confirmées sur {progress.total}
               </div>
             </div>
             <div className="space-y-3">
               <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Taches libres</div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Tâches libres</div>
                 <div className="mt-1 text-xl font-semibold text-slate-900">{formData.libreRowCount}</div>
               </div>
               <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Destinataire</div>
                 <div className="mt-1 text-sm font-semibold text-slate-900">
-                  {hasInviteToken
-                    ? sentRecipient || 'Equipe invitante'
-                    : formData.email_dest || 'A renseigner'}
+                  {sentRecipient || DEFAULT_FORM_DESTINATION_EMAIL}
                 </div>
               </div>
             </div>
@@ -229,12 +222,12 @@ export default function Section10_Envoi() {
 
           <div className="mt-5 space-y-3">
             <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
-              <div className="text-sm font-semibold text-slate-900">Ce que cette etape permet</div>
+              <div className="text-sm font-semibold text-slate-900">Ce que cette étape permet</div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-                <li>Enregistrement des reponses dans Supabase.</li>
-                <li>Notification admin cote backend si le projet est configure.</li>
-                <li>Envoi de l export au format CSV, PDF ou Word.</li>
-                <li>Disponibilite du dossier dans le dashboard admin.</li>
+                <li>Enregistrement des réponses dans Supabase.</li>
+                <li>Notification admin côté backend si le projet est configuré.</li>
+                <li>Envoi de l’export au format CSV, PDF ou Word.</li>
+                <li>Disponibilité du dossier dans le dashboard admin.</li>
               </ul>
             </div>
 
@@ -247,12 +240,12 @@ export default function Section10_Envoi() {
                 {error && <div className="font-medium text-red-900">{error}</div>}
                 {!error && savedToDatabase && !emailSent && (
                   <div className="font-medium text-blue-900">
-                    Les reponses ont ete enregistrees et sont accessibles depuis le tableau de bord admin.
+                    Les réponses ont été enregistrées et sont accessibles depuis le tableau de bord admin.
                   </div>
                 )}
                 {!error && emailSent && (
-                <div className="font-medium text-emerald-900">
-                    L export a bien ete envoye a {sentRecipient || formData.email_dest || formData.c_email}.
+                  <div className="font-medium text-emerald-900">
+                    L’export a bien été envoyé à {sentRecipient || DEFAULT_FORM_DESTINATION_EMAIL}.
                   </div>
                 )}
               </div>
@@ -262,16 +255,16 @@ export default function Section10_Envoi() {
 
         <div className="audit-card">
           <div className="mb-5 border-b border-slate-900/8 pb-4">
-              <div className="text-sm font-semibold text-slate-900">Parametres de restitution</div>
-              <p className="mt-1 text-sm text-slate-500">
-              Choisissez le destinataire, le message d accompagnement et le format du livrable.
-              </p>
-            </div>
+            <div className="text-sm font-semibold text-slate-900">Paramètres de restitution</div>
+            <p className="mt-1 text-sm text-slate-500">
+              Choisissez le destinataire, le message d’accompagnement et le format du livrable.
+            </p>
+          </div>
 
           <div className="space-y-4">
             {hasInviteToken ? (
               <div className="audit-note audit-note-info">
-                Votre reponse partira vers la personne ou l equipe qui vous a invite.
+                Votre réponse sera envoyée automatiquement vers {DEFAULT_FORM_DESTINATION_EMAIL}.
               </div>
             ) : (
               <>
@@ -279,10 +272,12 @@ export default function Section10_Envoi() {
                   <label className="mb-2 block">Email de destination</label>
                   <input
                     type="email"
-                    value={formData.email_dest}
-                    onChange={(event) => updateField('email_dest', event.target.value)}
-                    placeholder="ex: destinataire@entreprise.com"
+                    value={DEFAULT_FORM_DESTINATION_EMAIL}
+                    readOnly
                   />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Les formulaires complétés sont envoyés automatiquement vers {DEFAULT_FORM_DESTINATION_EMAIL}.
+                  </p>
                 </div>
                 <div>
                   <label className="mb-2 block">Email en copie</label>
@@ -297,12 +292,12 @@ export default function Section10_Envoi() {
             )}
 
             <div>
-              <label className="mb-2 block">Message d accompagnement</label>
+              <label className="mb-2 block">Message d’accompagnement</label>
               <textarea
                 value={formData.email_msg}
                 onChange={(event) => updateField('email_msg', event.target.value)}
                 rows={3}
-                placeholder="ex: Ci-joint mon audit IA complete. Je reste disponible pour en discuter."
+                placeholder="ex. : Ci-joint mon audit IA complété. Je reste disponible pour en discuter."
               />
             </div>
 
@@ -326,8 +321,8 @@ export default function Section10_Envoi() {
                     checked={protectWord}
                     onChange={(event) => setProtectWord(event.target.checked)}
                   />
-                    <span>Proteger le document Word par mot de passe</span>
-                  </label>
+                  <span>Protéger le document Word par mot de passe</span>
+                </label>
 
                 {protectWord && (
                   <div className="mt-4">
@@ -339,7 +334,7 @@ export default function Section10_Envoi() {
                       placeholder="ex: TransferAI-2026"
                     />
                     <p className="mt-2 text-xs text-slate-500">
-                      Ce mot de passe n est pas stocke en base et doit etre communique separement.
+                      Ce mot de passe n’est pas stocké en base et doit être communiqué séparément.
                     </p>
                   </div>
                 )}
@@ -352,14 +347,14 @@ export default function Section10_Envoi() {
                 disabled={sending || savedToDatabase}
                 className="audit-button audit-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {sending ? 'Enregistrement...' : savedToDatabase ? 'Donnees enregistrees' : 'Sauvegarder en base'}
+                {sending ? 'Enregistrement...' : savedToDatabase ? 'Données enregistrées' : 'Sauvegarder en base'}
               </button>
               <button
                 onClick={handleSendEmail}
                 disabled={sending || emailSent}
                 className="audit-button audit-button-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {sending ? 'Envoi en cours...' : emailSent ? 'Export envoye' : 'Sauvegarder et envoyer'}
+                {sending ? 'Envoi en cours...' : emailSent ? 'Export envoyé' : 'Sauvegarder et envoyer'}
               </button>
             </div>
 

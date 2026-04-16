@@ -10,21 +10,21 @@ import { calculateOverallProgress } from '../lib/formProgress';
 const coveredJourneys = [
   {
     title: 'Repondant standard',
-    description: 'Remplit le questionnaire, enregistre la reponse et peut envoyer un export par email.',
+    description: 'Remplit le questionnaire, enregistre la réponse et peut envoyer un export par email.',
   },
   {
-    title: 'Repondant invite',
-    description: 'Recupere un lien unique avec identite pre-remplie pour reprendre ou completer un brouillon.',
+    title: 'Répondant invité',
+    description: 'Récupère un lien unique avec identité préremplie pour reprendre ou compléter un brouillon.',
   },
   {
     title: 'Administrateur',
-    description: 'Consulte les soumissions, exporte les reponses et envoie des invitations nominatives.',
+    description: 'Consulte les soumissions, exporte les réponses et envoie des invitations nominatives.',
   },
 ];
 
 const platformFeatures = [
-  { icon: ClipboardCheck, label: '9 sections metier + envoi' },
-  { icon: Shield, label: 'Sauvegarde locale + persistence Supabase' },
+  { icon: ClipboardCheck, label: '9 sections métier + envoi' },
+  { icon: Shield, label: 'Sauvegarde locale + persistance Supabase' },
   { icon: Mail, label: 'Exports email CSV, PDF ou Word' },
   { icon: Sparkles, label: 'Adaptation dynamique selon le domaine' },
 ];
@@ -37,7 +37,7 @@ export default function Section0_Accueil() {
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
-    alert('Lien copie dans le presse-papiers.');
+    alert('Lien copié dans le presse-papiers.');
   };
 
   return (
@@ -46,15 +46,15 @@ export default function Section0_Accueil() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_360px]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="audit-pill bg-blue-100 text-blue-800">README transforme en parcours</span>
-              <span className="audit-pill bg-emerald-100 text-emerald-800">Audit IA metier</span>
+              <span className="audit-pill bg-blue-100 text-blue-800">README transformé en parcours</span>
+              <span className="audit-pill bg-emerald-100 text-emerald-800">Audit IA métier</span>
             </div>
             <h1 className="display-font mt-5 text-3xl font-semibold text-slate-950 md:text-5xl">
-              Formulaire d audit IA pour cartographier, prioriser et transmettre les usages.
+              Formulaire d’audit IA pour cartographier, prioriser et transmettre les usages.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 md:text-[15px]">
-              Cette experience reprend le scope du README dans un parcours simple a renseigner :
-              collecte structuree, sauvegarde automatique, enregistrement Supabase,
+              Cette expérience reprend le périmètre du README dans un parcours simple à renseigner :
+              collecte structurée, sauvegarde automatique, enregistrement Supabase,
               invitations nominatives, dashboard admin et restitution par email.
             </p>
 
@@ -76,10 +76,10 @@ export default function Section0_Accueil() {
           </div>
 
           <div className="rounded-[24px] border border-slate-900/8 bg-slate-950 p-5 text-white shadow-[0_24px_50px_rgba(15,37,66,0.18)]">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-white/55">Etat du dossier</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-white/55">État du dossier</div>
             <div className="display-font mt-3 text-5xl font-semibold">{progress.overall}%</div>
             <div className="mt-2 text-sm text-white/70">
-              {progress.done} sections confirmees sur {progress.total}
+              {progress.done} sections confirmées sur {progress.total}
             </div>
             <div className="mt-5 h-2.5 rounded-full bg-white/10">
               <div
@@ -95,7 +95,7 @@ export default function Section0_Accueil() {
               </div>
               <div className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-white/50">Parcours couverts</div>
-                <div className="mt-1 font-semibold">Standard, invite et admin</div>
+                <div className="mt-1 font-semibold">Standard, invité et admin</div>
               </div>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function Section0_Accueil() {
       <div className="audit-card mb-5">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
           <div>
-            <div className="text-sm font-semibold text-slate-900">Identite du repondant</div>
+            <div className="text-sm font-semibold text-slate-900">Identité du répondant</div>
             <p className="mt-1 text-sm text-slate-500">
               Ces informations servent de fil rouge pour la personnalisation du questionnaire et des exports.
             </p>
@@ -127,7 +127,7 @@ export default function Section0_Accueil() {
             />
           </div>
           <div>
-            <label className="mb-2 block">Email du repondant</label>
+            <label className="mb-2 block">Email du répondant</label>
             <input
               type="email"
               value={formData.c_email}
@@ -141,11 +141,11 @@ export default function Section0_Accueil() {
               type="text"
               value={formData.c_poste}
               onChange={(event) => updateField('c_poste', event.target.value)}
-              placeholder="ex: Directeur des Operations"
+              placeholder="ex. : Directeur des opérations"
             />
           </div>
           <div>
-            <label className="mb-2 block">Entite</label>
+            <label className="mb-2 block">Entité</label>
             <input
               type="text"
               value={formData.c_entite}
@@ -156,7 +156,7 @@ export default function Section0_Accueil() {
           <div>
             <label className="mb-2 block">Domaine principal</label>
             <select value={formData.c_domaine} onChange={(event) => updateField('c_domaine', event.target.value)}>
-              <option value="">Selectionner un domaine</option>
+              <option value="">Sélectionner un domaine</option>
               {competencyDomains.map((domain) => (
                 <option key={domain.key} value={domain.key}>
                   {domain.label}
@@ -165,12 +165,12 @@ export default function Section0_Accueil() {
             </select>
           </div>
           <div>
-            <label className="mb-2 block">Domaines associes ou contexte</label>
+            <label className="mb-2 block">Domaines associés ou contexte</label>
             <input
               type="text"
               value={formData.c_domaines_associes}
               onChange={(event) => updateField('c_domaines_associes', event.target.value)}
-              placeholder="ex: conformite, reporting, coordination siege"
+              placeholder="ex. : conformité, reporting, coordination siège"
             />
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function Section0_Accueil() {
           <div className="mt-5 grid gap-5 md:grid-cols-2">
             <div>
               <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Axes d audit a cadrer
+                Axes d’audit à cadrer
               </div>
               <div className="flex flex-wrap gap-2">
                 {automationBlueprint.priorityAreas.map((area) => (
@@ -196,7 +196,7 @@ export default function Section0_Accueil() {
             </div>
             <div>
               <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Automatisations suggerees
+                Automatisations suggérées
               </div>
               <ul className="space-y-2 text-sm text-slate-700">
                 {automationBlueprint.automationIdeas.map((idea) => (
@@ -211,7 +211,7 @@ export default function Section0_Accueil() {
         </div>
 
         <div className="audit-card">
-          <div className="mb-4 text-sm font-semibold text-slate-900">Parcours couverts par l application</div>
+          <div className="mb-4 text-sm font-semibold text-slate-900">Parcours couverts par l’application</div>
           <div className="space-y-3">
             {coveredJourneys.map((journey) => (
               <div key={journey.title} className="rounded-[20px] border border-slate-900/8 bg-white/70 p-4">
@@ -224,13 +224,13 @@ export default function Section0_Accueil() {
       </div>
 
       <div className="audit-card mt-5">
-        <div className="mb-4 text-sm font-semibold text-slate-900">Engagement du repondant</div>
+        <div className="mb-4 text-sm font-semibold text-slate-900">Engagement du répondant</div>
         <div className="grid gap-3">
           {[
-            { id: 'eng1', text: "Je m engage a tester les premiers modules IA des qu ils seront disponibles." },
-            { id: 'eng2', text: 'Je m engage a donner un feedback regulier pour ameliorer les outils.' },
-            { id: 'eng3', text: 'Je m engage a partager les apprentissages utiles avec mon equipe.' },
-            { id: 'eng4', text: 'Je confirme que les informations fournies refletent ma realite de travail.' },
+            { id: 'eng1', text: 'Je m’engage à tester les premiers modules IA dès qu’ils seront disponibles.' },
+            { id: 'eng2', text: 'Je m’engage à donner un feedback régulier pour améliorer les outils.' },
+            { id: 'eng3', text: 'Je m’engage à partager les apprentissages utiles avec mon équipe.' },
+            { id: 'eng4', text: 'Je confirme que les informations fournies reflètent ma réalité de travail.' },
           ].map((item) => (
             <label key={item.id} className="flex items-start gap-3 rounded-[20px] border border-slate-900/8 bg-white/80 p-4">
               <input
@@ -247,8 +247,8 @@ export default function Section0_Accueil() {
 
       <div className="section-actions">
         <div className="audit-note audit-note-info flex-1">
-          Vous pouvez avancer dans l ordre ou naviguer librement. Vos reponses sont sauvegardees
-          localement, puis pourront etre enregistrees ou envoyees au format CSV, PDF ou Word.
+          Vous pouvez avancer dans l’ordre ou naviguer librement. Vos réponses sont sauvegardées
+          localement, puis pourront être enregistrées ou envoyées au format CSV, PDF ou Word.
         </div>
         <button onClick={() => setCurrentSection(1)} className="audit-button audit-button-primary sm:self-end">
           Commencer le questionnaire

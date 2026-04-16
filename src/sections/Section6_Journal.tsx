@@ -8,16 +8,16 @@ export default function Section6_Journal() {
 
   const routineFields = [
     { id: 'f_matin', label: 'En arrivant le matin', placeholder: profile.routinePrompts.morning },
-    { id: 'f_matinee', label: 'Pendant la matinee', placeholder: profile.routinePrompts.midday },
+    { id: 'f_matinee', label: 'Pendant la matinée', placeholder: profile.routinePrompts.midday },
     { id: 'f_apm', label: 'Apres-midi', placeholder: profile.routinePrompts.afternoon },
-    { id: 'f_soir', label: 'En fin de journee', placeholder: profile.routinePrompts.endOfDay },
+    { id: 'f_soir', label: 'En fin de journée', placeholder: profile.routinePrompts.endOfDay },
   ];
 
   const cycleFields = [
-    { id: 'f_mois', label: 'Debut ou fin de mois', placeholder: profile.routinePrompts.month },
-    { id: 'f_trim', label: 'Taches trimestrielles', placeholder: profile.routinePrompts.quarter },
-    { id: 'f_annuel', label: 'Taches annuelles', placeholder: profile.routinePrompts.year },
-    { id: 'f_deplac', label: 'Deplacements ou coordination multisites', placeholder: profile.routinePrompts.travel },
+    { id: 'f_mois', label: 'Début ou fin de mois', placeholder: profile.routinePrompts.month },
+    { id: 'f_trim', label: 'Tâches trimestrielles', placeholder: profile.routinePrompts.quarter },
+    { id: 'f_annuel', label: 'Tâches annuelles', placeholder: profile.routinePrompts.year },
+    { id: 'f_deplac', label: 'Déplacements ou coordination multisites', placeholder: profile.routinePrompts.travel },
   ];
 
   return (
@@ -28,13 +28,13 @@ export default function Section6_Journal() {
           Journal de bord par rythme
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          Cette approche fait remonter les taches devenues invisibles parce qu elles sont integrees a la routine.
+          Cette approche fait remonter les tâches devenues invisibles parce qu’elles sont intégrées à la routine.
         </p>
       </div>
 
       <div className="audit-note audit-note-success mb-5">
-        Pensez en sequences reelles : demarrage de journee, debut de semaine, cloture mensuelle,
-        missions, deplacements, arbitrages de fin de journee.
+        Pensez en séquences réelles : démarrage de journée, début de semaine, clôture mensuelle,
+        missions, déplacements, arbitrages de fin de journée.
       </div>
 
       <div className="audit-card mb-5">
@@ -58,7 +58,7 @@ export default function Section6_Journal() {
         <div className="mb-4 text-sm font-semibold text-slate-900">F.2 - Routine hebdomadaire</div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block">Debut de semaine</label>
+            <label className="mb-2 block">Début de semaine</label>
             <textarea
               value={formData.f_lundi}
               onChange={(event) => updateField('f_lundi', event.target.value)}
@@ -79,7 +79,7 @@ export default function Section6_Journal() {
       </div>
 
       <div className="audit-card">
-        <div className="mb-4 text-sm font-semibold text-slate-900">F.3 - Cycles mensuels et periodiques</div>
+        <div className="mb-4 text-sm font-semibold text-slate-900">F.3 - Cycles mensuels et périodiques</div>
         <div className="grid gap-4">
           {cycleFields.map((field) => (
             <div key={field.id}>

@@ -2,11 +2,11 @@ import { useForm } from '../context/formContextCore';
 import { getInputValue } from '../lib/formValue';
 
 const scores = [
-  { id: 'sc1', label: 'Aisance generale avec les outils numeriques' },
-  { id: 'sc2', label: 'Excel avance, BI ou outils d analyse' },
-  { id: 'sc3', label: 'Usage actuel d outils IA generatifs' },
-  { id: 'sc4', label: 'Capacite a adopter vite un nouvel outil' },
-  { id: 'sc5', label: 'Ouverture a changer les habitudes de travail' },
+  { id: 'sc1', label: 'Aisance générale avec les outils numériques' },
+  { id: 'sc2', label: 'Excel avancé, BI ou outils d’analyse' },
+  { id: 'sc3', label: 'Usage actuel d’outils IA génératifs' },
+  { id: 'sc4', label: 'Capacité à adopter vite un nouvel outil' },
+  { id: 'sc5', label: 'Ouverture à changer les habitudes de travail' },
 ];
 
 export default function Section4_Profil() {
@@ -20,12 +20,12 @@ export default function Section4_Profil() {
           Profil early adopter
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          On evalue ici la maturite digitale, les usages IA existants et les formats de restitution preferes.
+          On évalue ici la maturité digitale, les usages IA existants et les formats de restitution préférés.
         </p>
       </div>
 
       <div className="audit-card mb-5">
-        <div className="mb-4 text-sm font-semibold text-slate-900">D.1 - Auto-evaluation digitale</div>
+        <div className="mb-4 text-sm font-semibold text-slate-900">D.1 - Auto-évaluation digitale</div>
         <div className="space-y-3">
           {scores.map((score) => (
             <div key={score.id} className="rounded-[20px] border border-slate-900/8 bg-slate-50/80 p-4">
@@ -49,10 +49,10 @@ export default function Section4_Profil() {
       </div>
 
       <div className="audit-card mb-5">
-        <div className="mb-4 text-sm font-semibold text-slate-900">D.2 - Experiences IA existantes</div>
+        <div className="mb-4 text-sm font-semibold text-slate-900">D.2 - Expériences IA existantes</div>
         <div className="grid gap-4">
           <div>
-            <label className="mb-2 block">Outils deja utilises</label>
+            <label className="mb-2 block">Outils déjà utilisés</label>
             <input
               type="text"
               value={formData.d_outils}
@@ -61,11 +61,11 @@ export default function Section4_Profil() {
             />
           </div>
           <div>
-            <label className="mb-2 block">Pour quelles taches ?</label>
+            <label className="mb-2 block">Pour quelles tâches ?</label>
             <textarea
               value={formData.d_usage}
               onChange={(event) => updateField('d_usage', event.target.value)}
-              placeholder="ex: syntheses, reformulation, recherche, brouillons"
+              placeholder="ex. : synthèses, reformulation, recherche, brouillons"
               rows={3}
             />
           </div>
@@ -78,7 +78,7 @@ export default function Section4_Profil() {
             />
           </div>
           <div>
-            <label className="mb-2 block">Ce qui vous a limite</label>
+            <label className="mb-2 block">Ce qui vous a limité</label>
             <textarea
               value={formData.d_moins}
               onChange={(event) => updateField('d_moins', event.target.value)}
@@ -89,14 +89,14 @@ export default function Section4_Profil() {
       </div>
 
       <div className="audit-card">
-        <div className="mb-4 text-sm font-semibold text-slate-900">D.3 - Formats de restitution preferes</div>
+        <div className="mb-4 text-sm font-semibold text-slate-900">D.3 - Formats de restitution préférés</div>
         <div className="grid gap-3">
           {[
-            { id: 'fmt1', text: 'Email HTML quotidien avec resume et liens directs' },
-            { id: 'fmt2', text: 'Dashboard web interactif a consulter a la demande' },
-            { id: 'fmt3', text: 'Document Word ou PDF genere automatiquement' },
+            { id: 'fmt1', text: 'Email HTML quotidien avec résumé et liens directs' },
+            { id: 'fmt2', text: 'Dashboard web interactif à consulter à la demande' },
+            { id: 'fmt3', text: 'Document Word ou PDF généré automatiquement' },
             { id: 'fmt4', text: 'Notification mobile pour les alertes critiques' },
-            { id: 'fmt5', text: 'Integration Outlook, Teams ou outils existants' },
+            { id: 'fmt5', text: 'Intégration Outlook, Teams ou outils existants' },
           ].map((item) => (
             <label key={item.id} className="flex items-start gap-3 rounded-[20px] border border-slate-900/8 bg-white/80 p-4">
               <input
@@ -110,7 +110,7 @@ export default function Section4_Profil() {
           ))}
         </div>
         <div className="mt-4">
-          <label className="mb-2 block">Precisions ou autre preference</label>
+          <label className="mb-2 block">Précisions ou autre préférence</label>
           <textarea
             value={formData.d_format_autre}
             onChange={(event) => updateField('d_format_autre', event.target.value)}

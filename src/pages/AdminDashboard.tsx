@@ -72,7 +72,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       setResponses((data || []) as FormResponse[]);
     } catch (error) {
       console.error('Error loading responses:', error);
-      alert('Erreur lors du chargement des reponses');
+      alert('Erreur lors du chargement des réponses');
     } finally {
       setLoading(false);
     }
@@ -129,11 +129,11 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
         if (error) throw error;
       }
 
-      alert('Parametres sauvegardes avec succes');
+      alert('Paramètres sauvegardés avec succès');
       setShowSettings(false);
     } catch (error) {
       console.error('Error saving admin settings:', error);
-      alert('Erreur lors de la sauvegarde des parametres');
+      alert('Erreur lors de la sauvegarde des paramètres');
     } finally {
       setSavingSettings(false);
     }
@@ -145,7 +145,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       return;
     }
 
-    if (!confirm('Etes-vous sur de vouloir supprimer cette reponse ?')) return;
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?')) return;
 
     try {
       const { error } = await supabase.from('form_responses').delete().eq('id', id);
@@ -162,13 +162,13 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     const headers = ['Date soumission', 'Date envoi', 'Nom', 'Email', 'Poste', 'Entite', 'Completion', 'Statut'];
     const rows = filteredResponses.map((response) => [
       new Date(response.submitted_at).toLocaleString('fr-FR'),
-      response.email_sent_at ? new Date(response.email_sent_at).toLocaleString('fr-FR') : 'Non envoye',
+      response.email_sent_at ? new Date(response.email_sent_at).toLocaleString('fr-FR') : 'Non envoyé',
       getSafeText(response.user_name),
       getSafeText(response.user_email),
       getSafeText(response.user_position),
       getSafeText(response.user_entity),
       `${response.completion_percentage}%`,
-      response.is_completed ? 'Complete' : 'En cours',
+      response.is_completed ? 'Complète' : 'En cours',
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => escapeCsvCell(String(cell))).join(','))].join('\n');
@@ -214,12 +214,12 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       <div className="min-h-screen pb-12">
         <div className="mx-auto max-w-4xl px-4 pt-6 md:px-6">
           <div className="audit-section-header mb-6">
-            <span className="audit-pill bg-blue-100 text-blue-800">Admin settings</span>
+            <span className="audit-pill bg-blue-100 text-blue-800">Paramètres admin</span>
             <h1 className="display-font mt-4 text-3xl font-semibold text-slate-950 md:text-4xl">
-              Parametres de notification
+              Paramètres de notification
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-              Configurez l adresse qui recevra les alertes apres chaque soumission.
+              Configurez l’adresse qui recevra les alertes après chaque soumission.
             </p>
           </div>
 
@@ -231,7 +231,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-slate-900">Notifications automatiques</div>
-                  <div className="text-sm text-slate-500">Chaque soumission peut declencher un email admin.</div>
+                  <div className="text-sm text-slate-500">Chaque soumission peut déclencher un email admin.</div>
                 </div>
               </div>
               <button onClick={() => setShowSettings(false)} className="audit-button audit-button-secondary">
@@ -250,14 +250,14 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                   placeholder="admin@entreprise.com"
                 />
                 <p className="mt-2 text-xs text-slate-500">
-                  Cet email recevra une notification a chaque fois qu un formulaire est soumis.
+                  Cet email recevra une notification à chaque fois qu’un formulaire est soumis.
                 </p>
               </div>
 
               <div className="audit-note audit-note-info">
-                <div className="font-semibold text-blue-900">Bon a savoir</div>
+                <div className="font-semibold text-blue-900">Bon à savoir</div>
                 <p className="mt-1 text-blue-950/80">
-                  L email admin UI doit rester coherent avec le fallback backend pour eviter toute confusion.
+                  L’email admin affiché dans l’interface doit rester cohérent avec le fallback backend pour éviter toute confusion.
                 </p>
               </div>
 
@@ -266,7 +266,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                 disabled={savingSettings || !adminEmail}
                 className="audit-button audit-button-primary border-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {savingSettings ? 'Sauvegarde...' : 'Sauvegarder les parametres'}
+                {savingSettings ? 'Sauvegarde...' : 'Sauvegarder les paramètres'}
               </button>
             </div>
           </div>
@@ -286,10 +286,10 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
           <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="display-font text-3xl font-semibold text-slate-950 md:text-4xl">
-                Tableau de bord des reponses
+                Tableau de bord des réponses
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Visualisez les soumissions, exportez les donnees et suivez les envois email dans une seule vue.
+                Visualisez les soumissions, exportez les données et suivez les envois email dans une seule vue.
               </p>
               {adminEmail && (
                 <p className="mt-2 text-sm text-slate-500">
@@ -307,7 +307,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
               )}
               <button onClick={() => setShowSettings(true)} className="audit-button audit-button-secondary">
                 <Settings className="h-4 w-4" />
-                Parametres
+                Paramètres
               </button>
               <button onClick={loadResponses} className="audit-button audit-button-secondary">
                 <RefreshCw className="h-4 w-4" />
@@ -323,21 +323,21 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
         {!isSupabaseConfigured && (
           <div className="audit-note audit-note-warn mb-6">
-            <div className="font-semibold text-amber-900">Backend non configure</div>
+            <div className="font-semibold text-amber-900">Backend non configuré</div>
             <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <div className="mb-6 grid gap-4 md:grid-cols-3">
           <div className="audit-card">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Total reponses</div>
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Total réponses</div>
             <div className="display-font mt-2 text-4xl font-semibold text-slate-950">{responses.length}</div>
             <div className="mt-2 text-sm text-slate-500">Toutes soumissions confondues.</div>
           </div>
           <div className="audit-card">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Completes</div>
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Complètes</div>
             <div className="display-font mt-2 text-4xl font-semibold text-emerald-700">{completedCount}</div>
-            <div className="mt-2 text-sm text-slate-500">Reponses juges finalisees.</div>
+            <div className="mt-2 text-sm text-slate-500">Réponses jugées finalisées.</div>
           </div>
           <div className="audit-card">
             <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">En cours</div>
@@ -352,7 +352,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, email, poste ou entite"
+                placeholder="Rechercher par nom, email, poste ou entité"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 className="pl-12"
@@ -360,7 +360,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
             </div>
             <select value={filterCompleted} onChange={(event) => handleFilterCompletedChange(event.target.value)}>
               <option value="all">Tous les statuts</option>
-              <option value="completed">Completes uniquement</option>
+              <option value="completed">Complètes uniquement</option>
               <option value="incomplete">En cours uniquement</option>
             </select>
           </div>
@@ -369,14 +369,14 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
         {loading ? (
           <div className="audit-card text-center py-14">
             <div className="mx-auto inline-block h-12 w-12 animate-spin rounded-full border-b-2 border-blue-700" />
-            <p className="mt-4 text-slate-500">Chargement des reponses...</p>
+            <p className="mt-4 text-slate-500">Chargement des réponses...</p>
           </div>
         ) : filteredResponses.length === 0 ? (
           <div className="audit-card text-center py-14">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500">
               <ShieldCheck className="h-8 w-8" />
             </div>
-            <p className="mt-4 text-lg font-medium text-slate-900">Aucune reponse trouvee</p>
+            <p className="mt-4 text-lg font-medium text-slate-900">Aucune réponse trouvée</p>
             <p className="mt-2 text-sm text-slate-500">Ajustez vos filtres ou attendez les prochaines soumissions.</p>
           </div>
         ) : (
@@ -387,7 +387,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                   <tr>
                     <th className="p-3 text-left text-xs font-semibold">Soumission</th>
                     <th className="p-3 text-left text-xs font-semibold">Envoi</th>
-                    <th className="p-3 text-left text-xs font-semibold">Repondant</th>
+                    <th className="p-3 text-left text-xs font-semibold">Répondant</th>
                     <th className="p-3 text-left text-xs font-semibold">Poste</th>
                     <th className="p-3 text-left text-xs font-semibold">Completion</th>
                     <th className="p-3 text-left text-xs font-semibold">Statut</th>
@@ -418,7 +418,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                             </div>
                           </>
                         ) : (
-                          <span className="text-xs text-slate-500">Non envoye</span>
+                          <span className="text-xs text-slate-500">Non envoyé</span>
                         )}
                       </td>
                       <td className="p-3">
@@ -446,7 +446,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                               : 'bg-amber-100 text-amber-800'
                           }`}
                         >
-                          {response.is_completed ? 'Complete' : 'En cours'}
+                          {response.is_completed ? 'Complète' : 'En cours'}
                         </span>
                       </td>
                       <td className="p-3">
@@ -454,16 +454,16 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                           <button
                             onClick={() => exportResponseJSON(response)}
                             className="audit-button audit-button-secondary !rounded-2xl !px-3 !py-2"
-                            title="Telecharger JSON"
+                            title="Télécharger JSON"
                           >
                             <Download className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => {
-                              alert(`ID de session: ${response.session_id}\n\nVous pouvez voir les details complets dans le JSON exporte.`);
+                              alert(`ID de session : ${response.session_id}\n\nVous pouvez voir les détails complets dans le JSON exporté.`);
                             }}
                             className="audit-button audit-button-secondary !rounded-2xl !px-3 !py-2"
-                            title="Voir details"
+                            title="Voir détails"
                           >
                             <Eye className="h-4 w-4" />
                           </button>

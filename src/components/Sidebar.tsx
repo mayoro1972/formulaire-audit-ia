@@ -10,9 +10,9 @@ export default function Sidebar() {
     <aside className="panel-glass rounded-[28px] border border-white/70 p-3 lg:sticky lg:top-28 lg:h-[calc(100vh-9rem)] lg:overflow-hidden">
       <div className="mb-4 rounded-[22px] border border-slate-900/8 bg-slate-950 px-4 py-4 text-white">
         <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">Parcours</div>
-        <div className="display-font mt-2 text-xl font-semibold">{progress.overall}% complete</div>
+        <div className="display-font mt-2 text-xl font-semibold">{progress.overall}% complété</div>
         <div className="mt-2 text-sm text-white/72">
-          {progress.done} etapes bien renseignees sur {progress.total} suivies.
+          {progress.done} étapes bien renseignées sur {progress.total} suivies.
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export default function Sidebar() {
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Etape {section.code}
+                    Étape {section.code}
                   </div>
                   <div className="mt-1 text-sm font-semibold text-slate-900">{section.label}</div>
                 </div>

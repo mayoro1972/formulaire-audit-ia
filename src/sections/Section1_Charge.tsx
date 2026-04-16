@@ -26,17 +26,17 @@ export default function Section1_Charge() {
           Votre charge de travail actuelle
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          On quantifie ici la repartition du temps, la part repetitive et les volumes
-          hebdomadaires qui serviront de base a l audit IA pour {profile.label.toLowerCase()}.
+          On quantifie ici la répartition du temps, la part répétitive et les volumes
+          hebdomadaires qui serviront de base à l’audit IA pour {profile.label.toLowerCase()}.
         </p>
       </div>
 
       <div className="audit-card mb-5">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
           <div>
-            <div className="text-sm font-semibold text-slate-900">A.1 - Repartition hebdomadaire</div>
+            <div className="text-sm font-semibold text-slate-900">A.1 - Répartition hebdomadaire</div>
             <p className="mt-1 text-sm text-slate-500">
-              Renseignez les heures reellement consommees chaque semaine.
+              Renseignez les heures réellement consommées chaque semaine.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-900/8 bg-slate-950 px-4 py-3 text-white">
@@ -49,10 +49,10 @@ export default function Section1_Charge() {
           <table>
             <thead>
               <tr>
-                <th className="p-3 text-left text-xs font-semibold">Domaine d activite</th>
+                <th className="p-3 text-left text-xs font-semibold">Domaine d’activité</th>
                 <th className="p-3 text-left text-xs font-semibold">Heures / semaine</th>
                 <th className="p-3 text-left text-xs font-semibold">% du temps</th>
-                <th className="p-3 text-left text-xs font-semibold">Part repetitive</th>
+                <th className="p-3 text-left text-xs font-semibold">Part répétitive</th>
               </tr>
             </thead>
             <tbody>
@@ -96,9 +96,9 @@ export default function Section1_Charge() {
 
       <div className="audit-card">
         <div className="mb-5 border-b border-slate-900/8 pb-4">
-          <div className="text-sm font-semibold text-slate-900">A.2 - Chiffres cles de la semaine type</div>
+          <div className="text-sm font-semibold text-slate-900">A.2 - Chiffres clés de la semaine type</div>
           <p className="mt-1 text-sm text-slate-500">
-            Ces indicateurs servent a estimer l intensite du poste et les poches d automatisation.
+            Ces indicateurs servent à estimer l’intensité du poste et les poches d’automatisation.
           </p>
         </div>
 
@@ -168,7 +168,7 @@ export default function Section1_Charge() {
             placeholder="ex: 6"
           />
           <p className="mt-2 text-xs text-slate-500">
-            Taches manuelles, ressaisies, reformatages, attentes ou relances sans valeur directe.
+            Tâches manuelles, ressaisies, reformatages, attentes ou relances sans valeur directe.
           </p>
         </div>
       </div>

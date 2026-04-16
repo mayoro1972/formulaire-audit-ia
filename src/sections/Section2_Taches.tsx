@@ -9,22 +9,22 @@ export default function Section2_Taches() {
   const renderTable = (title: string, tasks: string[][], prefix: string) => (
     <div key={prefix} className="audit-card mb-5">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-900/8 pb-4">
-        <div>
-          <div className="text-sm font-semibold text-slate-900">{title}</div>
+          <div>
+            <div className="text-sm font-semibold text-slate-900">{title}</div>
           <p className="mt-1 text-sm text-slate-500">
-            Confirmez la frequence, le temps reel et le niveau de fiabilite de cette trame.
+            Confirmez la fréquence, le temps réel et le niveau de fiabilité de cette trame.
           </p>
         </div>
-        <span className="audit-pill bg-blue-100 text-blue-800">{tasks.length} taches</span>
+        <span className="audit-pill bg-blue-100 text-blue-800">{tasks.length} tâches</span>
       </div>
 
       <div className="overflow-x-auto">
         <table>
           <thead>
             <tr>
-              <th className="p-3 text-left text-xs font-semibold">Tache</th>
-              <th className="p-3 text-left text-xs font-semibold">Frequence reelle</th>
-              <th className="p-3 text-left text-xs font-semibold">Temps reel / sem.</th>
+              <th className="p-3 text-left text-xs font-semibold">Tâche</th>
+              <th className="p-3 text-left text-xs font-semibold">Fréquence réelle</th>
+              <th className="p-3 text-left text-xs font-semibold">Temps réel / sem.</th>
               <th className="p-3 text-left text-xs font-semibold">Statut</th>
             </tr>
           </thead>
@@ -51,10 +51,10 @@ export default function Section2_Taches() {
                     value={getInputValue(formData[`${prefix}_c${index}`])}
                     onChange={(event) => updateField(`${prefix}_c${index}`, event.target.value)}
                   >
-                    <option value="">A qualifier</option>
-                    <option value="oui">Confirme</option>
-                    <option value="corr">Corrige</option>
-                    <option value="non">A revoir</option>
+                    <option value="">À qualifier</option>
+                    <option value="oui">Confirmé</option>
+                    <option value="corr">Corrigé</option>
+                    <option value="non">À revoir</option>
                   </select>
                 </td>
               </tr>
@@ -70,18 +70,18 @@ export default function Section2_Taches() {
       <div className="audit-section-header mb-6">
         <span className="audit-pill bg-blue-100 text-blue-800">Section B</span>
         <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
-          Taches deja identifiees
+          Tâches déjà identifiées
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          Cette partie traduit le README en trame metier prechargee : les groupes de taches
-          sont personnalises selon le domaine choisi et peuvent etre corriges librement.
+          Cette partie traduit le README en trame métier préchargée : les groupes de tâches
+          sont personnalisés selon le domaine choisi et peuvent être corrigés librement.
         </p>
       </div>
 
       <div className="audit-note audit-note-warn mb-5">
         <strong className="text-amber-900">Adaptation active :</strong> la trame ci-dessous est
-        generee a partir du domaine <strong>{profile.label}</strong>. Corrigez sans hesiter les
-        temps, frequences ou formulations pour coller a votre realite.
+        générée à partir du domaine <strong>{profile.label}</strong>. Corrigez sans hésiter les
+        temps, fréquences ou formulations pour coller à votre réalité.
       </div>
 
       {profile.taskGroups.map((group, index) => renderTable(group.title, group.tasks, `tb-${profile.key}-${index}`))}
