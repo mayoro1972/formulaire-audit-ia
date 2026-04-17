@@ -20,6 +20,7 @@ interface Invitee {
 
 interface SendInvitationsProps {
   onBack?: () => void;
+  prefillInvitee?: Invitee | null;
 }
 
 function generateSecureInviteToken() {
@@ -31,7 +32,7 @@ function generateSecureInviteToken() {
   return `invite_${Date.now()}_${randomPart}`;
 }
 
-export default function SendInvitations({ onBack }: SendInvitationsProps) {
+export default function SendInvitations({ onBack, prefillInvitee = null }: SendInvitationsProps) {
   const { formData, saveAll } = useForm();
   const initialRoutingRef = useRef({
     responseEmail: DEFAULT_FORM_DESTINATION_EMAIL,
@@ -41,7 +42,9 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const responseCcEditedRef = useRef(false);
   const includeDraftEditedRef = useRef(false);
 
-  const [invitees, setInvitees] = useState<Invitee[]>([{ name: '', email: '' }]);
+  const [invitees, setInvitees] = useState<Invitee[]>(
+    prefillInvitee ? [{ name: prefillInvitee.name, email: prefillInvitee.email }] : [{ name: '', email: '' }]
+  );
   const [responseEmail, setResponseEmail] = useState(DEFAULT_FORM_DESTINATION_EMAIL);
   const [responseCc, setResponseCc] = useState('');
   const [includeCurrentDraft, setIncludeCurrentDraft] = useState(false);
@@ -51,6 +54,12 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
   const [customMessage, setCustomMessage] = useState('');
   const hasCurrentDraft = hasDraftContent(formData);
   const validInvitees = invitees.filter((invitee) => invitee.name.trim() && invitee.email.trim());
+
+  useEffect(() => {
+    if (prefillInvitee?.email || prefillInvitee?.name) {
+      setInvitees([{ name: prefillInvitee.name, email: prefillInvitee.email }]);
+    }
+  }, [prefillInvitee]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -237,11 +246,11 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
           <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="display-font text-3xl font-semibold text-slate-950 md:text-4xl">
-                Envoyer des invitations nominatives
+                Préparer l’envoi du formulaire d’audit
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Créez des liens uniques, choisissez l’email de retour et décidez si le client doit
-                recevoir un brouillon déjà prérempli.
+                Créez un lien nominatif, choisissez l’email de retour et décidez si le prospect doit
+                recevoir un brouillon déjà prérempli avant l’audit.
               </p>
             </div>
 
@@ -268,11 +277,18 @@ export default function SendInvitations({ onBack }: SendInvitationsProps) {
                 <div>
                   <div className="text-sm font-semibold text-slate-900">Destinataires</div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Saisissez les contacts à inviter dans le parcours d’audit.
+                    Saisissez les prospects à inviter dans le parcours d’audit.
                   </p>
                 </div>
                 <span className="audit-pill bg-blue-100 text-blue-800">{validInvitees.length} prêt(s) à envoyer</span>
               </div>
+
+              {prefillInvitee && (
+                <div className="audit-note audit-note-info mb-4">
+                  Le prospect sélectionné depuis le dashboard a été prérempli. Vous pouvez compléter
+                  ou modifier les informations avant l’envoi.
+                </div>
+              )}
 
               <div className="space-y-4">
                 {invitees.map((invitee, index) => (

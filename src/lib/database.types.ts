@@ -135,6 +135,69 @@ export interface Database {
         };
         Relationships: [];
       };
+      prospect_requests: {
+        Row: {
+          id: string;
+          prospect_code: string;
+          full_name: string;
+          profession: string;
+          email: string;
+          phone: string;
+          city: string;
+          country: string;
+          activity_sector: string;
+          need_description: string;
+          status: string;
+          source: string;
+          created_at: string;
+          updated_at: string;
+          follow_up_due_at: string;
+          audit_form_sent_at: string | null;
+          last_contacted_at: string | null;
+          notes: string;
+        };
+        Insert: {
+          id?: string;
+          prospect_code?: string;
+          full_name: string;
+          profession: string;
+          email: string;
+          phone: string;
+          city: string;
+          country: string;
+          activity_sector: string;
+          need_description: string;
+          status?: string;
+          source?: string;
+          created_at?: string;
+          updated_at?: string;
+          follow_up_due_at?: string;
+          audit_form_sent_at?: string | null;
+          last_contacted_at?: string | null;
+          notes?: string;
+        };
+        Update: {
+          id?: string;
+          prospect_code?: string;
+          full_name?: string;
+          profession?: string;
+          email?: string;
+          phone?: string;
+          city?: string;
+          country?: string;
+          activity_sector?: string;
+          need_description?: string;
+          status?: string;
+          source?: string;
+          created_at?: string;
+          updated_at?: string;
+          follow_up_due_at?: string;
+          audit_form_sent_at?: string | null;
+          last_contacted_at?: string | null;
+          notes?: string;
+        };
+        Relationships: [];
+      };
       received_emails: {
         Row: {
           id: string;
