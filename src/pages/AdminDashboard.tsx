@@ -232,7 +232,7 @@ export default function AdminDashboard({ onBack, onPrepareAudit }: AdminDashboar
     const now = Date.now();
     return prospects.filter((prospect) => {
       if (prospect.status === 'audit_sent' || prospect.status === 'closed') return false;
-      return new Date(prospect.follow_up_due_at).getTime() <= now + 48 * 60 * 60 * 1000;
+      return new Date(prospect.follow_up_due_at).getTime() <= now + 30 * 60 * 1000;
     }).length;
   }, [prospects]);
 
@@ -377,9 +377,9 @@ export default function AdminDashboard({ onBack, onPrepareAudit }: AdminDashboar
             <div className="mt-2 text-sm text-slate-500">Demandes à prendre en compte.</div>
           </div>
           <div className="audit-card">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Suivi sous 48 h</div>
+            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Suivi sous 30 min</div>
             <div className="display-font mt-2 text-4xl font-semibold text-amber-700">{dueSoonCount}</div>
-            <div className="mt-2 text-sm text-slate-500">Échéances de relance ou de qualification.</div>
+            <div className="mt-2 text-sm text-slate-500">Demandes à traiter avant l’envoi du formulaire d’audit.</div>
           </div>
           <div className="audit-card">
             <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Audits envoyés</div>

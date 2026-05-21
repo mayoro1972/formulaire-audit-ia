@@ -21,22 +21,22 @@ function getFriendlyEmailFailureMessage(details?: SendFormEmailErrorDetails | nu
   const providerHints: string[] = [];
 
   if (resendDetail.includes('domain is not verified')) {
-    providerHints.push("Le domaine d’envoi Resend n’est pas encore vérifié.");
+    providerHints.push("Le domaine d’envoi n’est pas encore validé.");
   }
 
   if (emailJsDetail.includes('no Private Key was provided')) {
-    providerHints.push("La clé privée EmailJS n’est pas configurée côté backend.");
+    providerHints.push("Le service d’envoi n’est pas encore entièrement configuré.");
   }
 
   if (emailJsDetail.includes('Variables size limit')) {
-    providerHints.push("Le mode de secours EmailJS a dépassé sa limite de taille.");
+    providerHints.push("Le document à envoyer dépasse la limite prévue pour l’envoi.");
   }
 
   if (providerHints.length > 0) {
     return `Les réponses ont bien été enregistrées, mais l’email n’a pas pu être envoyé. ${providerHints.join(' ')}`;
   }
 
-  return "Les réponses ont bien été enregistrées, mais l’email n’a pas pu être envoyé. Vérifiez la configuration des fournisseurs email (Resend / EmailJS).";
+  return "Les réponses ont bien été enregistrées, mais l’email n’a pas pu être envoyé. Vérifiez la configuration du service d’envoi.";
 }
 
 export default function Section10_Envoi() {
@@ -204,18 +204,20 @@ export default function Section10_Envoi() {
       <div className="audit-section-header mb-6">
         <span className="audit-pill bg-blue-100 text-blue-800">Section 10</span>
         <h2 className="display-font mt-4 text-2xl font-semibold text-slate-950 md:text-3xl">
-          Récapitulatif, sauvegarde et envoi
+          Récapitulatif et envoi
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          Dernière étape du parcours README : sauvegarder en base, notifier l’admin,
-          exporter et transmettre le dossier dans le format attendu.
+          Dernière étape du formulaire : vérifier le niveau de complétion, choisir le format de restitution
+          et transmettre le dossier au bon destinataire.
         </p>
       </div>
 
       {!isSupabaseConfigured && (
           <div className="audit-note audit-note-warn mb-6">
-            <div className="font-semibold text-amber-900">Backend non configuré</div>
-            <p className="mt-1 text-amber-950/80">{supabaseConfigMessage}</p>
+            <div className="font-semibold text-amber-900">Envoi indisponible pour cette prévisualisation</div>
+            <p className="mt-1 text-amber-950/80">
+              L’enregistrement automatique et l’envoi du dossier ne sont pas actifs dans cet aperçu local.
+            </p>
           </div>
       )}
 
@@ -257,10 +259,10 @@ export default function Section10_Envoi() {
             <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
               <div className="text-sm font-semibold text-slate-900">Ce que cette étape permet</div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-                <li>Enregistrement des réponses dans Supabase.</li>
-                <li>Notification admin côté backend si le projet est configuré.</li>
-                <li>Envoi de l’export au format CSV, PDF ou Word.</li>
-                <li>Disponibilité du dossier dans le dashboard admin.</li>
+                <li>Vérifier que le questionnaire est suffisamment complété.</li>
+                <li>Choisir le format de restitution le plus adapté.</li>
+                <li>Envoyer le dossier au format CSV, PDF ou Word.</li>
+                <li>Conserver une copie de travail pour les échanges à venir.</li>
               </ul>
             </div>
 
@@ -273,7 +275,7 @@ export default function Section10_Envoi() {
                 {error && <div className="font-medium text-red-900">{error}</div>}
                 {!error && savedToDatabase && !emailSent && (
                   <div className="font-medium text-blue-900">
-                    Les réponses ont été enregistrées et sont accessibles depuis le tableau de bord admin.
+                    Vos réponses ont bien été enregistrées.
                   </div>
                 )}
                 {!error && emailSent && (
@@ -367,7 +369,7 @@ export default function Section10_Envoi() {
                       placeholder="ex: TransferAI-2026"
                     />
                     <p className="mt-2 text-xs text-slate-500">
-                      Ce mot de passe n’est pas stocké en base et doit être communiqué séparément.
+                      Ce mot de passe doit être communiqué séparément au destinataire.
                     </p>
                   </div>
                 )}
@@ -380,7 +382,7 @@ export default function Section10_Envoi() {
                 disabled={sending || savedToDatabase}
                 className="audit-button audit-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {sending ? 'Enregistrement...' : savedToDatabase ? 'Données enregistrées' : 'Sauvegarder en base'}
+                {sending ? 'Enregistrement...' : savedToDatabase ? 'Réponses enregistrées' : 'Enregistrer mes réponses'}
               </button>
               <button
                 onClick={handleSendEmail}
@@ -393,7 +395,7 @@ export default function Section10_Envoi() {
 
             <div className="grid gap-3 md:grid-cols-2">
               <button onClick={exportJSON} className="audit-button audit-button-secondary">
-                Exporter en JSON
+                Exporter une sauvegarde
               </button>
               <button onClick={handlePrint} className="audit-button audit-button-secondary">
                 Imprimer ou sauvegarder en PDF

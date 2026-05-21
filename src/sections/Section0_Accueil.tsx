@@ -9,24 +9,24 @@ import { calculateOverallProgress } from '../lib/formProgress';
 
 const coveredJourneys = [
   {
-    title: 'Repondant standard',
-    description: 'Remplit le questionnaire, enregistre la réponse et peut envoyer un export par email.',
+    title: 'Répondant principal',
+    description: 'Renseigne le questionnaire, enregistre sa progression et transmet le dossier final.',
   },
   {
     title: 'Répondant invité',
-    description: 'Récupère un lien unique avec identité préremplie pour reprendre ou compléter un brouillon.',
+    description: 'Reprend un questionnaire partagé et complète les éléments qui le concernent.',
   },
   {
-    title: 'Administrateur',
-    description: 'Consulte les soumissions, exporte les réponses et envoie des invitations nominatives.',
+    title: 'Suivi interne',
+    description: "Permet à l'équipe de centraliser les réponses et de préparer la restitution de l'audit.",
   },
 ];
 
 const platformFeatures = [
-  { icon: ClipboardCheck, label: '9 sections métier + envoi' },
-  { icon: Shield, label: 'Sauvegarde locale + persistance Supabase' },
-  { icon: Mail, label: 'Exports email CSV, PDF ou Word' },
-  { icon: Sparkles, label: 'Adaptation dynamique selon le domaine' },
+  { icon: ClipboardCheck, label: '9 rubriques métier + synthèse finale' },
+  { icon: Shield, label: 'Enregistrement progressif des réponses' },
+  { icon: Mail, label: 'Restitution par email, PDF ou Word' },
+  { icon: Sparkles, label: 'Questions adaptées au secteur choisi' },
 ];
 
 export default function Section0_Accueil() {
@@ -46,16 +46,16 @@ export default function Section0_Accueil() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_360px]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="audit-pill bg-blue-100 text-blue-800">README transformé en parcours</span>
-              <span className="audit-pill bg-emerald-100 text-emerald-800">Audit IA métier</span>
+              <span className="audit-pill bg-blue-100 text-blue-800">Audit IA multi-sectoriel</span>
+              <span className="audit-pill bg-emerald-100 text-emerald-800">Questionnaire personnalisable</span>
             </div>
             <h1 className="display-font mt-5 text-3xl font-semibold text-slate-950 md:text-5xl">
-              Formulaire d’audit IA pour cartographier, prioriser et transmettre les usages.
+              Formulaire d’audit IA pour cartographier, prioriser et structurer vos usages.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 md:text-[15px]">
-              Cette expérience reprend le périmètre du README dans un parcours simple à renseigner :
-              collecte structurée, sauvegarde automatique, enregistrement Supabase,
-              invitations nominatives, dashboard admin et restitution par email.
+              Ce formulaire vous aide à décrire votre activité, vos irritants, vos priorités et vos attentes
+              vis-à-vis de l’IA. Les questions s’adaptent au secteur sélectionné afin de faire émerger des
+              pistes concrètes, utiles et réalistes.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -94,8 +94,8 @@ export default function Section0_Accueil() {
                 <div className="mt-1 text-xs text-white/60">{domainProfile.summary}</div>
               </div>
               <div className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-white/50">Parcours couverts</div>
-                <div className="mt-1 font-semibold">Standard, invité et admin</div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-white/50">Modes de réponse</div>
+                <div className="mt-1 font-semibold">Individuel, partagé et suivi interne</div>
               </div>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function Section0_Accueil() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <div className="audit-card">
-          <div className="mb-4 text-sm font-semibold text-slate-900">Trame IA proposee pour ce domaine</div>
+          <div className="mb-4 text-sm font-semibold text-slate-900">Trame IA proposée pour ce domaine</div>
           <p className="text-sm leading-7 text-slate-600">{automationBlueprint.recommendation}</p>
 
           <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -211,7 +211,7 @@ export default function Section0_Accueil() {
         </div>
 
         <div className="audit-card">
-          <div className="mb-4 text-sm font-semibold text-slate-900">Parcours couverts par l’application</div>
+          <div className="mb-4 text-sm font-semibold text-slate-900">Modes de réponse prévus</div>
           <div className="space-y-3">
             {coveredJourneys.map((journey) => (
               <div key={journey.title} className="rounded-[20px] border border-slate-900/8 bg-white/70 p-4">
@@ -247,8 +247,8 @@ export default function Section0_Accueil() {
 
       <div className="section-actions">
         <div className="audit-note audit-note-info flex-1">
-          Vous pouvez avancer dans l’ordre ou naviguer librement. Vos réponses sont sauvegardées
-          localement, puis pourront être enregistrées ou envoyées au format CSV, PDF ou Word.
+          Vous pouvez avancer dans l’ordre ou naviguer librement. Vos réponses restent disponibles
+          pendant la saisie, puis peuvent être restituées au format CSV, PDF ou Word.
         </div>
         <button onClick={() => setCurrentSection(1)} className="audit-button audit-button-primary sm:self-end">
           Commencer le questionnaire

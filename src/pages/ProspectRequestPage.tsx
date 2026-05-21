@@ -13,6 +13,7 @@ const initialFormValues: ProspectFormValues = {
   country: '',
   activitySector: '',
   needDescription: '',
+  wantsExpertCall: false,
 };
 
 function isPreviewFriendlyError(error: unknown) {
@@ -36,7 +37,7 @@ export default function ProspectRequestPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<ProspectSubmissionResult | null>(null);
 
-  const updateField = (field: keyof ProspectFormValues, value: string) => {
+  const updateField = (field: keyof ProspectFormValues, value: string | boolean) => {
     setFormValues((current) => ({ ...current, [field]: value }));
   };
 
@@ -190,6 +191,22 @@ export default function ProspectRequestPage() {
               </div>
             </div>
 
+            <div className="rounded-[20px] border border-slate-900/8 bg-white/70 px-4 py-4">
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={formValues.wantsExpertCall}
+                  onChange={(event) => updateField('wantsExpertCall', event.target.checked)}
+                  className="mt-1"
+                  required
+                />
+                <span className="text-sm leading-6 text-slate-700">
+                  Je confirme que je souhaite échanger avec un expert pour un rendez-vous avant de
+                  commencer à remplir le formulaire d’audit.
+                </span>
+              </label>
+            </div>
+
             <div>
               <label className="mb-2 block">Décrivez votre besoin</label>
               <textarea
@@ -215,7 +232,7 @@ export default function ProspectRequestPage() {
                 <p className="mt-2 text-emerald-950/85">
                   Nous reviendrons vers vous avant le{' '}
                   <strong>{new Date(result.prospect.follow_up_due_at).toLocaleString('fr-FR')}</strong>{' '}
-                  pour qualifier votre besoin et vous adresser le formulaire d’audit.
+                  et le formulaire d’audit vous sera envoyé environ 30 minutes après la réception de votre demande.
                 </p>
                 <p className="mt-2 text-sm text-emerald-950/80">
                   Mode actuel : {result.storageMode === 'supabase' ? 'sauvegarde Supabase' : 'aperçu local simulé'}.

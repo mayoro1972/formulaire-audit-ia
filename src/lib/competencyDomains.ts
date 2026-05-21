@@ -143,7 +143,7 @@ export const competencyDomains: CompetencyDomainProfile[] = [
   {
     ...genericProfile,
     key: 'assistant-secretariat',
-    label: 'Assistantat & Secrétariat',
+    label: 'Assistanat & Secrétariat',
     summary: "Optimiser l'agenda, les communications et la préparation documentaire de la direction.",
     workloadCategories: [
       'Agenda & planification',
@@ -303,7 +303,7 @@ export const competencyDomains: CompetencyDomainProfile[] = [
   {
     ...genericProfile,
     key: 'service-client',
-    label: 'Service Client',
+    label: 'Service client & relation client',
     summary: 'Réduire les délais de réponse, homogénéiser les réponses et mieux piloter la satisfaction client.',
     workloadCategories: [
       'Réponses clients',
@@ -335,7 +335,7 @@ export const competencyDomains: CompetencyDomainProfile[] = [
   {
     ...genericProfile,
     key: 'data-analyse',
-    label: 'Data & Analyse',
+    label: 'Données & Analyse',
     summary: 'Structurer la collecte, le nettoyage, l’analyse et la restitution de données à forte valeur.',
     workloadCategories: [
       'Collecte de données',
@@ -431,7 +431,7 @@ export const competencyDomains: CompetencyDomainProfile[] = [
   {
     ...genericProfile,
     key: 'it-transformation-digitale',
-    label: 'IT & Transformation Digitale',
+    label: "Systèmes d'information & Transformation digitale",
     summary: 'Accélérer le run, la documentation, la priorisation des incidents et le cadrage des projets digitaux.',
     workloadCategories: [
       'Support / incidents',
@@ -495,7 +495,7 @@ export const competencyDomains: CompetencyDomainProfile[] = [
   {
     ...genericProfile,
     key: 'sante-bien-etre',
-    label: 'Santé & Bien-être',
+    label: 'Santé, social & bien-être',
     summary: 'Sécuriser la documentation, fluidifier la coordination et libérer du temps de prise en charge ou d’accompagnement.',
     workloadCategories: [
       'Prise en charge / accompagnement',

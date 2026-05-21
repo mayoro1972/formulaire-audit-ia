@@ -16,7 +16,7 @@ export default function Navbar() {
         <div className="flex flex-col gap-5 px-4 py-4 md:px-7 md:py-5 lg:flex-row lg:items-center">
           <div className="min-w-0 flex-1">
             <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/65">
-              <span className="audit-pill bg-white/10 text-white/80">Banking AI Audit</span>
+              <span className="audit-pill bg-white/10 text-white/80">Audit IA multi-sectoriel</span>
               <span className="audit-pill bg-emerald-400/12 text-emerald-100">{activeEntity}</span>
             </div>
             <div className="display-font text-xl font-semibold md:text-[1.7rem]">{activeLabel}</div>

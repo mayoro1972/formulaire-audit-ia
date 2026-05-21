@@ -48,7 +48,7 @@ export function getProspectStatusLabel(status: ProspectStatus) {
 
 export function createProspectRecord(values: ProspectFormValues, existing?: ProspectRecord): ProspectRecord {
   const now = new Date();
-  const followUpDue = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
+  const followUpDue = new Date(now.getTime() + 30 * 60 * 1000).toISOString();
 
   return {
     id: existing?.id || generateId(),
@@ -61,11 +61,13 @@ export function createProspectRecord(values: ProspectFormValues, existing?: Pros
     country: normalizeText(values.country),
     activity_sector: normalizeText(values.activitySector),
     need_description: normalizeText(values.needDescription),
+    wants_expert_call: values.wantsExpertCall,
     status: existing?.status && existing.status !== 'closed' ? existing.status : 'new',
     source: existing?.source || 'site_public',
     created_at: existing?.created_at || now.toISOString(),
     updated_at: now.toISOString(),
     follow_up_due_at: followUpDue,
+    acknowledgement_sent_at: existing?.acknowledgement_sent_at || now.toISOString(),
     audit_form_sent_at: existing?.audit_form_sent_at || null,
     last_contacted_at: existing?.last_contacted_at || null,
     notes: existing?.notes || '',
@@ -143,9 +145,11 @@ export function formatProspectsCsv(prospects: ProspectRecord[]) {
     'Ville',
     'Pays',
     'Secteur d activite',
+    'Souhaite parler a un expert',
     'Besoin',
     'Statut',
     'Suivi avant',
+    'Accuse reception envoye le',
     'Audit envoye le',
     'Dernier contact',
   ];
@@ -162,9 +166,11 @@ export function formatProspectsCsv(prospects: ProspectRecord[]) {
     prospect.city,
     prospect.country,
     prospect.activity_sector,
+    prospect.wants_expert_call ? 'Oui' : 'Non',
     prospect.need_description,
     getProspectStatusLabel(prospect.status),
     new Date(prospect.follow_up_due_at).toLocaleString('fr-FR'),
+    prospect.acknowledgement_sent_at ? new Date(prospect.acknowledgement_sent_at).toLocaleString('fr-FR') : '',
     prospect.audit_form_sent_at ? new Date(prospect.audit_form_sent_at).toLocaleString('fr-FR') : '',
     prospect.last_contacted_at ? new Date(prospect.last_contacted_at).toLocaleString('fr-FR') : '',
   ]);

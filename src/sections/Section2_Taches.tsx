@@ -73,8 +73,8 @@ export default function Section2_Taches() {
           Tâches déjà identifiées
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-          Cette partie traduit le README en trame métier préchargée : les groupes de tâches
-          sont personnalisés selon le domaine choisi et peuvent être corrigés librement.
+          Cette partie propose une trame métier préremplie. Les groupes de tâches
+          sont adaptés au domaine choisi et peuvent être corrigés librement.
         </p>
       </div>
 

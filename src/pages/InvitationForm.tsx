@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowRight, MailCheck, ShieldAlert } from 'lucide-react';
+import { ArrowRight, LockKeyhole, MailCheck, ShieldAlert } from 'lucide-react';
 import { FormProvider } from '../context/FormContext';
 import { useForm } from '../context/formContextCore';
+import { AuditFormShell } from './AuditFormPreviewPage';
 import {
   getSupabaseFunctionHeaders,
   getSupabaseFunctionUrl,
@@ -10,7 +11,6 @@ import {
 } from '../lib/supabase';
 import type { FormData } from '../types/form';
 import { getAppBaseUrl } from '../lib/appUrl';
-import App from '../App';
 
 interface InvitationPayload {
   invitee_name: string;
@@ -133,6 +133,65 @@ function InvitationFormContent() {
     );
   }
 
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="audit-card max-w-3xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="audit-pill bg-blue-100 text-blue-800">Formulaire d’audit IA</span>
+            <span className="audit-pill bg-emerald-100 text-emerald-800">Accès sécurisé</span>
+          </div>
+
+          <h1 className="display-font mt-5 text-3xl font-semibold text-slate-950 md:text-5xl">
+            Accédez à votre questionnaire d’audit en toute sécurité
+          </h1>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 md:text-[15px]">
+            Ce questionnaire est réservé aux prospects ayant déjà effectué une demande d’audit.
+            Utilisez vos identifiants pour ouvrir votre formulaire personnalisé ou commencez par une
+            nouvelle demande si vous n’avez pas encore reçu l’accès.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-[24px] border border-slate-900/8 bg-white/70 p-5">
+              <div className="inline-flex rounded-2xl bg-blue-100 p-3 text-blue-800">
+                <LockKeyhole className="h-5 w-5" />
+              </div>
+              <div className="mt-4 text-lg font-semibold text-slate-900">J’ai déjà mes identifiants</div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Ouvrez directement le portail sécurisé pour accéder à votre formulaire d’audit.
+              </p>
+              <a
+                href="https://www.transferai.ci/acces-formulaire-audit"
+                className="audit-button audit-button-primary mt-5 inline-flex border-0"
+              >
+                Ouvrir le portail sécurisé
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+
+            <div className="rounded-[24px] border border-slate-900/8 bg-white/70 p-5">
+              <div className="inline-flex rounded-2xl bg-amber-100 p-3 text-amber-800">
+                <MailCheck className="h-5 w-5" />
+              </div>
+              <div className="mt-4 text-lg font-semibold text-slate-900">Je n’ai pas encore demandé l’audit</div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Commencez par la demande d’audit pour recevoir l’accusé de réception, les explications
+                sectorielles, puis votre accès au questionnaire.
+              </p>
+              <a
+                href="https://www.transferai.ci/demande-audit-gratuit"
+                className="audit-button audit-button-secondary mt-5 inline-flex"
+              >
+                Faire une demande d’audit
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (invitation) {
     return (
       <div>
@@ -162,12 +221,12 @@ function InvitationFormContent() {
             </div>
           </div>
         </div>
-        <App invitationToken={token} withProvider={false} />
+        <AuditFormShell />
       </div>
     );
   }
 
-  return <App />;
+  return null;
 }
 
 export default function InvitationForm() {

@@ -113,8 +113,8 @@ export default function SuccessModal({
           <div className="audit-card !p-5">
             <div className="text-sm font-semibold text-slate-900">Que se passe-t-il maintenant ?</div>
             <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-              <li>Les données sont sauvegardées dans la base si le backend est configuré.</li>
-              <li>Le dossier devient consultable depuis le tableau de bord admin.</li>
+              <li>Le dossier est bien enregistré et prêt pour la restitution.</li>
+              <li>L’équipe peut relire les réponses et préparer les suites à donner.</li>
               {emailSent && <li>Un email récapitulatif a été envoyé à l’adresse configurée.</li>}
               <li>Vous pouvez encore modifier la réponse et soumettre à nouveau si nécessaire.</li>
             </ul>
