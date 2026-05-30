@@ -34,7 +34,7 @@ Exigences de presentation :
 - affichage d'un identifiant de suivi quand la sauvegarde est reussie
 
 Route de production recommandee :
-- [https://audit.transferai.ci/?form=prospect-simple-audit](https://audit.transferai.ci/?form=prospect-simple-audit)
+- [https://audit.transferai.ci/](https://audit.transferai.ci/)
 
 Route de travail locale :
 - [http://127.0.0.1:4177/?form=prospect-simple-audit](http://127.0.0.1:4177/?form=prospect-simple-audit)

@@ -10,7 +10,7 @@ Objectif :
 
 Je recommande de publier l'application sur un sous-domaine dédié :
 
-- `https://audit.transferai.ci/?form=prospect-simple-audit`
+- `https://audit.transferai.ci/`
 
 Pourquoi ce choix :
 - le sous-domaine reste cohérent avec la marque TransferAI
@@ -57,7 +57,7 @@ Variables minimales :
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_APP_BASE_PATH=/
-VITE_PUBLIC_PROSPECT_FORM_URL=https://audit.transferai.ci/?form=prospect-simple-audit
+VITE_PUBLIC_PROSPECT_FORM_URL=https://audit.transferai.ci/
 ```
 
 Rôle des variables :
@@ -86,7 +86,7 @@ Fichiers concernés :
 
 Lien recommandé pour la `General Executive Letter` :
 
-- `https://audit.transferai.ci/?form=prospect-simple-audit`
+- `https://audit.transferai.ci/`
 
 Ce lien ouvre directement le formulaire public séparé, sans passer par `www.transferai.ci`.
 
@@ -107,7 +107,7 @@ Réglages conseillés :
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_APP_BASE_PATH=/`
-- `VITE_PUBLIC_PROSPECT_FORM_URL=https://audit.transferai.ci/?form=prospect-simple-audit`
+- `VITE_PUBLIC_PROSPECT_FORM_URL=https://audit.transferai.ci/`
 
 ### Domaine personnalisé
 
@@ -116,7 +116,7 @@ Ajouter ensuite le custom domain :
 
 ## 7. Tests à faire après publication
 
-1. ouvrir `https://audit.transferai.ci/?form=prospect-simple-audit`
+1. ouvrir `https://audit.transferai.ci/`
 2. verifier l'affichage du formulaire
 3. tester le switch `FR / EN / ES`
 4. remplir un formulaire de test
@@ -139,7 +139,7 @@ Positionnement prospect :
 
 Si vous voulez un lien public séparé immédiatement crédible, la meilleure cible est :
 
-- `https://audit.transferai.ci/?form=prospect-simple-audit`
+- `https://audit.transferai.ci/`
 
 Cela donne :
 - une URL claire

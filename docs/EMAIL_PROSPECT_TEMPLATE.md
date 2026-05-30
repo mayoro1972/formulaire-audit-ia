@@ -25,7 +25,7 @@ Lien de travail actuel :
 - [http://127.0.0.1:4177/?form=prospect-simple-audit](http://127.0.0.1:4177/?form=prospect-simple-audit)
 
 Lien public cible :
-- `https://www.transferai.ci/?form=prospect-simple-audit`
+- `https://audit.transferai.ci/`
 
 ## Version plus commerciale
 
