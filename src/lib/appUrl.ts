@@ -9,17 +9,22 @@ export function buildInviteUrl(inviteToken: string) {
 }
 
 export function buildProspectSimpleAuditUrl() {
+  const defaultEntry = import.meta.env.VITE_DEFAULT_ENTRY?.trim();
+  const publicFormUrl = import.meta.env.VITE_PUBLIC_PROSPECT_FORM_URL?.trim();
+
+  if (publicFormUrl) {
+    return publicFormUrl;
+  }
+
+  if (defaultEntry === 'prospect-simple-audit') {
+    return getAppBaseUrl();
+  }
+
   const appUrl = new URL(getAppBaseUrl());
   appUrl.searchParams.set('form', 'prospect-simple-audit');
   return appUrl.toString();
 }
 
 export function getPublicProspectSimpleAuditUrl() {
-  const configuredUrl = import.meta.env.VITE_PUBLIC_PROSPECT_FORM_URL?.trim();
-
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
   return buildProspectSimpleAuditUrl();
 }
