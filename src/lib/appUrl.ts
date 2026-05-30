@@ -13,3 +13,13 @@ export function buildProspectSimpleAuditUrl() {
   appUrl.searchParams.set('form', 'prospect-simple-audit');
   return appUrl.toString();
 }
+
+export function getPublicProspectSimpleAuditUrl() {
+  const configuredUrl = import.meta.env.VITE_PUBLIC_PROSPECT_FORM_URL?.trim();
+
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  return buildProspectSimpleAuditUrl();
+}

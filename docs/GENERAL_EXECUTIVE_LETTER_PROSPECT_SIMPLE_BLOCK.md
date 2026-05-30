@@ -2,13 +2,13 @@
 
 Ce document fournit le bloc a inserer dans la `General Executive Letter` pour inviter le prospect a ouvrir et remplir le formulaire de preparation a l'audit.
 
-## Lien de travail actuel
+## Lien de production recommande
+
+Lien de production cible :
+- `https://audit.transferai.ci/?form=prospect-simple-audit`
 
 Lien local de travail :
 - [http://127.0.0.1:4177/?form=prospect-simple-audit](http://127.0.0.1:4177/?form=prospect-simple-audit)
-
-Lien de production a remplacer ensuite :
-- `https://www.transferai.ci/?form=prospect-simple-audit`
 
 ## Bloc recommande - Francais
 
@@ -22,7 +22,7 @@ Afin de preparer notre rencontre dans les meilleures conditions, nous vous invit
 
 Vous pouvez l'ouvrir des maintenant et le remplir au moment qui vous convient :
 
-[Completer le formulaire de preparation a l'audit](https://www.transferai.ci/?form=prospect-simple-audit)
+[Completer le formulaire de preparation a l'audit](https://audit.transferai.ci/?form=prospect-simple-audit)
 
 Une fois le formulaire complete, il nous sera transmis automatiquement afin que notre equipe puisse l'analyser avant la rencontre et preparer un audit plus cible, plus fluide et plus utile pour votre organisation.
 
@@ -38,7 +38,7 @@ To help us prepare our meeting in the best possible conditions, we invite you to
 
 You can open it now and complete it whenever it suits you:
 
-[Complete the audit preparation form](https://www.transferai.ci/?form=prospect-simple-audit)
+[Complete the audit preparation form](https://audit.transferai.ci/?form=prospect-simple-audit)
 
 Once completed, the form will be sent automatically to our team so we can review it before the meeting and prepare a more focused, smoother, and more useful audit for your organization.
 
@@ -54,7 +54,7 @@ Para preparar nuestra reunion en las mejores condiciones, le invitamos a complet
 
 Puede abrirlo ahora y completarlo en el momento que mas le convenga:
 
-[Completar el formulario de preparacion para la auditoria](https://www.transferai.ci/?form=prospect-simple-audit)
+[Completar el formulario de preparacion para la auditoria](https://audit.transferai.ci/?form=prospect-simple-audit)
 
 Una vez completado, el formulario se nos transmitira automaticamente para que nuestro equipo pueda revisarlo antes de la reunion y preparar una auditoria mas enfocada, mas fluida y mas util para su organizacion.
 
@@ -62,10 +62,10 @@ Una vez completado, el formulario se nos transmitira automaticamente para que nu
 
 Afin de preparer un audit plus cible et plus utile pour votre organisation, merci de completer ce formulaire en amont de notre visite. Il peut etre renseigne au moment qui vous convient puis transmis a notre equipe pour preparation :
 
-[Ouvrir le formulaire de preparation](https://www.transferai.ci/?form=prospect-simple-audit)
+[Ouvrir le formulaire de preparation](https://audit.transferai.ci/?form=prospect-simple-audit)
 
 ## Notes d'integration
 
-- remplacer l'URL locale par l'URL publique de production lors de la mise en ligne
+- remplacer l'URL locale par l'URL publique du sous-domaine lors de la mise en ligne
 - utiliser le meme lien dans la lettre, l'email d'accompagnement et les relances
 - conserver une formulation simple et rassurante pour encourager la completion avant la visite
