@@ -8,13 +8,14 @@ import './index.css';
 
 const urlParams = new URLSearchParams(window.location.search);
 const preview = urlParams.get('preview');
+const form = urlParams.get('form');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AdminAuthProvider>
       {preview === 'audit-form' ? (
         <AuditFormPreviewPage />
-      ) : preview === 'prospect-simple-audit' ? (
+      ) : preview === 'prospect-simple-audit' || form === 'prospect-simple-audit' ? (
         <ProspectSimpleAuditFormPreviewPage />
       ) : (
         <InvitationForm />

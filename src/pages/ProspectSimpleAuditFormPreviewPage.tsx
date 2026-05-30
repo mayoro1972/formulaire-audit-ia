@@ -1,5 +1,6 @@
 import { ArrowUpRight, CheckCircle2, Clock3, Globe2, Mail, Shield, Sparkles, Target, Workflow } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
+import { buildProspectSimpleAuditUrl } from '../lib/appUrl';
 import { getSupabaseFunctionHeaders, getSupabaseFunctionUrl, isSupabaseConfigured, supabaseConfigMessage } from '../lib/supabase';
 
 type Language = 'fr' | 'en' | 'es';
@@ -969,7 +970,7 @@ export default function ProspectSimpleAuditFormPreviewPage() {
   const [savedResponseId, setSavedResponseId] = useState('');
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  const currentUrl = `${window.location.origin}${window.location.pathname}?preview=prospect-simple-audit`;
+  const currentUrl = buildProspectSimpleAuditUrl();
 
   const fieldLabels = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};

@@ -33,7 +33,10 @@ Exigences de presentation :
 - message de confirmation apres envoi
 - affichage d'un identifiant de suivi quand la sauvegarde est reussie
 
-Route de preview actuelle :
+Route de travail actuelle :
+- [http://127.0.0.1:4177/?form=prospect-simple-audit](http://127.0.0.1:4177/?form=prospect-simple-audit)
+
+Route de compatibilite preview :
 - [http://127.0.0.1:4177/?preview=prospect-simple-audit](http://127.0.0.1:4177/?preview=prospect-simple-audit)
 
 Implementation actuelle :

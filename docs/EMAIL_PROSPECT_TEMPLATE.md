@@ -16,6 +16,17 @@ Si vous êtes d'accord, je vous envoie le lien nominatif afin que nous puissions
 
 Bien cordialement,
 
+## Bloc General Executive Letter
+
+Reference :
+- [docs/GENERAL_EXECUTIVE_LETTER_PROSPECT_SIMPLE_BLOCK.md](/Users/marius_ayoro/Documents/Playground/formulaire-audit-ia/docs/GENERAL_EXECUTIVE_LETTER_PROSPECT_SIMPLE_BLOCK.md)
+
+Lien de travail actuel :
+- [http://127.0.0.1:4177/?form=prospect-simple-audit](http://127.0.0.1:4177/?form=prospect-simple-audit)
+
+Lien public cible :
+- `https://www.transferai.ci/?form=prospect-simple-audit`
+
 ## Version plus commerciale
 
 Objet : Préparer votre audit IA en amont
