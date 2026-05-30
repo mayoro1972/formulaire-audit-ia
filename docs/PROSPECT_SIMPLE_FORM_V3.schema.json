@@ -1,0 +1,228 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "transferai_prospect_simple_form_v3",
+  "purpose": "Mini formulaire prospect post pre-audit, aligne avec Assemble Prospect Context et Generate Tailored Audit Form.",
+  "delivery": {
+    "entryPoint": "executive_letter_link",
+    "linkBehavior": "open_in_dedicated_window",
+    "intendedTiming": "before_audit_visit",
+    "recipientEmail": "contact@transferai.ci",
+    "submissionGoal": "allow_transfer_before_visit_for_better_meeting_preparation"
+  },
+  "baseSections": [
+    {
+      "id": "identity",
+      "title": "Votre contexte",
+      "fields": [
+        { "id": "organization_name", "type": "text", "label": "Organisation", "required": true },
+        { "id": "decision_maker_name", "type": "text", "label": "Nom et prenom", "required": true },
+        { "id": "role_title", "type": "text", "label": "Fonction", "required": true },
+        { "id": "team_scope", "type": "text", "label": "Equipe ou service concerne", "required": true },
+        { "id": "sector_activity", "type": "text", "label": "Secteur d'activite", "required": true },
+        { "id": "website", "type": "url", "label": "Site web", "required": false },
+        { "id": "country", "type": "text", "label": "Pays", "required": true }
+      ]
+    },
+    {
+      "id": "priorities",
+      "title": "Vos priorites metier",
+      "fields": [
+        { "id": "priority_outcome", "type": "textarea", "label": "Quel resultat souhaitez-vous obtenir en priorite ?", "required": true },
+        { "id": "priority_1", "type": "text", "label": "Priorite 1", "required": true },
+        { "id": "priority_2", "type": "text", "label": "Priorite 2", "required": false },
+        { "id": "priority_3", "type": "text", "label": "Priorite 3", "required": false },
+        { "id": "main_pain_point", "type": "textarea", "label": "Quel irritant vous penalise le plus aujourd'hui ?", "required": true }
+      ]
+    },
+    {
+      "id": "operations",
+      "title": "Vos operations au quotidien",
+      "fields": [
+        { "id": "repetitive_tasks", "type": "textarea", "label": "Quelles sont les 3 a 5 taches les plus repetitives ?", "required": true },
+        { "id": "weekly_volume", "type": "text", "label": "Volume traite par semaine", "required": true },
+        { "id": "current_delays", "type": "text", "label": "Delais actuels moyens", "required": true },
+        { "id": "manual_steps", "type": "textarea", "label": "Quelles etapes restent tres manuelles ?", "required": true }
+      ]
+    },
+    {
+      "id": "tools_data",
+      "title": "Outils et donnees",
+      "fields": [
+        { "id": "current_tools", "type": "textarea", "label": "Quels outils utilisez-vous aujourd'hui ?", "required": true },
+        { "id": "data_types", "type": "textarea", "label": "Quelles donnees ou documents manipulez-vous ?", "required": true },
+        { "id": "sensitive_data_constraints", "type": "textarea", "label": "Quelles donnees sont sensibles ou confidentielles ?", "required": true },
+        { "id": "desired_integrations", "type": "textarea", "label": "Quelles integrations seraient utiles ?", "required": false }
+      ]
+    },
+    {
+      "id": "adoption",
+      "title": "Formation et adoption",
+      "fields": [
+        {
+          "id": "ai_maturity_level",
+          "type": "select",
+          "label": "Avez-vous deja teste des outils IA ?",
+          "required": true,
+          "options": ["Jamais", "Un peu", "Regulierement", "Equipe deja outillee"]
+        },
+        {
+          "id": "desired_use_case_family",
+          "type": "multi_select",
+          "label": "Quels usages vous interessent le plus ?",
+          "required": true,
+          "options": ["Gagner du temps", "Mieux repondre", "Mieux analyser", "Mieux documenter", "Mieux former"]
+        },
+        {
+          "id": "training_expectations",
+          "type": "multi_select",
+          "label": "Quel type d'accompagnement attendez-vous ?",
+          "required": true,
+          "options": ["Audit", "Prototype", "Automatisation", "Formation", "Accompagnement equipe"]
+        }
+      ]
+    },
+    {
+      "id": "goals_90_days",
+      "title": "Objectif a 3 mois",
+      "fields": [
+        { "id": "quick_win_90_days", "type": "textarea", "label": "Quel quick win attendez-vous sous 90 jours ?", "required": true },
+        { "id": "success_kpi", "type": "text", "label": "Comment mesurerez-vous le succes ?", "required": true },
+        { "id": "internal_sponsor", "type": "text", "label": "Qui doit valider ou sponsoriser le projet ?", "required": true }
+      ]
+    }
+  ],
+  "sectorModules": {
+    "service_client_multicanal": {
+      "title": "Module Service client",
+      "fields": [
+        { "id": "sc_channels", "type": "multi_select", "label": "Canaux traites", "options": ["Email", "WhatsApp", "Telephone", "CRM", "Autre"] },
+        { "id": "sc_ticket_volume", "type": "text", "label": "Volume de demandes ou tickets par semaine" },
+        { "id": "sc_target_sla", "type": "text", "label": "Delai de reponse a ameliorer" }
+      ]
+    },
+    "support_it_intelligent": {
+      "title": "Module IT / Support",
+      "fields": [
+        { "id": "it_incident_volume", "type": "text", "label": "Volume d'incidents ou demandes support par semaine" },
+        { "id": "it_knowledge_base", "type": "yes_no", "label": "Disposez-vous d'une base documentaire ou de procedures techniques ?" },
+        { "id": "it_recurring_requests", "type": "textarea", "label": "Quelles demandes reviennent le plus souvent ?" }
+      ]
+    },
+    "machine_contenu_marketing": {
+      "title": "Module Marketing",
+      "fields": [
+        { "id": "mk_content_types", "type": "textarea", "label": "Quels contenus produisez-vous le plus souvent ?" },
+        { "id": "mk_campaign_volume", "type": "text", "label": "Combien de campagnes ou publications gerez-vous par mois ?" },
+        { "id": "mk_time_sink", "type": "select", "label": "Ou perdez-vous le plus de temps ?", "options": ["Redaction", "Adaptation", "Validation", "Reporting"] }
+      ]
+    },
+    "workflow_administratif": {
+      "title": "Module Administratif",
+      "fields": [
+        { "id": "adm_processes", "type": "textarea", "label": "Quels processus administratifs sont les plus repetitifs ?" },
+        { "id": "adm_validation_steps", "type": "textarea", "label": "Quelles validations ralentissent le plus le flux ?" },
+        { "id": "adm_deadlines", "type": "text", "label": "Quelles echeances devez-vous respecter ?" }
+      ]
+    },
+    "assistant_direction_documentaire": {
+      "title": "Module Direction / Management",
+      "fields": [
+        { "id": "dir_reporting_rhythm", "type": "text", "label": "Quels points de pilotage reviennent chaque semaine ?" },
+        { "id": "dir_decision_briefs", "type": "textarea", "label": "Quels arbitrages vous prennent le plus de temps ?" },
+        { "id": "dir_expected_summary", "type": "text", "label": "Quel type de synthese vous serait le plus utile ?" }
+      ]
+    },
+    "reporting_financier_assiste": {
+      "title": "Module Finance",
+      "fields": [
+        { "id": "fin_reporting_types", "type": "textarea", "label": "Quels reportings ou rapprochements sont les plus chronophages ?" },
+        { "id": "fin_close_delay", "type": "text", "label": "Quel delai de cloture ou de production souhaitez-vous reduire ?" },
+        { "id": "fin_human_controls", "type": "textarea", "label": "Quels controles doivent rester humains ?" }
+      ]
+    },
+    "recrutement_onboarding_augmente": {
+      "title": "Module RH",
+      "fields": [
+        { "id": "hr_priority_process", "type": "select", "label": "Quel processus RH est prioritaire ?", "options": ["Recrutement", "Onboarding", "Formation", "Administration RH"] },
+        { "id": "hr_monthly_cases", "type": "text", "label": "Combien de dossiers ou demandes RH traitez-vous par mois ?" },
+        { "id": "hr_sensitive_info", "type": "textarea", "label": "Quelles informations sont les plus sensibles ?" }
+      ]
+    },
+    "commentaire_donnees_reporting": {
+      "title": "Module Donnees & Analyse",
+      "fields": [
+        { "id": "data_sources", "type": "textarea", "label": "Quelles sources de donnees utilisez-vous ?" },
+        { "id": "data_analysis_repeat", "type": "textarea", "label": "Quelles analyses ou visualisations reviennent le plus souvent ?" },
+        { "id": "data_manual_effort", "type": "select", "label": "Ou se trouvent les plus gros efforts manuels ?", "options": ["Collecte", "Nettoyage", "Synthese", "Visualisation"] }
+      ]
+    },
+    "telemedecine_triage_orientation": {
+      "title": "Module Sante / Social",
+      "fields": [
+        { "id": "health_repetitive_records", "type": "textarea", "label": "Quels dossiers ou suivis sont les plus repetitifs ?" },
+        { "id": "health_non_negotiable_confidentiality", "type": "textarea", "label": "Quelles contraintes de confidentialite sont non negociables ?" },
+        { "id": "health_time_consuming_coordination", "type": "textarea", "label": "Quels comptes rendus ou coordinations prennent le plus de temps ?" }
+      ]
+    },
+    "banque_kyc_reporting": {
+      "title": "Module Banque / Conformite",
+      "fields": [
+        { "id": "bnk_control_types", "type": "textarea", "label": "Quels controles, revues ou reportings sont les plus frequents ?" },
+        { "id": "bnk_traceability_rules", "type": "textarea", "label": "Quelles exigences de tracabilite ou de validation devez-vous respecter ?" },
+        { "id": "bnk_sensitive_flows", "type": "textarea", "label": "Quels documents ou flux sont les plus sensibles ?" }
+      ]
+    },
+    "operations_terrain_coordination": {
+      "title": "Module Operations terrain / Logistique",
+      "fields": [
+        { "id": "ops_field_coordination", "type": "textarea", "label": "Quelles operations terrain faut-il coordonner chaque semaine ?" },
+        { "id": "ops_field_feedback", "type": "textarea", "label": "Quels retours ou rapports remontent du terrain ?" },
+        { "id": "ops_delay_reduction", "type": "text", "label": "Quels delais ou pertes d'information voulez-vous reduire ?" }
+      ]
+    },
+    "energie_industrie_services": {
+      "title": "Module Energie / Industrie",
+      "fields": [
+        { "id": "ind_repetitive_processes", "type": "textarea", "label": "Quels processus sont les plus repetitifs ou documentaires ?" },
+        { "id": "ind_reporting_outputs", "type": "textarea", "label": "Quels rapports ou comptes rendus produisez-vous regulierement ?" },
+        { "id": "ind_safety_constraints", "type": "textarea", "label": "Quelles contraintes de securite ou de conformite s'appliquent ?" }
+      ]
+    },
+    "formation_montee_en_competence": {
+      "title": "Module Formation / Pedagogie",
+      "fields": [
+        { "id": "trn_content_types", "type": "textarea", "label": "Quels supports ou evaluations preparez-vous souvent ?" },
+        { "id": "trn_personalization_need", "type": "yes_no", "label": "Faut-il personnaliser les contenus selon les publics ?" },
+        { "id": "trn_expected_result", "type": "text", "label": "Quel resultat attendez-vous en priorite ?" }
+      ]
+    }
+  },
+  "domainToSignalTagCrosswalk": {
+    "assistant-secretariat": ["assistant_direction_documentaire", "workflow_administratif"],
+    "ressources-humaines": ["recrutement_onboarding_augmente", "formation_montee_en_competence", "workflow_administratif"],
+    "marketing-communication": ["machine_contenu_marketing"],
+    "finance-comptabilite": ["reporting_financier_assiste"],
+    "juridique-conformite": ["workflow_administratif", "banque_kyc_reporting"],
+    "service-client": ["service_client_multicanal"],
+    "data-analyse": ["commentaire_donnees_reporting"],
+    "administration-gestion": ["workflow_administratif"],
+    "management-leadership": ["assistant_direction_documentaire", "commentaire_donnees_reporting"],
+    "it-transformation-digitale": ["support_it_intelligent"],
+    "formation-pedagogie": ["formation_montee_en_competence"],
+    "sante-bien-etre": ["telemedecine_triage_orientation"],
+    "diplomatie-affaires-internationales": ["assistant_direction_documentaire", "commentaire_donnees_reporting", "workflow_administratif"]
+  },
+  "letterBindingFields": [
+    "priority_outcome",
+    "main_pain_point",
+    "repetitive_tasks",
+    "weekly_volume",
+    "current_delays",
+    "current_tools",
+    "sensitive_data_constraints",
+    "training_expectations",
+    "quick_win_90_days",
+    "success_kpi",
+    "internal_sponsor"
+  ]
+}
