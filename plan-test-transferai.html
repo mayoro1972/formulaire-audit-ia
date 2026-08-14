@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plan de Test — Audit IA | TransferAI.ci</title>
+  <style>
+    :root {
+      --blue-dark:  #042C53;
+      --blue-mid:   #0a4a8a;
+      --blue-light: #e8f0f8;
+      --green:      #16a34a;
+      --green-bg:   #dcfce7;
+      --red:        #dc2626;
+      --red-bg:     #fee2e2;
+      --amber:      #d97706;
+      --amber-bg:   #fef3c7;
+      --gray:       #6b7280;
+      --gray-light: #f3f4f6;
+      --border:     #e5e7eb;
+      --text:       #111827;
+      --white:      #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: #f0f4f8;
+      line-height: 1.5;
+    }
+
+    .header {
+      background: var(--blue-dark);
+      color: #fff;
+      padding: 28px 40px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+    .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+    .header-left p  { font-size: 12px; opacity: .75; margin-top: 3px; }
+    .header-right   { display: flex; gap: 10px; align-items: center; }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-white   { background: #fff; color: var(--blue-dark); }
+    .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.5); }
+    .btn-green   { background: var(--green); color: #fff; }
+    .btn-red     { background: var(--red);   color: #fff; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    .tester-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      padding: 22px 26px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .tester-card h2 {
+      grid-column: 1/-1;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 5px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--blue-mid);
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      padding: 16px 20px;
+      text-align: center;
+    }
+    .stat-card .stat-val {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-card .stat-lbl { font-size: 11px; color: var(--gray); font-weight: 600; text-transform: uppercase; }
+    .stat-total  .stat-val { color: var(--blue-dark); }
+    .stat-pass   .stat-val { color: var(--green); }
+    .stat-fail   .stat-val { color: var(--red); }
+    .stat-pct    .stat-val { color: var(--amber); }
+
+    .progress-bar-wrap {
+      background: #fff;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      padding: 16px 22px;
+      margin-bottom: 24px;
+    }
+    .progress-bar-wrap .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--blue-dark);
+    }
+    .progress-track {
+      background: var(--gray-light);
+      border-radius: 99px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--blue-mid), #22d3ee);
+      transition: width .4s;
+    }
+
+    .module {
+      background: #fff;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .module-header {
+      background: var(--blue-dark);
+      color: #fff;
+      padding: 13px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .module-header h3 { font-size: 13px; font-weight: 700; letter-spacing: .2px; }
+    .module-header .module-stats {
+      display: flex;
+      gap: 10px;
+      font-size: 11px;
+      align-items: center;
+    }
+    .badge {
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .badge-pass  { background: var(--green-bg); color: var(--green); }
+    .badge-fail  { background: var(--red-bg);   color: var(--red); }
+    .badge-pend  { background: rgba(255,255,255,.2); color: #fff; }
+    .chevron { font-size: 14px; transition: transform .2s; }
+    .module.collapsed .chevron { transform: rotate(-90deg); }
+    .module.collapsed .module-body { display: none; }
+
+    .module-body { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--blue-light); }
+    th {
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfc; }
+
+    .col-id    { width: 46px;  color: var(--gray); font-weight: 700; font-size: 11px; }
+    .col-test  { min-width: 160px; font-weight: 600; }
+    .col-steps { min-width: 200px; color: #374151; font-size: 12px; }
+    .col-exp   { min-width: 200px; color: #374151; font-size: 12px; }
+    .col-stat  { width: 130px; }
+    .col-note  { min-width: 180px; }
+
+    select.status-select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+    select.status-select.pass { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+    select.status-select.fail { border-color: var(--red);   background: var(--red-bg);   color: var(--red); }
+    select.status-select.skip { border-color: var(--amber); background: var(--amber-bg); color: var(--amber); }
+    select.status-select.pending { border-color: var(--border); background: #fff; color: var(--gray); }
+
+    textarea.note-input {
+      width: 100%;
+      padding: 5px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      resize: vertical;
+      min-height: 36px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .15s;
+    }
+    textarea.note-input:focus { border-color: var(--blue-mid); }
+
+    .summary-table-wrap {
+      background: #fff;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      padding: 22px;
+      margin-bottom: 24px;
+    }
+    .summary-table-wrap h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--blue-dark);
+      margin-bottom: 14px;
+    }
+    .summary-table { width: 100%; border-collapse: collapse; }
+    .summary-table th {
+      background: var(--blue-light);
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 11px;
+      color: var(--blue-dark);
+      border-bottom: 2px solid var(--border);
+    }
+    .summary-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .summary-table tr:last-child td { font-weight: 700; background: var(--blue-light); }
+
+    .send-zone {
+      background: var(--blue-dark);
+      color: #fff;
+      border-radius: 10px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .send-zone h3 { font-size: 14px; font-weight: 700; }
+    .send-zone p  { font-size: 12px; opacity: .75; margin-top: 3px; }
+    .send-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    @media print {
+      .header { position: static; }
+      .header-right, .send-zone, .btn { display: none !important; }
+      .module.collapsed .module-body { display: block !important; }
+      body { background: #fff; }
+      .container { padding: 0; max-width: 100%; }
+      .dashboard { grid-template-columns: repeat(4,1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard { grid-template-columns: repeat(2,1fr); }
+      .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Plan de Test — Audit IA · TransferAI.ci</h1>
+    <p>Formulaire de suivi qualité — à compléter par chaque testeur et à retourner à contact@transferai.ci</p>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-outline" onclick="toggleAll(true)">Tout développer</button>
+    <button class="btn btn-outline" onclick="toggleAll(false)">Tout réduire</button>
+    <button class="btn btn-outline" onclick="resetAll()">Réinitialiser</button>
+    <button class="btn btn-white"  onclick="window.print()">🖨 Imprimer</button>
+    <button class="btn btn-green"  onclick="sendByEmail()">✉ Envoyer les résultats</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="tester-card">
+    <h2>📋 Informations du testeur</h2>
+    <div class="field"><label>Nom complet *</label><input type="text" id="t_nom" placeholder="ex : Jean Dupont" oninput="saveState()" /></div>
+    <div class="field"><label>Email *</label><input type="email" id="t_email" placeholder="ex : jean@entreprise.com" oninput="saveState()" /></div>
+    <div class="field"><label>Rôle</label><select id="t_role" onchange="saveState()"><option value="">-- Sélectionner --</option><option>Administrateur</option><option>Testeur QA</option><option>Utilisateur métier</option><option>Développeur</option><option>Chef de projet</option></select></div>
+    <div class="field"><label>Date du test *</label><input type="date" id="t_date" oninput="saveState()" /></div>
+    <div class="field"><label>Version testée</label><input type="text" id="t_version" placeholder="ex : v1.0 — avril 2026" oninput="saveState()" /></div>
+    <div class="field"><label>Navigateur utilisé</label><select id="t_browser" onchange="saveState()"><option value="">-- Sélectionner --</option><option>Chrome</option><option>Firefox</option><option>Edge</option><option>Safari</option><option>Opera</option></select></div>
+    <div class="field"><label>Environnement</label><select id="t_env" onchange="saveState()"><option value="">-- Sélectionner --</option><option>Production (transferai.ci)</option><option>Recette / Staging</option><option>Local (localhost)</option></select></div>
+    <div class="field"><label>Observations générales</label><textarea id="t_obs" rows="2" placeholder="Contexte, remarques globales…" oninput="saveState()"></textarea></div>
+  </div>
+
+  <div class="dashboard">
+    <div class="stat-card stat-total"><div class="stat-val" id="stat-total">93</div><div class="stat-lbl">Total tests</div></div>
+    <div class="stat-card stat-pass"><div class="stat-val" id="stat-pass">0</div><div class="stat-lbl">✅ Réussis</div></div>
+    <div class="stat-card stat-fail"><div class="stat-val" id="stat-fail">0</div><div class="stat-lbl">❌ Échoués</div></div>
+    <div class="stat-card stat-pct"><div class="stat-val" id="stat-pct">0%</div><div class="stat-lbl">Taux de réussite</div></div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="bar-label"><span>Progression du plan de test</span><span id="bar-label-pct">0 / 93 tests renseignés</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="module" id="mod1">
+    <div class="module-header" onclick="toggleModule('mod1')"><h3>MODULE 1 — Chargement et interface générale</h3><div class="module-stats"><span class="badge badge-pass" id="mod1-pass">0 ✅</span><span class="badge badge-fail" id="mod1-fail">0 ❌</span><span class="badge badge-pend" id="mod1-pend">7 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod1"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod2">
+    <div class="module-header" onclick="toggleModule('mod2')"><h3>MODULE 2 — Section 0 : Accueil (Identité &amp; cadrage)</h3><div class="module-stats"><span class="badge badge-pass" id="mod2-pass">0 ✅</span><span class="badge badge-fail" id="mod2-fail">0 ❌</span><span class="badge badge-pend" id="mod2-pend">6 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod2"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod3">
+    <div class="module-header" onclick="toggleModule('mod3')"><h3>MODULE 3 — Sections A à I (Contenu du formulaire)</h3><div class="module-stats"><span class="badge badge-pass" id="mod3-pass">0 ✅</span><span class="badge badge-fail" id="mod3-fail">0 ❌</span><span class="badge badge-pend" id="mod3-pend">13 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod3"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod4">
+    <div class="module-header" onclick="toggleModule('mod4')"><h3>MODULE 4 — Sauvegarde locale &amp; persistance</h3><div class="module-stats"><span class="badge badge-pass" id="mod4-pass">0 ✅</span><span class="badge badge-fail" id="mod4-fail">0 ❌</span><span class="badge badge-pend" id="mod4-pend">4 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod4"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod5">
+    <div class="module-header" onclick="toggleModule('mod5')"><h3>MODULE 5 — Section 10 : Envoi &amp; récapitulatif</h3><div class="module-stats"><span class="badge badge-pass" id="mod5-pass">0 ✅</span><span class="badge badge-fail" id="mod5-fail">0 ❌</span><span class="badge badge-pend" id="mod5-pend">15 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod5"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod6">
+    <div class="module-header" onclick="toggleModule('mod6')"><h3>MODULE 6 — Dashboard Administrateur</h3><div class="module-stats"><span class="badge badge-pass" id="mod6-pass">0 ✅</span><span class="badge badge-fail" id="mod6-fail">0 ❌</span><span class="badge badge-pend" id="mod6-pend">15 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod6"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod7">
+    <div class="module-header" onclick="toggleModule('mod7')"><h3>MODULE 7 — Envoi des invitations</h3><div class="module-stats"><span class="badge badge-pass" id="mod7-pass">0 ✅</span><span class="badge badge-fail" id="mod7-fail">0 ❌</span><span class="badge badge-pend" id="mod7-pend">11 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod7"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod8">
+    <div class="module-header" onclick="toggleModule('mod8')"><h3>MODULE 8 — Formulaire via invitation (lien ?invite=)</h3><div class="module-stats"><span class="badge badge-pass" id="mod8-pass">0 ✅</span><span class="badge badge-fail" id="mod8-fail">0 ❌</span><span class="badge badge-pend" id="mod8-pend">9 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod8"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod9">
+    <div class="module-header" onclick="toggleModule('mod9')"><h3>MODULE 9 — Notifications email (backend)</h3><div class="module-stats"><span class="badge badge-pass" id="mod9-pass">0 ✅</span><span class="badge badge-fail" id="mod9-fail">0 ❌</span><span class="badge badge-pend" id="mod9-pend">5 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod9"></tbody></table></div>
+  </div>
+
+  <div class="module" id="mod10">
+    <div class="module-header" onclick="toggleModule('mod10')"><h3>MODULE 10 — Cas limites &amp; robustesse</h3><div class="module-stats"><span class="badge badge-pass" id="mod10-pass">0 ✅</span><span class="badge badge-fail" id="mod10-fail">0 ❌</span><span class="badge badge-pend" id="mod10-pend">8 en attente</span><span class="chevron">▼</span></div></div>
+    <div class="module-body"><table><thead><tr><th class="col-id">#</th><th class="col-test">Cas de test</th><th class="col-steps">Étapes</th><th class="col-exp">Résultat attendu</th><th class="col-stat">Statut</th><th class="col-note">Commentaire / Bug</th></tr></thead><tbody id="body-mod10"></tbody></table></div>
+  </div>
+
+  <div class="summary-table-wrap">
+    <h2>📊 Récapitulatif par module</h2>
+    <table class="summary-table"><thead><tr><th>Module</th><th>Nb tests</th><th>✅ Réussis</th><th>❌ Échoués</th><th>⏳ Non testés</th><th>Taux réussite</th></tr></thead><tbody id="summary-body"></tbody></table>
+  </div>
+
+  <div class="send-zone">
+    <div><h3>✉ Envoyer les résultats à l'équipe TransferAI</h3><p>Cliquez sur "Envoyer les résultats" pour ouvrir votre client email avec un rapport pré-rempli.</p></div>
+    <div class="send-actions">
+      <button class="btn btn-outline" onclick="exportJSON()">💾 Sauvegarder JSON</button>
+      <button class="btn btn-white"   onclick="window.print()">🖨 Imprimer PDF</button>
+      <button class="btn btn-green"   onclick="sendByEmail()">✉ Envoyer les résultats</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const MODULES = [
+  { id: 'mod1', tests: [
+    ['1.1','Chargement de la page','Ouvrir l\'URL de production https://mayoro1972.github.io/formulaire-audit-ia/','Page chargée sans écran blanc, titre "Audit IA" visible'],
+    ['1.2','Barre de navigation (Navbar)','Vérifier le haut de page','Domaine, poste, entité affichés + barre de progression + statut de sauvegarde'],
+    ['1.3','Barre latérale (Sidebar)','Vérifier le panneau gauche','11 sections listées, barres de progression à 0%, section "Accueil" active'],
+    ['1.4','Navigation entre sections','Cliquer chaque section dans la sidebar','Passage d\'une section à l\'autre, scroll en haut de page'],
+    ['1.5','Boutons Précédent / Suivant','Naviguer via les boutons bas de page','Passage séquentiel entre sections'],
+    ['1.6','Boutons flottants visibles','Vérifier en bas à droite de l\'écran','Boutons "Admin" et "Envoyer invitations" visibles'],
+    ['1.7','Responsive mobile','Ouvrir sur mobile ou réduire la fenêtre à 375px','Sidebar en scroll horizontal, formulaire lisible sans débordement'],
+  ]},
+  { id: 'mod2', tests: [
+    ['2.1','Saisie du nom','Remplir le champ "Nom complet"','Valeur enregistrée, navbar mise à jour'],
+    ['2.2','Saisie email','Remplir le champ "Email"','Email affiché dans la section 10 comme destinataire'],
+    ['2.3','Sélection du domaine','Choisir un domaine dans la liste déroulante','Navbar affiche le domaine, contenu des sections adapté'],
+    ['2.4','Adaptation du contenu par domaine','Sélectionner "Banque", puis "Multi-métiers"','Tâches de la section B et libellés de la section A changent'],
+    ['2.5','Progression section Accueil','Remplir tous les champs obligatoires','Barre de progression section 00 passe à vert'],
+    ['2.6','Cases à cocher engagements','Cocher les 4 cases d\'engagement','Aucune erreur, état mémorisé après navigation'],
+  ]},
+  { id: 'mod3', tests: [
+    ['3.1','Section A — Saisie heures','Remplir les 8 lignes d\'activités avec heures et % répétitif','Total des heures calculé, progression mise à jour'],
+    ['3.2','Section A — Métriques clés','Remplir emails/réunions/rapports par semaine','Valeurs sauvegardées et persistantes'],
+    ['3.3','Section B — Tâches pré-chargées','Vérifier les tâches selon le domaine choisi en Section 0','Tâches spécifiques au domaine affichées avec fréquence/temps'],
+    ['3.4','Section B — Modification tâche','Modifier fréquence et temps d\'une tâche existante','Modification enregistrée, progression mise à jour'],
+    ['3.5','Section C — Ajustements','Remplir inexactitudes, exclusions, 3 priorités IA','Données sauvegardées'],
+    ['3.6','Section D — Scores maturité','Déplacer les 5 curseurs de 1 à 10','Scores enregistrés, progression calculée'],
+    ['3.7','Section D — Préférences format','Cocher les cases de format de livrables','État mémorisé après rechargement'],
+    ['3.8','Section E — Ajout tâche libre','Cliquer "Ajouter une tâche", remplir description/fréquence/temps','Nouvelle ligne ajoutée, progression augmente'],
+    ['3.9','Section E — Suppression tâche libre','Supprimer une ligne de tâche libre','Ligne retirée, compteur mis à jour'],
+    ['3.10','Section F — Journal de bord','Remplir les routines matin / semaine / mois / an','Textes sauvegardés'],
+    ['3.11','Section G — Points de douleur','Remplir les 5 irritants (description + temps + solution IA)','Données sauvegardées'],
+    ['3.12','Section H — Vision IA','Remplir priorité 6 mois, vision 18 mois, KPIs','Textes sauvegardés, progression mise à jour'],
+    ['3.13','Section I — Contraintes','Cocher contraintes (RGPD, confidentialité, SI…)','Cases cochées mémorisées, section à 100% si tout coché'],
+  ]},
+  { id: 'mod4', tests: [
+    ['4.1','Auto-sauvegarde','Remplir un champ, attendre 2 sec sans action','Navbar affiche "Sauvegardé HH:MM"'],
+    ['4.2','Persistance après rechargement','Remplir des champs, recharger la page (F5)','Données toujours présentes après rechargement'],
+    ['4.3','Progression globale','Remplir plusieurs sections','Barre de progression globale en navbar augmente'],
+    ['4.4','Progression par section','Compléter une section à 100%','Barre verte + icône coche dans la sidebar'],
+  ]},
+  { id: 'mod5', tests: [
+    ['5.1','Affichage progression Section 10','Aller en Section 10','% complétion, sections confirmées, destinataire affichés'],
+    ['5.2','Saisie email destination','Remplir "Email de destination"','Champ accepte l\'email, valeur mémorisée'],
+    ['5.3','Saisie email CC','Remplir "Email en copie" (optionnel)','Champ optionnel accepte l\'email'],
+    ['5.4','Message d\'accompagnement','Taper un message dans le textarea','Texte saisi et mémorisé'],
+    ['5.5','Envoi format CSV','Sélectionner CSV, cliquer "Enregistrer + Envoyer"','Email reçu avec pièce jointe .csv'],
+    ['5.6','Envoi format PDF','Sélectionner PDF, cliquer "Enregistrer + Envoyer"','Email reçu avec pièce jointe .pdf'],
+    ['5.7','Envoi format Word','Sélectionner Word, cliquer "Enregistrer + Envoyer"','Email reçu avec pièce jointe .docx'],
+    ['5.8','Protection Word par mot de passe','Sélectionner Word, cocher "Protéger", saisir mot de passe, envoyer','Document Word reçu protégé par mot de passe'],
+    ['5.9','Word sans mot de passe bloqué','Cocher "Protéger" sans saisir de mot de passe, cliquer envoyer','Alerte "Veuillez renseigner un mot de passe"'],
+    ['5.10','Enregistrer en base uniquement','Cliquer "Sauvegarder en base"','Message bleu de confirmation, données visibles dans le dashboard admin'],
+    ['5.11','Export JSON local','Cliquer "Exporter en JSON"','Fichier .json téléchargé automatiquement'],
+    ['5.12','Impression / PDF local','Cliquer "Imprimer ou sauvegarder en PDF"','Dialogue d\'impression du navigateur s\'ouvre'],
+    ['5.13','Modal de succès','Après envoi réussi','Modale verte "Formulaire soumis avec succès" avec infos du répondant'],
+    ['5.14','Réinitialiser le formulaire','Cliquer "Démarrer un nouveau formulaire" dans la modale','Formulaire remis à zéro, section 0 affichée'],
+    ['5.15','Envoi sans destinataire','Laisser l\'email vide, cliquer "Enregistrer + Envoyer"','Alerte "Veuillez renseigner l\'email de destination"'],
+  ]},
+  { id: 'mod6', tests: [
+    ['6.1','Accès au dashboard','Cliquer le bouton flottant "Admin"','Dashboard admin s\'ouvre avec la liste des réponses'],
+    ['6.2','Affichage des statistiques','Vérifier les 3 cartes en haut','Total, complétés, en cours — chiffres cohérents'],
+    ['6.3','Liste des réponses','Vérifier le tableau des soumissions','Colonnes : date, email envoyé, nom, email, entité, poste, %, statut, actions'],
+    ['6.4','Recherche par nom','Taper un nom dans la barre de recherche','Résultats filtrés en temps réel'],
+    ['6.5','Recherche par email','Taper un email dans la barre de recherche','Résultats filtrés en temps réel'],
+    ['6.6','Filtre Complétés','Sélectionner "Complétés" dans le filtre','Seules les réponses >=80% affichées'],
+    ['6.7','Filtre En cours','Sélectionner "En cours" dans le filtre','Seules les réponses <80% affichées'],
+    ['6.8','Export CSV admin','Cliquer "Exporter CSV"','Fichier CSV téléchargé avec toutes les réponses filtrées'],
+    ['6.9','Télécharger réponse JSON','Cliquer l\'icône téléchargement sur une ligne','Fichier JSON de la réponse téléchargé'],
+    ['6.10','Voir ID de session','Cliquer l\'icône "Voir détails" sur une ligne','ID de session affiché'],
+    ['6.11','Supprimer une réponse','Cliquer l\'icône rouge "Supprimer"','Confirmation demandée, réponse retirée du tableau'],
+    ['6.12','Rafraîchir les données','Cliquer le bouton "Actualiser"','Tableau rechargé avec les dernières données'],
+    ['6.13','Accès paramètres admin','Cliquer l\'icône engrenage','Page paramètres admin s\'ouvre'],
+    ['6.14','Configurer l\'email admin','Saisir un email dans les paramètres, enregistrer','Email admin sauvegardé'],
+    ['6.15','Retour depuis le dashboard','Cliquer "Retour"','Retour au formulaire principal'],
+  ]},
+  { id: 'mod7', tests: [
+    ['7.1','Accès page invitations','Cliquer "Envoyer invitations"','Page d\'invitations s\'ouvre'],
+    ['7.2','Ajouter un destinataire','Remplir nom + email, cliquer "Ajouter"','Nouvelle ligne ajoutée, compteur mis à jour'],
+    ['7.3','Supprimer un destinataire','Cliquer l\'icône poubelle sur une ligne','Ligne supprimée'],
+    ['7.4','Email de retour','Remplir "Email recevant le formulaire complété"','Email de routage enregistré'],
+    ['7.5','Email CC invitation','Remplir le champ CC optionnel','Email CC mémorisé'],
+    ['7.6','Message personnalisé','Taper un message dans le textarea','Message inclus dans l\'email d\'invitation'],
+    ['7.7','Inclure le brouillon','Cocher "Inclure le brouillon actuel"','Case cochée, statut "Oui" dans la synthèse'],
+    ['7.8','Envoyer invitation simple','1 destinataire, cliquer "Envoyer"','Email d\'invitation reçu avec le lien personnalisé ?invite=xxx'],
+    ['7.9','Envoyer plusieurs invitations','3 destinataires, cliquer "Envoyer"','3 emails envoyés, confirmation affichée'],
+    ['7.10','Invitation en double','Envoyer une invitation à un email déjà invité','Message d\'erreur email déjà invité'],
+    ['7.11','Lien d\'invitation généré','Vérifier le lien affiché dans la page','Format ...?invite=invite_xxxxx visible'],
+  ]},
+  { id: 'mod8', tests: [
+    ['8.1','Ouverture lien valide','Ouvrir l\'URL reçue par email (?invite=xxx)','Bandeau sombre "Bonjour {nom}" affiché en haut'],
+    ['8.2','Pré-remplissage du nom','Vérifier Section 0 après ouverture du lien','Champ "Nom" pré-rempli avec le nom de l\'invité'],
+    ['8.3','Pré-remplissage de l\'email','Vérifier Section 0','Champ "Email" pré-rempli'],
+    ['8.4','Brouillon pré-chargé','Ouvrir un lien avec brouillon inclus','Données du brouillon pré-remplies dans toutes les sections'],
+    ['8.5','Boutons admin masqués','Vérifier les boutons flottants sur le lien d\'invitation','Boutons "Admin" et "Invitations" non affichés'],
+    ['8.6','Routage automatique réponse','Remplir et envoyer via un lien d\'invitation','Réponse envoyée à l\'email de retour de l\'inviteur'],
+    ['8.7','Lien déjà utilisé','Ouvrir un lien dont la réponse a été soumise','Message "Invitation déjà utilisée" affiché'],
+    ['8.8','Lien expiré','Ouvrir un lien expiré','Message "Invitation expirée" affiché'],
+    ['8.9','Lien invalide','Ouvrir ?invite=token_inexistant','Message "Invitation invalide" affiché'],
+  ]},
+  { id: 'mod9', tests: [
+    ['9.1','Notification admin soumission','Soumettre un formulaire complet','Email de notification reçu à l\'adresse admin configurée'],
+    ['9.2','Email avec pièce jointe CSV','Envoyer en format CSV','Email reçu avec fichier .csv en pièce jointe lisible'],
+    ['9.3','Email avec pièce jointe Word','Envoyer en format Word','Email reçu avec fichier .docx en pièce jointe'],
+    ['9.4','Email avec CC','Renseigner un email CC et envoyer','Email reçu également par l\'adresse CC'],
+    ['9.5','Horodatage de l\'envoi','Vérifier dans le dashboard admin après envoi','Colonne "Date envoi" renseignée pour la réponse'],
+  ]},
+  { id: 'mod10', tests: [
+    ['10.1','Formulaire vide — envoi','Aller directement en Section 10 sans rien remplir, envoyer','Envoi possible, progression ~0%, aucun crash'],
+    ['10.2','Rechargement en cours de saisie','Remplir Section D, recharger, revenir à Section D','Données intactes'],
+    ['10.3','Navigation rapide','Cliquer chaque section successivement en 10 secondes','Aucun crash, chaque section s\'affiche correctement'],
+    ['10.4','Changement de domaine en cours','Remplir Section B, puis changer le domaine en Section 0','Tâches de Section B mises à jour selon le nouveau domaine'],
+    ['10.5','Saisie caractères spéciaux','Saisir une balise script dans un champ texte','Texte affiché tel quel, aucun script exécuté (XSS)'],
+    ['10.6','Email invalide','Saisir "notanemail" dans le champ email, envoyer','Comportement géré, alerte ou erreur claire'],
+    ['10.7','Double clic sur Envoyer','Cliquer deux fois rapidement sur "Enregistrer + Envoyer"','Un seul envoi effectué, pas de doublon en base'],
+    ['10.8','Connexion lente','Simuler Slow 3G dans DevTools (F12 → Network → Throttling)','Indicateur "Envoi en cours…" visible, pas de crash'],
+  ]},
+];
+
+const MODULE_NAMES = ['Interface générale','Section 0 — Accueil','Sections A à I','Sauvegarde locale','Envoi & récapitulatif','Dashboard Admin','Envoi invitations','Formulaire invitation','Notifications email','Cas limites'];
+
+function buildTables() {
+  MODULES.forEach(mod => {
+    const tbody = document.getElementById('body-' + mod.id);
+    mod.tests.forEach(([id, name, steps, expected]) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td class="col-id">' + id + '</td><td class="col-test">' + name + '</td><td class="col-steps">' + steps + '</td><td class="col-exp">' + expected + '</td><td class="col-stat"><select class="status-select pending" data-mod="' + mod.id + '" data-id="' + id + '" onchange="onStatusChange(this)"><option value="">— En attente —</option><option value="pass">✅ Réussi</option><option value="fail">❌ Échoué</option><option value="skip">⏳ Non testé</option></select></td><td class="col-note"><textarea class="note-input" data-note="' + id + '" rows="2" placeholder="Commentaire, bug, URL screenshot…" oninput="saveState()"></textarea></td>';
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function onStatusChange(sel) {
+  sel.className = 'status-select ' + (sel.value || 'pending');
+  updateStats();
+  saveState();
+}
+
+function updateStats() {
+  let totalPass = 0, totalFail = 0, totalDone = 0;
+  const summaryRows = [];
+  MODULES.forEach((mod, mi) => {
+    const selects = document.querySelectorAll('select[data-mod="' + mod.id + '"]');
+    let p = 0, f = 0, s = 0;
+    selects.forEach(sel => { if (sel.value==='pass') p++; else if (sel.value==='fail') f++; else if (sel.value==='skip') s++; });
+    const total = selects.length, done = p+f+s;
+    const rate = p>0 ? Math.round((p/(p+f))*100) : (done===0 ? '—' : '0');
+    document.getElementById(mod.id+'-pass').textContent = p+' ✅';
+    document.getElementById(mod.id+'-fail').textContent = f+' ❌';
+    document.getElementById(mod.id+'-pend').textContent = (total-done)+' en attente';
+    totalPass+=p; totalFail+=f; totalDone+=done;
+    summaryRows.push([MODULE_NAMES[mi], total, p, f, total-done, p+f>0 ? rate+'%' : '—']);
+  });
+  document.getElementById('stat-pass').textContent = totalPass;
+  document.getElementById('stat-fail').textContent = totalFail;
+  const pct = totalPass+totalFail>0 ? Math.round((totalPass/(totalPass+totalFail))*100) : 0;
+  document.getElementById('stat-pct').textContent = pct+'%';
+  document.getElementById('progress-fill').style.width = Math.round((totalDone/93)*100)+'%';
+  document.getElementById('bar-label-pct').textContent = totalDone+' / 93 tests renseignés';
+  const sb = document.getElementById('summary-body');
+  sb.innerHTML = '';
+  let totals=[0,0,0,0];
+  summaryRows.forEach(row => {
+    const tr = document.createElement('tr');
+    const rc = row[5]==='—' ? '' : parseInt(row[5])>=80 ? 'color:var(--green)' : parseInt(row[5])>=50 ? 'color:var(--amber)' : 'color:var(--red)';
+    tr.innerHTML = '<td>'+row[0]+'</td><td>'+row[1]+'</td><td style="color:var(--green);font-weight:600">'+row[2]+'</td><td style="color:var(--red);font-weight:600">'+row[3]+'</td><td style="color:var(--amber)">'+row[4]+'</td><td style="'+rc+';font-weight:700">'+row[5]+'</td>';
+    sb.appendChild(tr);
+    totals[0]+=row[1]; totals[1]+=row[2]; totals[2]+=row[3]; totals[3]+=row[4];
+  });
+  const totalRate = totals[1]+totals[2]>0 ? Math.round((totals[1]/(totals[1]+totals[2]))*100)+'%' : '—';
+  const tfoot = document.createElement('tr');
+  tfoot.innerHTML = '<td>TOTAL</td><td>'+totals[0]+'</td><td>'+totals[1]+'</td><td>'+totals[2]+'</td><td>'+totals[3]+'</td><td>'+totalRate+'</td>';
+  sb.appendChild(tfoot);
+}
+
+function toggleModule(id) { document.getElementById(id).classList.toggle('collapsed'); }
+function toggleAll(expand) { document.querySelectorAll('.module').forEach(m => { expand ? m.classList.remove('collapsed') : m.classList.add('collapsed'); }); }
+
+function resetAll() {
+  if (!confirm('Réinitialiser tous les statuts et commentaires ?')) return;
+  document.querySelectorAll('select.status-select').forEach(s => { s.value=''; s.className='status-select pending'; });
+  document.querySelectorAll('textarea.note-input').forEach(t => t.value='');
+  ['t_nom','t_email','t_role','t_date','t_version','t_browser','t_env','t_obs'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  updateStats();
+  localStorage.removeItem('transferai_test_plan');
+}
+
+function saveState() {
+  const state = { tester:{}, statuses:{}, notes:{} };
+  ['nom','email','role','date','version','browser','env','obs'].forEach(k => { const el=document.getElementById('t_'+k); if(el) state.tester[k]=el.value; });
+  document.querySelectorAll('select.status-select').forEach(s => { state.statuses[s.dataset.id]=s.value; });
+  document.querySelectorAll('textarea.note-input').forEach(t => { state.notes[t.dataset.note]=t.value; });
+  localStorage.setItem('transferai_test_plan', JSON.stringify(state));
+}
+
+function loadState() {
+  const raw = localStorage.getItem('transferai_test_plan');
+  if (!raw) return;
+  try {
+    const state = JSON.parse(raw);
+    if (state.tester) Object.entries(state.tester).forEach(([k,v]) => { const el=document.getElementById('t_'+k); if(el) el.value=v; });
+    if (state.statuses) Object.entries(state.statuses).forEach(([id,val]) => { const sel=document.querySelector('select[data-id="'+id+'"]'); if(sel){ sel.value=val; sel.className='status-select '+(val||'pending'); } });
+    if (state.notes) Object.entries(state.notes).forEach(([id,val]) => { const ta=document.querySelector('textarea[data-note="'+id+'"]'); if(ta) ta.value=val; });
+  } catch(e) { console.warn('Erreur chargement état:', e); }
+}
+
+function sendByEmail() {
+  const nom=document.getElementById('t_nom').value||'Testeur';
+  const email=document.getElementById('t_email').value||'';
+  const date=document.getElementById('t_date').value||new Date().toLocaleDateString('fr-FR');
+  const browser=document.getElementById('t_browser').value||'N/A';
+  const env=document.getElementById('t_env').value||'N/A';
+  let pass=0,fail=0,skip=0;
+  const failures=[];
+  document.querySelectorAll('select.status-select').forEach(s => { if(s.value==='pass') pass++; else if(s.value==='fail'){fail++;failures.push(s.dataset.id);} else if(s.value==='skip') skip++; });
+  const rate=pass+fail>0?Math.round(pass/(pass+fail)*100):0;
+  const failList=failures.length ? '\n\nTests échoués :\n'+failures.map(id=>'  - '+id).join('\n') : '';
+  const obs=document.getElementById('t_obs').value||'Aucune';
+  const subject=encodeURIComponent('[Plan de Test] Rapport '+nom+' — '+date+' — '+rate+'% réussite');
+  const body=encodeURIComponent('RAPPORT DE TEST — Audit IA | TransferAI.ci\n'+'='.repeat(50)+'\n\nTesteur      : '+nom+'\nEmail        : '+email+'\nDate         : '+date+'\nNavigateur   : '+browser+'\nEnvironnement: '+env+'\n\nRÉSULTATS\n'+'-'.repeat(30)+'\n✅ Réussis   : '+pass+'\n❌ Échoués   : '+fail+'\n⏳ Non testés: '+skip+'\nTaux réussite: '+rate+'%'+failList+'\n\nObservations générales :\n'+obs+'\n\n--\nEnvoyé depuis le plan de test TransferAI.ci');
+  window.location.href='mailto:contact@transferai.ci?subject='+subject+'&body='+body;
+}
+
+function exportJSON() {
+  const state=JSON.parse(localStorage.getItem('transferai_test_plan')||'{}');
+  state.exportedAt=new Date().toISOString();
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='plan-test-transferai-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildTables();
+  loadState();
+  updateStats();
+  const dateEl=document.getElementById('t_date');
+  if(!dateEl.value) dateEl.value=new Date().toISOString().slice(0,10);
+});
+</script>
+</body>
+</html>
