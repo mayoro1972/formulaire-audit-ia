@@ -48,7 +48,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'Audit IA <onboarding@resend.dev>';
+    // Same sender resolution as send-form-email / notify-admin: MAIL_FROM holds the
+    // verified transferai.ci address; onboarding@resend.dev only delivers to the account owner.
+    const FROM_EMAIL =
+      Deno.env.get('MAIL_FROM') ||
+      Deno.env.get('FROM_EMAIL') ||
+      'TransferAI Africa <contact@transferai.ci>';
     const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
     const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
     const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
